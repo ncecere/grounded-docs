@@ -1,0 +1,117 @@
+---
+title: Security
+description: A summary of Grounded's threat model and controls, rotating the install's keys, grounded doctor, and reporting vulnerabilities.
+---
+
+## Threat model in brief
+
+The repository's security package (data flow, controls with their tests, a dependency inventory and a STRIDE threat model) is written for security reviews. In short:
+
+| Boundary | Main threats | How Grounded answers |
+|---|---|---|
+| **Between teams** | A member of one team reading or changing another's content | Team role checked on every request; non-members get "not found"; an authorization test calls every API route as every kind of caller, including other teams' members and each key scope. |
+| **Crawler → websites** | Reaching internal services (SSRF) | Only public addresses and ports 80/443, checked at every redirect hop and pinned when connecting; the allowlist; page, depth, size and time limits. |
+| **Documents → model** | Prompt injection in crawled or uploaded text | Retrieved text is wrapped and marked as data; the model has no tool but knowledge search and makes no outbound requests; raw HTML is never rendered and external images don't load without a click; optional SystemOne passage judging drops injections. Models don't always obey, so a poisoned source can still mislead: who may add content is the team's control. |
+| **Public agents and widget** | Abuse, stolen widget keys, clickjacking | Allowed origins enforced by `frame-ancestors` and checked at session start; rate limits and daily caps that fail closed; optional CAPTCHA; moderation that fails closed; the public switch and kill switches. |
+| **API keys** | Guessing, a leaked database dump | 40-character random secrets stored only as HMAC digests keyed by `API_KEY_PEPPER`, which isn't in the database; expiry; per-key rate limits; revocation when the owner leaves. |
+| **Sign-in** | Forged tokens, login CSRF | OIDC with verified tokens, nonce, state and PKCE; users identified by issuer and subject, not email; sign-in rate limits. |
+| **Platform admins** | Reading team content | No content access by default; break-glass only, scoped, time-boxed, audited per read, owners notified. |
+| **Supply chain** | A compromised build or image | Images built only in CI from actions pinned by commit, scanned by Trivy (fixable HIGH and CRITICAL fail the build), signed with cosign, with SBOM and provenance; `govulncheck` on every push. |
+
+### Accepted risks
+
+- **Platform admins can point model connections at a gateway they control** and so see what's sent to it. It's audited and visible to other admins; separate duties outside Grounded if you need to prevent it.
+- **Database superusers can alter the audit log.** Protect database credentials, and ship audit data elsewhere if your policies require it.
+- **Prompt injection can still mislead answers.** It's mitigated, not solved.
+- **The model gateway sees what's sent to it**: questions, passages and answers. Choose gateways and models per classification level accordingly.
+- An auditor sending a malformed body to an admin write route gets 400 instead of 403 (no data revealed), and the distroless base image is referenced by tag.
+
+## Hardened defaults
+
+- Processes refuse to start off loopback with the example keys, development sign-in, or plain HTTP.
+- Stored credentials are encrypted (AES-256-GCM); API keys are stored only as keyed hashes.
+- Browser sessions use CSRF tokens and Origin checks; the app sends `X-Frame-Options: DENY` except on the embed page.
+- Pods are non-root with read-only root filesystems, no capabilities, seccomp `RuntimeDefault` and no service account token; the namespace is default-deny.
+- Metrics are served on an internal listener, never through the Ingress.
+
+## grounded doctor
+
+`grounded doctor` prints the safety checks and warnings, then checks every dependency with timings: Postgres (version, pgvector, whether migrations are current), Valkey, object storage (writes, reads and deletes a probe object), the OIDC issuer (discovery, signing keys) and each enabled model connection. It exits 1 if a check fails; warnings don't fail it.
+
+```sh
+kubectl -n grounded exec deploy/grounded-api -c api -- /grounded doctor
+kubectl -n grounded exec deploy/grounded-worker -c worker -- /grounded doctor --mode worker
+kubectl -n grounded exec deploy/grounded-api -c api -- /grounded doctor --json
+kubectl -n grounded exec deploy/grounded-api -c api -- /grounded doctor --probe https://gateway.example.org/v1/models
+```
+
+Failures are named: `certificate not trusted`, `connection refused by <host:port>`, `DNS lookup failed for host <name>`, `timed out after 10s (<phase>)` and so on. Run it after every install, upgrade, restore and key rotation.
+
+## Rotating keys
+
+The install has two secrets of its own:
+
+| Secret | Protects | How it rotates |
+|---|---|---|
+| `ENCRYPTION_KEY` | Credentials stored in the database | `grounded rotate-keys` re-encrypts every stored value; until then the server reads with both keys. |
+| `API_KEY_PEPPER` | API keys and widget keys (stored as keyed hashes) | Each key is re-hashed with the new pepper the next time it's used, while the old pepper is kept as `API_KEY_PEPPER_PREVIOUS`. |
+
+Rotate when a key may have leaked, when someone who knew it leaves, on your schedule, or to move off the example values. Other secrets (the OIDC client secret, SMTP, Turnstile, S3 and database passwords) aren't stored by Grounded: change them where they're issued.
+
+<Steps>
+<Step>
+
+### Prepare
+
+Take a database backup, and **keep the old values**: backups taken before the rotation can only be read with the old `ENCRYPTION_KEY`. Generate the new ones with `openssl rand -base64 32`, straight into your secret store.
+
+</Step>
+<Step>
+
+### Set new values, keeping the old ones as `*_PREVIOUS`
+
+In `grounded-runtime`: `ENCRYPTION_KEY_PREVIOUS` = the old key, `ENCRYPTION_KEY` = the new key; `API_KEY_PEPPER_PREVIOUS` = the old pepper, `API_KEY_PEPPER` = the new pepper. Rotate one or both.
+
+</Step>
+<Step>
+
+### Roll every pod
+
+```sh
+kubectl -n grounded rollout restart deploy/grounded-api deploy/grounded-worker
+```
+
+</Step>
+<Step>
+
+### Dry run, then re-encrypt
+
+```sh
+kubectl -n grounded exec deploy/grounded-api -c api -- /grounded rotate-keys --dry-run
+kubectl -n grounded exec deploy/grounded-api -c api -- /grounded rotate-keys
+```
+
+The dry run counts values on each key and lists API keys still on the previous pepper, writing nothing. If it reports values that decrypt with neither key, stop and find that key (or re-enter those connections' keys). The real run re-encrypts in small batches, is safe while Grounded serves, and can simply be run again if interrupted. For the pepper alone, use `--pepper-only`.
+
+</Step>
+<Step>
+
+### Verify, then remove `ENCRYPTION_KEY_PREVIOUS`
+
+Run the dry run again (0 values on the previous key), **Test connection** on each connection in the admin portal, and try a chat and an existing API key. Then delete `ENCRYPTION_KEY_PREVIOUS` and roll the pods again.
+
+</Step>
+<Step>
+
+### Retire the old pepper after a grace period
+
+Keep `API_KEY_PEPPER_PREVIOUS` long enough for every key in regular use to be used once: two to four weeks suits most installs. Meanwhile the admin Overview lists keys still on the previous pepper, with their team and last use; ask their owners to use them or replace them. When you remove it and roll the pods, any key still listed stops working (401).
+
+</Step>
+</Steps>
+
+To roll back, swap the values (old current, new previous), roll the pods and run `rotate-keys` again. Never remove a key that stored values still need. A pepper rotation also changes the pseudonymous IDs used in analytics, so unique-user counts over a period spanning it count people twice.
+
+## Reporting a vulnerability
+
+Report vulnerabilities privately through GitHub's [private vulnerability reporting](https://github.com/ncecere/grounded/security/advisories/new) on the Grounded repository, not in a public issue. Grounded has one maintainer, who aims to reply within 5 business days and agree a disclosure date with you.

@@ -1,0 +1,23 @@
+---
+title: Self-hosting
+description: Run Grounded on your own infrastructure — what you need, how to install it, and how to operate it.
+---
+
+Grounded runs on Kubernetes. The repository ships a generic Kustomize base, optional components and two example overlays; your install keeps its own overlay in its own repository, references the base at a release tag, and pins the image by digest.
+
+<Cards>
+  <Card title="Requirements" href="/docs/self-hosting/requirements">Kubernetes, Postgres with pgvector, Valkey, S3, OIDC and a model gateway.</Card>
+  <Card title="Install on Kubernetes" href="/docs/self-hosting/kubernetes">The base and components, secrets, configuration and the first admin.</Card>
+  <Card title="Configuration reference" href="/docs/self-hosting/configuration">Every environment variable, grouped.</Card>
+  <Card title="OIDC and SSO" href="/docs/self-hosting/oidc">Sign-in, allowed domains, the first admin and group claims.</Card>
+  <Card title="Model gateways" href="/docs/self-hosting/model-gateways">OpenAI-compatible gateways and self-hosted model tips.</Card>
+  <Card title="OCR sidecar" href="/docs/self-hosting/ocr-sidecar">The optional Tesseract sidecar for scanned documents.</Card>
+  <Card title="Observability" href="/docs/self-hosting/observability">Metrics, dashboards, alerts and objectives.</Card>
+  <Card title="Backups and restore" href="/docs/self-hosting/backups">What to back up and how to restore it.</Card>
+  <Card title="Upgrades" href="/docs/self-hosting/upgrades">Release by release, pinning digests and verifying images.</Card>
+  <Card title="Security" href="/docs/self-hosting/security">Threat model summary, key rotation and `grounded doctor`.</Card>
+</Cards>
+
+<Callout type="warn" title="Before you rely on it">
+  Grounded is pre-1.0 with one maintainer. Its load tests and restore rehearsal ran on single-node test clusters, and the high-availability topology is validated as manifests but hasn't yet been proven by a long-running install. Load-test your own install and rehearse a restore before you depend on it.
+</Callout>

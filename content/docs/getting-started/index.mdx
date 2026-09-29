@@ -1,0 +1,66 @@
+---
+title: What is Grounded
+description: An open-source, multi-tenant platform for knowledge bases and agents that answer only from your own sources, with citations.
+---
+
+Grounded is an open-source (MIT) platform for retrieval-augmented generation (RAG) and agents, built for organisations. One install serves many teams. Each team turns uploaded files and crawled websites into **knowledge bases**, then publishes **agents** that answer questions only from those sources. Every answer cites the passages it used.
+
+People use the agents in the web app, in a widget embedded on a website, or from any OpenAI-compatible client. Platform admins decide what happens: which models may see which data, who may use an agent, how long data is kept, and who can read what.
+
+<Screenshot slot="chat-answer-with-claims" />
+
+## What it does
+
+<Cards>
+  <Card title="Knowledge from your sources" href="/docs/using/editors/data-sources">
+    Upload PDF, Word, PowerPoint, HTML, Markdown and text files, or crawl public websites. Scanned documents can be read with optional OCR.
+  </Card>
+  <Card title="Agents that cite" href="/docs/using/chat">
+    Agents answer from their knowledge bases with numbered citations. With strict grounding (on by default) they refuse rather than guess.
+  </Card>
+  <Card title="Claims checked one by one" href="/docs/administration/systemone">
+    An optional SystemOne model checks each factual sentence against the source it cites and marks it supported, not supported or uncited.
+  </Card>
+  <Card title="Three ways to reach an agent" href="/docs/using/editors/sharing">
+    The web app, an embeddable widget and public page, and an OpenAI-compatible API where each agent is a model.
+  </Card>
+  <Card title="Governance built in" href="/docs/administration/classifications">
+    Classification levels, moderation for public agents, retention with legal holds, audited break-glass access and a full audit log.
+  </Card>
+  <Card title="Quality you can measure" href="/docs/using/editors/evaluations">
+    Evaluation sets check that knowledge bases still find the right documents and agents still answer well after changes.
+  </Card>
+</Cards>
+
+## How it is built
+
+Grounded is a single Go binary with the React web app embedded in it. The same binary runs the API, the background worker, database migrations and a few operator commands. It stores everything in PostgreSQL with pgvector, keeps rebuildable state (rate limits, crawl pacing) in Valkey or Redis, keeps files in S3-compatible storage, and talks to models through any OpenAI-compatible gateway. Sign-in uses OIDC.
+
+It runs on Kubernetes. The repository ships a generic Kustomize base, optional components and example overlays. See [Self-hosting](/docs/self-hosting).
+
+## Who these docs are for
+
+| You are | Start with |
+|---|---|
+| Someone chatting with an agent | [Chatting with an agent](/docs/using/chat) |
+| A team editor building sources, knowledge bases and agents | [Data sources](/docs/using/editors/data-sources) |
+| A team owner or admin | [Members and roles](/docs/using/owners/members) |
+| A platform admin or auditor | [The admin portal](/docs/administration) |
+| An operator installing and running Grounded | [Requirements](/docs/self-hosting/requirements) |
+| A developer calling the API | [API overview](/docs/api) |
+
+If you only want to see it working, [try it locally](/docs/getting-started/try-it-locally) with Docker. No model keys are needed.
+
+## Project status
+
+Grounded is **pre-1.0**, and it currently has one maintainer. The latest release is [v0.2.1](/docs/releases/v0-2-1). What to expect:
+
+- **Meant to stay stable through 0.x:** the OpenAI-compatible chat endpoint, the widget embed, the environment variables, and the Kubernetes resource names that overlays patch. If one of these has to change, the release notes say how to adapt.
+- **May change between minor releases:** the native REST API, metric names, the UI and component defaults.
+- **Upgrades** are forward-only and happen without downtime. Downgrading means restoring a backup.
+
+Capacity figures in the project come from load tests on a single-node test cluster, not from long production use. Test your own install before relying on it. See the [known limitations](/docs/releases/v0-1-0#known-limitations).
+
+<Callout title="These docs and the repository">
+  These pages are the user and operator guide. The Grounded repository's own `docs/` folder stays the engineering record: the design, architecture decision records and the original runbooks.
+</Callout>

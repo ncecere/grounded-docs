@@ -1,0 +1,6 @@
+{
+  "title": "Getting started",
+  "description": "What Grounded is and how to try it",
+  "root": true,
+  "pages": ["index", "concepts", "try-it-locally", "quick-tour"]
+}

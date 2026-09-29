@@ -1,0 +1,19 @@
+{
+  "title": "Self-hosting",
+  "description": "Installing and operating Grounded",
+  "root": true,
+  "pages": [
+    "index",
+    "requirements",
+    "kubernetes",
+    "configuration",
+    "oidc",
+    "model-gateways",
+    "ocr-sidecar",
+    "---Operating---",
+    "observability",
+    "backups",
+    "upgrades",
+    "security"
+  ]
+}

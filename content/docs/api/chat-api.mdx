@@ -1,0 +1,65 @@
+---
+title: Native chat API
+description: Ask an agent with conversations, retrieval events and citation verdicts, streamed over Server-Sent Events.
+---
+
+`POST /v1/agents/{team}/{agent}/chat` is the API the web app's chat uses. Compared with the [OpenAI-compatible endpoint](/docs/api/openai-compatible), it keeps conversations for personal keys and sessions, and streams richer events: retrieval results, tool calls, moderation, and the citation check. It's part of the native API, which may change between minor releases before 1.0.
+
+It needs a signed-in session or an API key with the `query` scope.
+
+## The request
+
+```json
+{
+  "message": "How do I request a transcript?",
+  "conversationId": "…",
+  "stream": true
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `message` | The question, 1–8,000 characters. |
+| `conversationId` | Continue a conversation. Sessions and personal keys only. |
+| `history` | Earlier turns (`{role, content}` with role `user` or `assistant`, up to 50), for stateless callers such as service keys. |
+| `stream` | `true` (default) for Server-Sent Events; `false` for one JSON answer. |
+
+Sessions and personal keys store the conversation; the first event tells you its ID. Service keys are stateless: send the history, and `conversationId` is refused.
+
+## The event stream
+
+Named events whose data is JSON, in this order:
+
+| Event | When |
+|---|---|
+| `conversation` | First: the conversation's ID. |
+| `retrieval` | With "search before every answer": the passages found (numbered, with title, URL and snippet), and with passage judging the counts judged, kept and dropped. |
+| `message_start` | The answer begins. |
+| `thinking_delta`, `text_delta`, `tool_call`, `retrieval`, `tool_result` | As they happen. `text_delta` carries raw model text. |
+| `moderation` | Only when moderation replaced the question's answer or the answer with a notice. |
+| `message_end` | The final text (which replaces the deltas), `citations`, `usage`, `stopReason`, `refused`, `noContext` and `noContextReason`. For answers checked before release (buffered public answers and JSON answers), also `claims` and `uncited`. |
+| `citations_checked` | Only with SystemOne citation checks on and citations in the answer: follows `message_end` and replaces the citations, with `claims`, `uncited` and counts; in enforce mode, also the text. |
+| `error` | Only on failure, for example `model_unavailable`, `model_busy` or `incomplete_answer`. |
+| `done` | Last. |
+
+A blocked question gets `conversation`, `message_start`, `moderation` and `message_end`. A `: ping` comment is sent every 15 seconds. Closing the connection stops the answer; the partial answer is saved with the stop reason `aborted`.
+
+In `message_end.text`, unknown `[n]` markers are removed, `[1, 2]` is written as `[1][2]`, and markers are removed entirely when the agent's citation mode is "No citations". `noContextReason` is `judged_out` (passage judging left nothing), `small_talk` or `out_of_scope` (the scope check) when those apply.
+
+Errors before the answer starts (`agent_disabled`, `agent_policy_violation`, `rate_limited`, `quota_exceeded`, `budget_exhausted`, `model_unavailable`, `model_busy`) are plain HTTP errors, not events.
+
+## Conversations and feedback
+
+| Route | Does |
+|---|---|
+| `GET /v1/conversations` | Your conversations (never anyone else's). |
+| `GET /v1/conversations/{id}` | One, with its messages, citations and claims. |
+| `GET /v1/conversations/{id}/export` | Markdown or JSON, with citations. |
+| `DELETE /v1/conversations/{id}` | Delete it (retention rules may keep the stored copy longer). |
+| `POST /v1/messages/{id}/feedback` | Thumbs up or down, with a reason for down: `incorrect`, `not_helpful`, `missing_sources`, `wrong_sources`, `outdated`, `harmful_or_unsafe` or `other`. |
+
+A personal key reaches only conversations with its own team's agents, within its restrictions.
+
+## Searching without an answer
+
+`POST /v1/teams/{team}/kbs/{kbId}/retrieve` returns the passages a knowledge base's hybrid search finds, with citations, and no chat model call. It counts against the team's query limits. See the [reference](/docs/api/reference/kbs/retrieve).

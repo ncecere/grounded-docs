@@ -1,0 +1,90 @@
+---
+title: OCR sidecar
+description: Deploy the grounded-ocr Tesseract sidecar, add languages, or use Apache Tika instead.
+---
+
+OCR reads scanned PDF pages and image uploads. It's off until a platform admin turns it on in [Parsing & OCR](/docs/administration/parsing-and-ocr), and only configured backends can be chosen there. The recommended backend is **Tesseract**, through Grounded's own sidecar image `ghcr.io/ncecere/grounded-ocr`. It runs in your cluster, so scanned pages never leave it.
+
+## Deploy on Kubernetes
+
+Add the component and pin the image by digest, like Grounded's:
+
+```yaml
+components:
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ocr-tesseract?ref=v0.2.1
+images:
+  - name: ghcr.io/ncecere/grounded-ocr
+    newTag: v0.2.1
+    digest: sha256:<digest>
+```
+
+It adds:
+
+- the `grounded-ocr` Deployment and Service (port 8080);
+- a NetworkPolicy that lets only Grounded's api and worker pods call it;
+- `OCR_TESSERACT_URL=http://grounded-ocr:8080` in `grounded-config`.
+
+The sidecar runs as a non-root user with a read-only root filesystem, writes only a temporary directory per request under `/tmp`, and passes the `restricted` Pod Security Standard. The image is multi-arch, signed and scanned like the main image; verify it the same way ([Verifying images](/docs/self-hosting/upgrades#verifying-images)).
+
+Check it:
+
+```sh
+kubectl -n grounded exec deploy/grounded-ocr -- grounded-ocr version
+```
+
+Then turn OCR on in the admin portal and press **Test**.
+
+## Sizing
+
+Each request is one page. The sidecar runs `OCR_CONCURRENCY` Tesseract processes at once (2 in the component, matching its CPU limit) and queues the rest until its timeout. Each Grounded worker sends at most `OCR_CONCURRENCY` pages at once (its own setting, default 2). A page takes about 0.5–3 seconds of CPU. Scale the sidecar's replicas or CPUs with the number of workers.
+
+## Languages
+
+The image includes `eng`, `spa`, `fra`, `deu`, `ita`, `por`, `nld`, `pol`, `rus`, `ukr`, `ara`, `hin`, `chi_sim`, `chi_tra`, `jpn`, `kor` and `vie` (and `osd`). For another language, derive an image:
+
+```dockerfile
+FROM ghcr.io/ncecere/grounded-ocr:v0.2.1
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr-ell \
+ && rm -rf /var/lib/apt/lists/*
+USER 65532:65532
+```
+
+Choose the languages in the admin portal, joined with `+` (`eng+spa`). List only those your documents use.
+
+## The sidecar's settings
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `OCR_ADDR` | `:8080` | Listen address. |
+| `OCR_CONCURRENCY` | one per CPU | Tesseract processes at once. |
+| `OCR_MAX_BYTES` | 32 MiB | The largest image accepted. |
+| `OCR_TIMEOUT` | `2m` | One request, including waiting for a slot. |
+| `OCR_TESSERACT` | `tesseract` | The program to run. |
+
+Its API is small: `POST /ocr?lang=eng+spa` with a PNG body returns `{"text": "...", "confidence": 0.93}`; `GET /languages` lists the installed languages; `GET /healthz` answers `ok`.
+
+## Docker Compose (development)
+
+```sh
+docker compose --profile ocr up -d --build ocr
+```
+
+Then set `OCR_TESSERACT_URL=http://127.0.0.1:58080` in `.env`.
+
+## Using Apache Tika instead
+
+If you already run the `tika` component, switch it to Tika's `-full` image, which includes Tesseract, and give it more memory:
+
+```yaml
+images:
+  - name: docker.io/apache/tika
+    newTag: <version>-full
+    digest: sha256:<digest>
+```
+
+Tika without Tesseract returns no text, and the Test button says "No text came back". Tika as a fallback parser never parses images.
+
+## Using a vision model instead
+
+A vision model on your gateway can be the OCR backend too: add it as a model of kind **Vision (OCR)**. It reads forms and tables better, returns Markdown, and costs tokens per page. It's subject to its maximum classification, so it won't read scans from sources above its level.

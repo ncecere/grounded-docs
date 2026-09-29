@@ -1,0 +1,108 @@
+---
+title: OIDC and SSO
+description: Connect Grounded to your identity provider, restrict who can sign in, name the first admin, and send groups for SSO group mapping.
+---
+
+Grounded signs people in with OpenID Connect (the authorization code flow with PKCE, state and nonce). It works with any OIDC provider. There are no local passwords.
+
+## Set up the client
+
+<Steps>
+<Step>
+
+### Create a confidential client
+
+In your identity provider, create a confidential (server-side) client with the redirect URI:
+
+```
+https://<your Grounded host>/auth/callback
+```
+
+It must match `APP_URL` exactly, including the scheme and host.
+
+</Step>
+<Step>
+
+### Configure Grounded
+
+In `grounded-runtime` (secret): `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`. In `grounded-config`, as needed:
+
+```sh
+OIDC_SCOPES=openid,profile,email      # the default
+OIDC_EMAIL_CLAIM=email                # the default
+OIDC_REQUIRE_VERIFIED_EMAIL=true      # the default
+OIDC_ALLOWED_EMAIL_DOMAINS=example.org
+OIDC_GROUPS_CLAIM=groups              # the default, for SSO group mapping
+```
+
+</Step>
+<Step>
+
+### Check it
+
+`grounded doctor` fetches the issuer's discovery document and signing keys and reports what fails. Then sign in.
+
+</Step>
+</Steps>
+
+## Who can sign in
+
+Anyone your identity provider authenticates can sign in, unless you restrict it:
+
+- `OIDC_ALLOWED_EMAIL_DOMAINS`: only these email domains. Empty allows anyone the provider signs in; Grounded reports that as information at startup and on the admin Overview, since it's fine when the provider already limits access.
+- Or restrict access in the provider itself (an application assignment or access policy).
+
+Everyone who can sign in counts as "everyone who signs in" for agent audiences. Decide who that includes (staff, students, contractors, guests) before teams publish to it, and tell them.
+
+People are created on their first sign-in, without a team. Users are identified by the issuer and subject (`sub`), not by email. All OIDC claims are stored at each sign-in, for future audience rules.
+
+## The first platform admin
+
+Set `BOOTSTRAP_ADMIN_SUBJECT` to your `sub` after your first sign-in. See [the first platform admin](/docs/self-hosting/kubernetes#5-the-first-platform-admin). It's applied once and recorded, so demoting that person later sticks.
+
+## Groups
+
+For [SSO group mapping](/docs/administration/sso-groups), the provider must put the person's groups in the **ID token**, in the claim `OIDC_GROUPS_CLAIM` names (default `groups`). Grounded doesn't call the userinfo endpoint. A list of strings works; a single string counts as one group.
+
+<Tabs items={['Authentik', 'Keycloak', 'Microsoft Entra ID', 'Other']}>
+<Tab value="Authentik">
+
+The `profile` scope mapping sends `groups` with the group names. The default `OIDC_SCOPES=openid,profile,email` already asks for it.
+
+</Tab>
+<Tab value="Keycloak">
+
+Add a **Group Membership** mapper to the client, with the token claim name `groups` and **Add to ID token** on. Turn **Full group path** off unless your rules use paths such as `/staff/admissions`.
+
+</Tab>
+<Tab value="Microsoft Entra ID">
+
+Set `groupMembershipClaims` in the app manifest. Entra sends group object IDs, not names, unless you configure cloud-only group display names; write the rules with whatever the token carries. Users in more than 200 groups get an overage marker instead of the list, which Grounded can't follow.
+
+</Tab>
+<Tab value="Other">
+
+Decode an ID token from your provider, find the claim that lists groups, and set `OIDC_GROUPS_CLAIM` to its name.
+
+</Tab>
+</Tabs>
+
+If rules exist but no sign-in in the last 30 days carried the claim, Grounded warns (`sso_groups_claim_missing`). A sign-in without the claim counts as no groups, and removes the memberships rules made.
+
+## Sessions
+
+Browser sessions are stored on the server with secure cookies, CSRF tokens and Origin checks, and last `SESSION_TTL` (12 hours by default). Suspending a user signs them out everywhere at once. Sign-in attempts are rate-limited per client address.
+
+## Development sign-in
+
+`DEV_AUTH=true` offers fixed personas (such as "Dev Platform Admin") instead of OIDC, for local development and the demo. Grounded refuses to start with it unless `APP_URL` is a loopback address.
+
+## Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| A redirect error at the provider | The redirect URI must be exactly `<APP_URL>/auth/callback`. |
+| Sign-in refused because the email isn't verified | The provider doesn't mark the email verified. Fix it there, or set `OIDC_REQUIRE_VERIFIED_EMAIL=false` if you trust the provider's emails. |
+| People from outside your organisation can sign in | Set `OIDC_ALLOWED_EMAIL_DOMAINS`, or restrict the application in the provider. |
+| Group rules add nobody | The claim isn't in the ID token, or its name differs. Check the dry run's **Groups last seen** column. |
+| Slow sign-in from the cluster | `grounded doctor` times DNS, connect, TLS and first byte for the issuer. |

@@ -1,0 +1,106 @@
+---
+title: Try it locally
+description: Run the demo with Docker. It seeds a sample team whose agents answer from the Go documentation, with no model keys needed.
+---
+
+The demo is the quickest way to see Grounded working. It runs everything on your machine with Docker Compose and seeds a **Demo** team whose agents answer questions about the Go programming language from the Go documentation.
+
+<Callout type="warn" title="For your machine only">
+  The demo uses development sign-in (anyone who reaches the page can pick any persona) and the public example keys from `.env.example`. Grounded accepts both only because the app's URL is a loopback address, and the compose file publishes the UI on 127.0.0.1 only. Don't expose it, and don't use it as the basis of a real install. See [Self-hosting](/docs/self-hosting) instead.
+</Callout>
+
+## Start it
+
+You need Docker. No model keys are required.
+
+<Steps>
+<Step>
+
+### Clone and start
+
+```sh
+git clone https://github.com/ncecere/grounded.git
+cd grounded
+docker compose -f compose.demo.yaml up --build     # or: make demo
+```
+
+The first start builds the image, which takes a few minutes. Compose then starts Postgres, Valkey, Grounded (`grounded serve`: the API, the web app and the worker) and a `demo` service.
+
+</Step>
+<Step>
+
+### Wait for the crawl
+
+The `demo` service runs `grounded demo` with built-in fake models and keeps serving them. The worker crawls about 100 pages of `https://go.dev/doc/` and indexes them, which takes about two minutes. The source's page in the app shows the progress.
+
+</Step>
+<Step>
+
+### Sign in and ask
+
+Open http://localhost:8080 and sign in as **Dev Platform Admin**. Home lists the two agents. Open **Go docs assistant** and pick one of its starter questions.
+
+</Step>
+</Steps>
+
+<Callout title="The fake model is not a language model">
+  Each answer starts with *"Demo model: this is a canned answer, not a real language model"* and quotes the three passages that best match the question, with citations to the Go documentation pages. Retrieval, citations, conversations and the rest of the app are real.
+</Callout>
+
+| Task | Command |
+|---|---|
+| Use another port | `GROUNDED_DEMO_PORT=8081 docker compose -f compose.demo.yaml up` |
+| Stop, keeping the data | `docker compose -f compose.demo.yaml down` |
+| Start again from scratch | `docker compose -f compose.demo.yaml down -v` |
+
+Starting again with the data kept is quick: the demo finds the Demo team, prints "already seeded" and adds nothing. The source re-syncs weekly.
+
+## Use real models
+
+To see real answers, start from scratch with any OpenAI-compatible gateway (LiteLLM, vLLM, SGLang, a hosted API):
+
+```sh
+docker compose -f compose.demo.yaml down -v
+export DEMO_MODELS=openai-compatible DEMO_SERVE_FAKE_MODELS=false
+export DEMO_CHAT_URL=https://gateway.example.org/v1 DEMO_CHAT_KEY=sk-... DEMO_CHAT_MODEL=<chat model>
+export DEMO_EMBED_MODEL=<embedding model>
+docker compose -f compose.demo.yaml up --build
+```
+
+The `demo` service then seeds with your models and exits. A gateway running on your own machine is `http://host.docker.internal:<port>/v1` from inside the containers.
+
+| Variable | Flag | Meaning |
+|---|---|---|
+| `DEMO_CHAT_URL` | `--chat-url` | Required. The gateway's base URL, including `/v1`. |
+| `DEMO_CHAT_KEY` | `--chat-key` | The gateway's API key. |
+| `DEMO_CHAT_MODEL` | `--chat-model` | Required. The chat model ID. |
+| `DEMO_EMBED_MODEL` | `--embed-model` | Required. The embedding model ID. |
+| `DEMO_EMBED_URL`, `DEMO_EMBED_KEY` | `--embed-url`, `--embed-key` | Default: the chat ones. |
+| `DEMO_EMBED_DIMS` | `--embed-dims` | Default: asked from the gateway with one embedding request. |
+| `DEMO_SYSTEMONE_MODEL` | `--systemone-model` | Optional. Adds a SystemOne model on the chat gateway; turn its checks on under Admin → SystemOne. |
+
+Prefer the variables to flags for keys: command lines are visible to other users of the machine. Keys are stored encrypted, like keys entered in the admin portal.
+
+## What the demo creates
+
+| Object | Details |
+|---|---|
+| Crawl allowlist entry | `go.dev`, unless the allowlist already covers it. |
+| Models (only with `--models`) | A model connection, a chat model, an embedding model and an embedding profile. |
+| Team **Demo** (`demo`) | Owned by the first platform admin (the development admin in the Docker demo), or the account `--owner-email` names; approved up to the least sensitive level that allows web sources and signed-in audiences (Open on a default install). |
+| Web source **Go documentation** | Crawls `https://go.dev/doc/`: pages under `/doc/`, depth 2, at most 100 pages, weekly. |
+| Knowledge base **Go documentation** | The web source attached. |
+| Agent **Go docs assistant** (`go-docs`) | Published to the team, with a welcome message and four starter questions. |
+| Agent **Go docs (signed-in)** (`go-docs-signed-in`) | Published to everyone who signs in. |
+
+The demo never changes existing data; every step only adds what is missing, and it's safe to run again. It refuses to run on an install that already has a team, unless you pass `--force`. Everything it creates is ordinary data that you can change or delete like any other. Each object is audited as the owner created it, plus one system entry, "Seeded the demo".
+
+## Seed an install you already run
+
+`grounded demo` also works on a real install, run with the install's configuration (the same environment as `grounded worker`). Add your model connection, a chat model and a default embedding profile in the admin portal first; the demo then uses them. On Kubernetes:
+
+```sh
+kubectl -n grounded exec deploy/grounded-worker -c worker -- /grounded demo
+```
+
+It acts as the first platform admin, if they've signed in (`--owner-email` picks another owner), and needs outbound HTTPS to go.dev for the crawl. Add `--force` if the install already has teams.

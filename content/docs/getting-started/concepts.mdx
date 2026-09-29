@@ -1,0 +1,113 @@
+---
+title: Concepts
+description: Teams, data sources, knowledge bases, agents, conversations, classification levels and roles, and how they fit together.
+---
+
+## The pieces
+
+```
+Platform
+├── Users (platform admin, platform auditor, or neither)
+├── Model connections ──< Models (chat, embedding, moderation, SystemOne, vision)
+├── Embedding profiles
+├── Classification levels (Open, Sensitive, Restricted by default)
+├── Platform-shared data sources
+└── Teams (each approved up to a maximum classification)
+    ├── Members (owner, admin, editor, member) and pending invites
+    ├── API keys (personal and team service keys)
+    ├── Data sources ──< Documents ──< Passages
+    ├── Knowledge bases (a set of data sources)
+    └── Agents ──< Published versions
+          └── Conversations (readable only by the person who had them)
+```
+
+### Teams
+
+A **team** is the tenant. It owns its data sources, knowledge bases, agents and API keys, and it has its own members, limits, usage and audit log. Only platform admins create teams; there are no personal spaces. Someone who signs in without being on a team can still use agents that are shared with them.
+
+### Data sources and documents
+
+A **data source** produces documents. It has exactly one type, set when it's created:
+
+- **Upload**: files you upload in the app or through the API.
+- **Web**: pages fetched by Grounded's own crawler. It can scrape one page, fetch a list of pages, crawl a site or map one.
+
+Each source also has one embedding profile and one classification level. A **document** is one parsed page or file, split into **passages** (chunks) that are embedded and indexed for search. Platform admins can also create **platform-shared sources** that any team may attach to its knowledge bases.
+
+### Knowledge bases
+
+A **knowledge base** is a named set of data sources, searched together. It can mix the team's own sources with platform-shared ones. All its sources share one embedding profile. Search is hybrid: a vector search and a keyword search run side by side and their results are fused. Each knowledge base has default retrieval settings, such as how many passages a search returns.
+
+### Agents
+
+An **agent** answers questions from one or more knowledge bases (up to five). It has instructions, a chat model and settings for how it searches, answers and cites. You edit a **draft**; **publishing** creates an immutable, numbered version, and people always chat with the latest published version.
+
+By default an agent is **strictly grounded**: it answers only from its sources, answers the part of a question its sources cover and says what they don't, and gives the team's refusal message when they have nothing relevant.
+
+### Audiences
+
+Each published agent has one audience:
+
+| Audience | Who can use it |
+|---|---|
+| **Team** | Members of the team that owns it. |
+| **Everyone who signs in** | Anyone who can sign in to the install. These agents are listed in the agent directory. |
+| **Public** | Anyone, without signing in, on a public page or in an embedded widget. Requires moderation and the platform's public access switch. |
+
+### Conversations
+
+A **conversation** is private to the person who had it. Other team members, team admins and platform admins can't read it. The one exception is a platform admin in an audited, time-limited [break-glass session](/docs/administration/break-glass) with the conversations scope. People can export their own conversations (Markdown or JSON) and delete them. Teams see only aggregates and metadata, never message content.
+
+### Classification levels
+
+**Classification levels** describe how sensitive data is. A default install has three:
+
+| Level | Most open audience by default | Models allowed by default |
+|---|---|---|
+| **Open** | Public | Any enabled model |
+| **Sensitive** | Everyone who signs in | Models tagged Sensitive or higher |
+| **Restricted** | Team | Only models an admin tags for Restricted |
+
+Platform admins can change the levels and write what each one means for their organisation. Grounded enforces the rules when anything changes and again on every question:
+
+- A team is approved up to a maximum level, and its sources can't be classified above it.
+- A knowledge base is as sensitive as its most sensitive source, and an agent as its most sensitive knowledge base.
+- Each model has a maximum level. An embedding model can't embed, and a chat model can't read, data above its level.
+- An agent's audience must be allowed for its level.
+
+What each level covers, and which data is not allowed at all, is your organisation's policy. Grounded provides the mechanisms; it doesn't encode any law.
+
+### Embedding profiles and models
+
+Platform admins connect Grounded to one or more OpenAI-compatible **model connections** and add **models** from them. An **embedding profile** fixes the embedding model, the vector dimensions, the query and document prefixes and the passage sizes. A profile can't change in place: moving a knowledge base to a new one is a background [profile migration](/docs/administration/embedding-profiles).
+
+## Roles
+
+### Team roles
+
+| Can | Owner | Admin | Editor | Member |
+|---|:-:|:-:|:-:|:-:|
+| Use the team's agents and search its knowledge bases | Yes | Yes | Yes | Yes |
+| Create and edit data sources, knowledge bases and agents | Yes | Yes | Yes | |
+| Raise a source's classification | Yes | Yes | Yes | |
+| Lower a source's classification (with a reason; owners are notified) | Yes | Yes | | |
+| Publish agents to the team | Yes | Yes | Yes | |
+| Publish agents to everyone who signs in, or to the public | Yes | Yes | | |
+| Manage members | Yes | Yes (not owners) | | |
+| Create team service keys | Yes | Yes | | |
+| Create personal API keys | Yes | Yes | Yes | Query scope only |
+| Request crawl domains outside the allowlist | Yes | Yes | Yes | |
+| See usage, analytics and the audit log | Yes | Yes | Read | |
+| See the team's spend | Yes | Yes | | |
+| Use evaluations | Yes | Yes | Yes | |
+
+Only platform admins change a team's limits or approved classification. In the app, a role's badge (on Members, and "Your role" on the team Overview) opens what that role can and can't do.
+
+### Platform roles
+
+| Role | Can | Can't |
+|---|---|---|
+| **Platform admin** | Manage users and teams, models and embedding profiles, classification levels, limits, the crawl allowlist, shared sources, moderation and public access, retention and legal holds; disable any agent; open break-glass sessions | Read team content or conversations outside break-glass; change team content, even under break-glass |
+| **Platform auditor** | Read platform settings, usage, the audit log and the access log | Change anything; read content |
+
+Platform roles don't grant any access to team content. The last active platform admin can't be demoted or suspended.

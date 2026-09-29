@@ -1,0 +1,250 @@
+---
+title: Install on Kubernetes
+description: Write an overlay over Grounded's Kustomize base, create the secrets, set the configuration, apply, and make yourself platform admin.
+---
+
+Grounded ships a generic Kustomize **base**, optional **components** and two example **overlays** in the repository's `deploy/kubernetes/`. Your install writes its own overlay, in its own repository, that sets the namespace, pins the image, patches the settings, provides the secrets and picks components. Nothing specific to your organisation belongs in the Grounded repository.
+
+<Files>
+  <Folder name="deploy/kubernetes" defaultOpen>
+    <Folder name="base">
+      <File name="api + worker Deployments, Services, config.env, PDBs, NetworkPolicies" />
+    </Folder>
+    <Folder name="components" defaultOpen>
+      <File name="postgres-single — pgvector Postgres 17 StatefulSet (small installs)" />
+      <File name="postgres-cnpg — CloudNativePG cluster, 3 instances, WAL archiving and backups" />
+      <File name="valkey-single — Valkey StatefulSet with a password" />
+      <File name="backup-pgdump — daily pg_dump CronJob, optional off-site copy" />
+      <File name="backup-objects — daily off-site copy of the bucket" />
+      <File name="ingress — a generic Ingress" />
+      <File name="tika — optional Apache Tika" />
+      <File name="ocr-tesseract — optional OCR sidecar (grounded-ocr)" />
+      <File name="monitoring / monitoring-annotations — scraping" />
+      <File name="alerts / dashboards — PrometheusRule and Grafana dashboards" />
+      <File name="private-registry — image pull secret" />
+    </Folder>
+    <Folder name="overlays">
+      <File name="example-small — single Postgres and Valkey, pg_dump backups, Traefik ingress" />
+      <File name="example-ha — CloudNativePG, 3 API replicas one per node, external Valkey" />
+    </Folder>
+    <Folder name="restore">
+      <File name="restore Jobs: pg_restore (PVC or off-site), the bucket" />
+    </Folder>
+  </Folder>
+</Files>
+
+Check the [requirements](/docs/self-hosting/requirements) first.
+
+## 1. Write an overlay
+
+Reference the base and the components you need at a release tag. A small install:
+
+```yaml title="kustomization.yaml"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: grounded
+
+resources:
+  - namespace.yaml   # your namespace, labelled for the restricted Pod Security Standard
+  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.2.1
+
+components:
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.2.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.2.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.2.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.2.1
+
+images:
+  - name: ghcr.io/ncecere/grounded
+    newTag: v0.2.1             # informational
+    digest: sha256:<digest>    # what is deployed
+
+configMapGenerator:
+  - name: grounded-config
+    behavior: merge
+    literals:
+      - APP_URL=https://grounded.example.org
+      - S3_ENDPOINT=https://s3.example.org
+      - S3_BUCKET=grounded
+      - OIDC_ALLOWED_EMAIL_DOMAINS=example.org
+      - CRAWL_ALLOWLIST_SEED=*.example.org
+      - TRUSTED_PROXIES=10.0.0.0/8
+```
+
+Copy `example-small` or `example-ha` from the repository as a starting point. Flux and Argo CD both build remote bases. Keep `?ref=` on a tag, and bump it together with the image digest.
+
+<Callout title="Pin by digest">
+  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.2.1`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
+</Callout>
+
+### Components
+
+| Component | What it adds |
+|---|---|
+| `postgres-single` | pgvector Postgres 17, one replica, a 20Gi volume. Not highly available: pair it with `backup-pgdump`. Patch `volumeClaimTemplates[0].spec` for size and storage class. |
+| `postgres-cnpg` | A CloudNativePG cluster of 3 instances with the extensions created, WAL archiving and a daily base backup through the Barman Cloud Plugin. Needs the CloudNativePG operator 1.26+. |
+| `valkey-single` | Valkey 8 with a password, no persistence (it holds only rebuildable state). |
+| `backup-pgdump` | A daily `pg_dump` CronJob (03:17 UTC), checked after each run, kept 14 days, optionally copied off-site. |
+| `backup-objects` | A daily off-site copy of the bucket (03:47 UTC) with 14 days of changed and deleted files. |
+| `ingress` | An Ingress named `grounded` for `grounded-api`. Patch the host, class and TLS. |
+| `tika` | Apache Tika, with `TIKA_URL` set. |
+| `ocr-tesseract` | The OCR sidecar; see [OCR sidecar](/docs/self-hosting/ocr-sidecar). |
+| `monitoring` or `monitoring-annotations` | A ServiceMonitor (Prometheus Operator), or `prometheus.io/*` annotations. Use one. |
+| `alerts`, `dashboards` | The alert rules as a PrometheusRule, and the Grafana dashboards as ConfigMaps. See [Observability](/docs/self-hosting/observability). |
+| `private-registry` | A pull secret on the ServiceAccount. Not needed for the public images. |
+
+## 2. Create the secrets
+
+The base references secrets by name only. Create them with your secrets operator or by hand.
+
+| Secret | Keys | Used by |
+|---|---|---|
+| `grounded-runtime` (required) | `ENCRYPTION_KEY`, `API_KEY_PEPPER`, `DATABASE_URL`, `VALKEY_URL`, `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`; `POSTGRES_PASSWORD` for `postgres-single`, `VALKEY_PASSWORD` for `valkey-single` | api, worker, migrations |
+| `grounded-s3` (required) | `access_key`, `secret_key` | api, worker |
+| `grounded-smtp` (optional) | `SMTP_PASSWORD`, and `SMTP_USERNAME` if the relay needs it | api, worker |
+| `grounded-backup-s3` (optional) | `access_key`, `secret_key` | off-site backup copies |
+| `grounded-postgres-backup-s3` | `access_key`, `secret_key` | `postgres-cnpg` backups |
+
+A development-only example with random values:
+
+```sh
+ns=grounded
+pg=$(openssl rand -hex 24); vk=$(openssl rand -hex 24)
+kubectl -n $ns create secret generic grounded-runtime \
+  --from-literal=ENCRYPTION_KEY="$(openssl rand -base64 32)" \
+  --from-literal=API_KEY_PEPPER="$(openssl rand -base64 32)" \
+  --from-literal=POSTGRES_PASSWORD="$pg" \
+  --from-literal=DATABASE_URL="postgres://grounded:$pg@grounded-postgres:5432/grounded?sslmode=disable" \
+  --from-literal=VALKEY_PASSWORD="$vk" \
+  --from-literal=VALKEY_URL="redis://:$vk@grounded-valkey:6379/0" \
+  --from-literal=OIDC_ISSUER=https://idp.example.org \
+  --from-literal=OIDC_CLIENT_ID=grounded \
+  --from-literal=OIDC_CLIENT_SECRET=change-me
+kubectl -n $ns create secret generic grounded-s3 --from-literal=access_key=... --from-literal=secret_key=...
+```
+
+- **Back up `ENCRYPTION_KEY`** in your secret store. It encrypts the stored gateway, SMTP and moderation credentials; losing it makes them unreadable. Changing `API_KEY_PEPPER` without keeping the old value invalidates every API key. To change either, [rotate](/docs/self-hosting/security#rotating-keys).
+- `grounded-runtime` is loaded as environment variables, so any other setting can live there too (for example `BOOTSTRAP_ADMIN_SUBJECT`). A key in the secret overrides the same key in `grounded-config`.
+- With `postgres-cnpg`, leave `DATABASE_URL` and `POSTGRES_PASSWORD` out: the component takes the URL from the operator's secret.
+- URL-encode passwords inside URLs, or generate them from a URL-safe alphabet (`openssl rand -hex 24`). Use `rediss://` for a TLS Valkey endpoint.
+
+## 3. Set the configuration
+
+Non-secret settings live in the `grounded-config` ConfigMap, generated from the base's `config.env` with a hash in its name. **A configuration change therefore rolls the pods**; there's nothing to restart by hand. Merge your keys with a `configMapGenerator` using `behavior: merge` (as above) or a patch on `grounded-config`. Don't create a plain `grounded-config` ConfigMap, and don't disable the name hash: the pods would keep the old settings.
+
+Secrets aren't hashed: after changing one, run `kubectl -n grounded rollout restart deploy/grounded-api deploy/grounded-worker`.
+
+Usually set: `APP_URL`, the S3 endpoint and bucket, `OIDC_ALLOWED_EMAIL_DOMAINS`, `TRUSTED_PROXIES` (the ingress controller's addresses, so client IPs and rate limits are right), your identity (`INSTANCE_NAME`, `ORG_NAME`, `UI_LOGO_URL`, `SUPPORT_URL`, `TEAM_REQUEST_URL`), `CRAWL_ALLOWLIST_SEED` if teams will crawl websites, and the SMTP settings. The [configuration reference](/docs/self-hosting/configuration) lists everything.
+
+### Safety checks
+
+Every process refuses to start on a non-loopback `APP_URL` when:
+
+- `ENCRYPTION_KEY` or `API_KEY_PEPPER` is the public example value from `.env.example`;
+- `DEV_AUTH` is on;
+- `APP_URL` is `http://`.
+
+The error names each setting. In a pod, `kubectl logs <pod> -c migrate` shows it first, since the init container stops the rollout. Settings that are allowed but deserve attention (an empty crawl allowlist, public agents without moderation, no SMTP, no email-domain restriction, SSO group rules without a groups claim) are logged at startup, listed under Needs attention in the admin portal, and printed by `grounded doctor`.
+
+## 4. Apply and check
+
+Apply the overlay, or commit it for your GitOps tool. Migrations run in each pod's `migrate` init container under a Postgres advisory lock, so concurrent pods are safe and only the first does the work. Then:
+
+```sh
+kubectl -n grounded exec deploy/grounded-api -c api -- /grounded doctor
+kubectl -n grounded exec deploy/grounded-worker -c worker -- /grounded doctor --mode worker
+```
+
+`grounded doctor` checks the configuration and every dependency (Postgres, Valkey, object storage, the OIDC issuer and each model connection), with timings, and names what fails. The image is distroless: there's no shell, and the binary is `/grounded`.
+
+## 5. The first platform admin
+
+Grounded has no default admin account. The first admin is named by their OIDC subject:
+
+<Steps>
+<Step>
+
+Sign in once as the future admin. You get an ordinary account.
+
+</Step>
+<Step>
+
+Find your `sub`, the identity provider's stable user ID (for some providers a hash, not your username):
+
+```sh
+kubectl -n grounded exec -it grounded-postgres-0 -- psql -U grounded -d grounded \
+  -c "SELECT email, oidc_subject FROM users ORDER BY created_at"
+```
+
+</Step>
+<Step>
+
+Set `BOOTSTRAP_ADMIN_SUBJECT` to it, in `grounded-config` or `grounded-runtime`, and let the pods roll.
+
+</Step>
+<Step>
+
+Sign in again: you're a platform admin. The promotion is recorded once, so a later deliberate demotion isn't undone. You may remove the setting afterwards.
+
+</Step>
+</Steps>
+
+## 6. Set up the platform
+
+In the admin portal (its Overview has a setup checklist):
+
+1. Add a [model connection](/docs/administration/models), a chat model and an embedding model, and an [embedding profile](/docs/administration/embedding-profiles).
+2. Write the [classification levels'](/docs/administration/classifications) descriptions and set each model's maximum classification.
+3. Add crawl allowlist patterns if teams will crawl websites.
+4. Set up a [moderation policy](/docs/administration/moderation-and-public-access) before you turn public agents on.
+5. Create the first team.
+6. Set [retention periods](/docs/administration/retention) only after your records management has confirmed them. Until then Grounded keeps everything except anonymous conversations and evaluation runs.
+
+To see the install working before any team exists, [seed the demo](/docs/getting-started/try-it-locally#seed-an-install-you-already-run).
+
+## Resource names and ports
+
+Overlays patch these names; they're stable through 0.x.
+
+| Resource | Kind | Notes |
+|---|---|---|
+| `grounded-api` | Deployment, Service, PDB | Ports `http` 8080 and `metrics` 9091. Service `http` 80 → 8080 for the Ingress. Init container `migrate`, container `api`. |
+| `grounded-worker` | Deployment, headless Service, PDB | Port `http` 9090 (`/healthz`, `/readyz`, `/metrics` only). Container `worker`. |
+| `grounded-config` | ConfigMap | Generated as `grounded-config-<hash>`. |
+| `grounded` | ServiceAccount | No API token mounted. |
+| `grounded` | Ingress | Component `ingress`. |
+| `grounded-postgres`, `grounded-valkey` | StatefulSets and Services | Components `postgres-single`, `valkey-single`. |
+| `grounded-ocr`, `grounded-tika` | Deployments and Services | Components `ocr-tesseract`, `tika`. |
+
+Every resource carries `app.kubernetes.io/name: grounded` and, per workload, `app.kubernetes.io/component` (`api`, `worker`, `postgres`, `valkey`, `backup`, `tika`, `ocr`). NetworkPolicies select on these labels.
+
+## Scheduling and security defaults
+
+- API replicas spread across nodes with a hard topology spread constraint; workers with a soft one. Both PodDisruptionBudgets allow one pod down at a time and never let an unready pod block a node drain.
+- Pods run non-root with a read-only root filesystem, no capabilities, no privilege escalation, seccomp `RuntimeDefault`, `/tmp` on an `emptyDir` and no service account token. Everything meets the `restricted` Pod Security Standard.
+- **NetworkPolicies** deny everything in the namespace, then allow DNS, ingress to the API on 8080 from the ingress controller's namespace (`grounded-api-ingress`: patch the placeholder namespace), egress to Postgres and Valkey in the namespace, to in-cluster S3 on 9000, and to 443 and 80 anywhere (gateways, OIDC, external S3, the crawler). Add egress in your overlay for anything else: a managed database outside the namespace, SMTP (587/465), or model servers on other ports.
+- The crawler's own address checks still refuse private addresses, whatever the NetworkPolicies allow.
+
+## Ingress
+
+- The host must match `APP_URL`, and TLS must terminate at or before the ingress.
+- **Chat streams over Server-Sent Events.** The controller must not buffer responses and must allow reads of a few minutes. Traefik and most Gateway implementations need nothing. For NGINX-based controllers, turn off proxy buffering and raise the read timeout (for example `proxy-buffering: "off"`, `proxy-read-timeout: "600"`), and allow bodies up to `MAX_UPLOAD_BYTES`.
+- Metrics are served on the internal port 9091, never through the Ingress; the public port answers 404 for `/metrics`.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| `ErrImagePull` for `…:pin-a-digest-in-your-overlay` | The overlay doesn't set `images:`. |
+| `CreateContainerConfigError` | A required secret or key is missing; `kubectl describe pod` names it. |
+| `migrate` init container fails | `DATABASE_URL` is wrong or Postgres is unreachable (NetworkPolicy, password encoding). On a managed or CloudNativePG database, a superuser must create the `vector` extension first. |
+| Pod exits with `invalid configuration` | The log lists every problem: missing keys, example keys, `DEV_AUTH` on, `APP_URL` not https, no OIDC issuer. |
+| Pods run but never become ready | `/readyz` through a port-forward shows which of Postgres, Valkey or storage fails. |
+| 502/504 from the ingress | `grounded-api-ingress` doesn't admit the controller's namespace. |
+| Chat answers arrive all at once or cut off | The ingress buffers responses or times out reads. |
+| Sign-in fails with a redirect error | The provider's redirect URI must be exactly `<APP_URL>/auth/callback`. |
+| Everyone shares one rate limit, or logs show the wrong client IPs | Set `TRUSTED_PROXIES` to the ingress controller's addresses. |
+| API pod `Pending` with a topology spread message | Fewer schedulable nodes than replicas need; add a node or lower the replicas. |
+| Model tests are slow from the cluster only | The test's phases show where the time goes. If DNS takes seconds, try `ndots: 2` in the pods' `dnsConfig`, or fix the upstream resolver. |
+| Crawls fail for internal sites | By design: private addresses are always refused. |
+| Something is wrong but it isn't clear what | Run `grounded doctor`. |

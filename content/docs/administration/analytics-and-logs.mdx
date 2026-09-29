@@ -1,0 +1,55 @@
+---
+title: Analytics and logs
+description: Platform analytics without message content, the audit log of every change, and the access log for sensitive agents.
+---
+
+## Analytics
+
+**Usage & spend → Analytics** shows platform admins and auditors how the install is used, over a date range, optionally filtered by team and audience. It has tabs:
+
+| Tab | Shows |
+|---|---|
+| **Overview** | The daily chart first, then answers, conversations, unique users, public share, satisfaction, refusals and no-context answers, latency and time to first token, errors, and moderation (questions blocked, answers withheld, flagged, support messages). |
+| **Breakdown** | Answers by audience and by channel (app, API, OpenAI-compatible API, public page, widget, test chats). |
+| **Models & tokens** | Tokens by model, from the usage ledger (chat and embedding, ingestion included). |
+| **Top agents & teams** | The most used agents and teams. |
+| **Checks** | Shown while a SystemOne model is configured: passage judging, citation checks (claims supported, and "Cited sources that support their claim" per source), and the scope check. |
+
+<Screenshot slot="admin-analytics" />
+
+- Analytics never contain message content or identify people. Unique users are counted with pseudonymous IDs, per team (per agent for anonymous visitors), so someone using two teams' agents counts twice. The IDs are never shown.
+- Moderation decisions can be listed with their category and score (**Show decisions**), without the text.
+- The daily table exports as CSV.
+- Days are UTC days; the page says so. Cost figures use the platform's time zone instead (see [Costs](/docs/administration/costs)).
+
+Teams see the same kind of aggregates for their own agents in each agent's [Analytics tab](/docs/using/editors/agent-analytics).
+
+## Logs
+
+**Records → Logs** has two tabs.
+
+### Audit log
+
+Every change on the platform, newest first, append-only:
+
+- actions by platform admins and team admins; members, roles and invites, including those SSO group rules make;
+- API keys created and revoked; classification changes with their reasons; audiences, publishes and kill switches;
+- the crawl allowlist and domain decisions; limits, budgets, prices and cost settings;
+- uploads and deletions of documents;
+- break-glass sessions and every read under them (kind and target, never content);
+- legal holds, and retention runs (as the system, with counts only);
+- evaluation sets, questions and runs.
+
+Configuration changes keep before and after values, shown as a table in words ("Monthly budget $5.00 → none"), with money, dates and plain names instead of IDs. Filter by **Area** (type a word such as "budget" to find actions by label), **Person** (including **System (group mapping)**), target type and time. An entry names its team and links to what it's about.
+
+Platform auditors see everything; team owners and admins see their team's entries in [Team settings](/docs/using/owners/audit-log). The audit log is kept until you set a [retention](/docs/administration/retention) period for it (at least 30 days). Entries about legal holds are never deleted.
+
+The log is append-only in the database: only the retention job may delete entries. A database superuser can still alter it; protect database credentials, and ship audit data to external logging if your policies require it.
+
+### Access log
+
+Every use of an agent at the Sensitive level or above: who used which agent, and when. Platform auditors and admins can read it; it never contains message content. It's kept until you set its retention period.
+
+## Metrics and server logs
+
+Operators get Prometheus metrics, Grafana dashboards and alerts, and JSON logs on stdout. None of them carries a team, user, agent, document or conversation ID. See [Observability](/docs/self-hosting/observability).

@@ -1,0 +1,63 @@
+---
+title: Limits
+description: Platform defaults and ceilings for team limits, per-team overrides, and how each limit is enforced.
+---
+
+Limits keep one team from using more than its share of storage, ingestion, queries and models. Each limit has a **platform default** and a **ceiling**; a team may have an **override** up to the ceiling. **Usage & spend → Limits** sets the defaults and ceilings in five tabs: **Team resources**, **Ingestion**, **Queries & chat**, **Public agents** and **Evaluations**. A team's overrides are on its admin page's **Limits** tab.
+
+- An empty override means "inherit the default". `0` means "blocked".
+- Lowering a ceiling also caps existing overrides. A new override above the ceiling is refused.
+- Changes are audited and take a revision check, so two admins can't overwrite each other.
+- Team owners and admins see their effective limits and usage in [Usage & spend](/docs/using/owners/usage-and-spend), but can't change them.
+
+## The limits
+
+| Limit | Built-in default | When it's reached |
+|---|---|---|
+| **Storage** (original document sizes) | 10 GiB | Uploads and crawled pages are refused; a crawl stops. |
+| **Documents** | 50,000 | The same. |
+| **Data sources** | 100 | Creation is refused. |
+| **Knowledge bases** | 50 | Creation is refused. |
+| **Agents** | 25 | Creation is refused. |
+| **Crawl pages per day** (UTC) | 5,000 | The crawl waits until the next day, or until the limit is raised. |
+| **Concurrent crawls** | 2 | Further crawls stay queued until one finishes. |
+| **Concurrent ingestion jobs** | 8 (`INGEST_MAX_INFLIGHT_PER_TEAM`) | The team's documents queue fairly with other teams'. |
+| **OCR pages per day** (UTC) | 1,000 | A document waits until the next day, or until the limit is raised. `0` blocks OCR. |
+| **Queries per minute** (team) | 600 | 429 `rate_limited` with `Retry-After`. |
+| **Queries per day** (team) | 50,000 | 429 until midnight UTC. |
+| **Queries per minute per API key** | 300 | 429. |
+| **Queries per minute per person** | 120 | 429. |
+| **Chat tokens per day** (team) | 2,000,000 | 429 `quota_exceeded` until midnight UTC. |
+| **Concurrent chats per person** (or service key) | 3 | 429. |
+| **Evaluation sets** | 50 | Creation is refused. |
+| **Questions per evaluation set** | 500 | Adding or importing is refused. |
+
+Chat answers count towards the query limits too: each answer is one query. Evaluation runs work within the same query and chat limits.
+
+### Public agents
+
+| Limit | Default |
+|---|---|
+| Questions per minute per IP address | 10 |
+| Questions per minute per visitor session | 6 |
+| Questions per day per agent | 5,000 |
+| Tokens per day per agent | 2,000,000 |
+| Concurrent chats per agent | 20 |
+| Longest question (characters) | 2,000 |
+
+A widget key may lower the per-minute limits for its sites, within these.
+
+## How limits are enforced
+
+- **Per-minute limits** are counters in Valkey. If Valkey is unavailable, signed-in traffic is let through (fail-open) and anonymous public traffic is refused (fail-closed).
+- **Daily and total caps** (tokens and queries per day, pages per day, storage) are checked against the usage ledger in Postgres, so a Valkey outage can never reset or bypass them.
+- **Waiting instead of failing**: crawls and OCR that reach a daily limit wait. Raising the limit, for the team or the platform default, wakes them at once.
+- Refusals carry the limit, its maximum and the current use, so the app and API clients can say which limit was hit.
+
+Team admins and owners are notified when their team reaches a daily limit.
+
+## Other bounds
+
+Some limits are environment settings rather than team limits: the largest upload (`MAX_UPLOAD_BYTES`, 100 MB), the largest crawl (`CRAWL_MAX_PAGES`, 10,000 pages), OCR pages per document, and the platform-wide ingestion cap (`INGEST_MAX_INFLIGHT`). See the [configuration reference](/docs/self-hosting/configuration).
+
+Budgets are separate from limits: see [Costs and budgets](/docs/administration/costs).

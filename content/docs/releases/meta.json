@@ -1,0 +1,6 @@
+{
+  "title": "Releases",
+  "description": "Release notes and the stability policy",
+  "root": true,
+  "pages": ["index", "v0-2-1", "v0-2-0", "v0-1-0"]
+}

@@ -1,0 +1,235 @@
+/*
+ * Grounded brand tokens for Tailwind CSS v4.
+ *
+ * One file, shared verbatim by the Grounded website (grounded-website,
+ * app/brand.css) and the Grounded docs (grounded-docs, app/brand.css). Change
+ * it in both places at once.
+ *
+ * The values come from Grounded's own UI (github.com/ncecere/grounded, v0.2.1):
+ * web/src/components/ui/themes/neutral.css (colours: cool slate neutrals with
+ * an indigo accent, light and dark) and web/src/components/ui/styles/tokens.css
+ * (radii, font stack). Contrast ratios noted there hold here: body text and
+ * links meet WCAG 2.1 AA (4.5:1) on the backgrounds they are paired with.
+ *
+ * Import it after Tailwind:  @import "tailwindcss";  @import "./brand.css";
+ * The font is Inter Variable, self-hosted by each site
+ * (@fontsource-variable/inter); nothing is loaded from a CDN.
+ *
+ * Light values apply to :root. Dark values apply under .dark or
+ * [data-theme="dark"], and follow the system setting when neither .light nor
+ * [data-theme="light"] is set.
+ */
+
+:root,
+.light,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --grounded-bg: #f7f8fa; /* app background, off-white */
+  --grounded-surface: #ffffff; /* cards, tables, inputs */
+  --grounded-surface-raised: #ffffff; /* popovers, dialogs, menus */
+  --grounded-surface-sunken: #f0f2f5; /* wells, code, table header tint */
+  --grounded-surface-hover: rgba(15, 23, 42, 0.04);
+
+  /* Text */
+  --grounded-text: #161a22; /* 16.4:1 on bg */
+  --grounded-text-muted: #525a69; /* 6.5:1 on bg */
+  --grounded-text-subtle: #646c7b; /* 4.97:1 on bg */
+  --grounded-text-inverse: #ffffff;
+
+  /* Borders */
+  --grounded-border: rgba(15, 23, 42, 0.08); /* decorative hairlines */
+  --grounded-border-emphasis: rgba(15, 23, 42, 0.16);
+  --grounded-border-strong: #7f8795; /* control boundaries, >= 3:1 */
+
+  /* Indigo accent */
+  --grounded-primary: #4b4fd6; /* white text 6.20:1; as text on bg 5.83:1 */
+  --grounded-primary-hover: #3d3fb4;
+  --grounded-primary-active: #32338f;
+  --grounded-primary-contrast: #ffffff;
+  --grounded-primary-subtle: #f0f1fe; /* active nav tint */
+  --grounded-primary-subtle-text: #3d3fb4; /* 7.29:1 on primary-subtle */
+  --grounded-link: #4b4fd6;
+  --grounded-link-hover: #32338f;
+  --grounded-focus-ring: #4b4fd6;
+  --grounded-highlight: #2dd4bf; /* decorative only: the logo's accent */
+
+  /* Status */
+  --grounded-danger: #b42318;
+  --grounded-danger-subtle: #fef2f2;
+  --grounded-danger-text: #8f1d16;
+  --grounded-success: #0e6b3f;
+  --grounded-success-subtle: #edfbf3;
+  --grounded-success-text: #0e6b3f;
+  --grounded-warning: #92560a;
+  --grounded-warning-subtle: #fff8eb;
+  --grounded-warning-text: #7a4508;
+  --grounded-info: #1d55c9;
+  --grounded-info-subtle: #eff5ff;
+  --grounded-info-text: #1d55c9;
+
+  /* Shadows */
+  --grounded-shadow-1: 0 0 0 1px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --grounded-shadow-2: 0 0 0 1px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04),
+    0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  --grounded-shadow-3: 0 0 0 1px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.04),
+    0 12px 28px -6px rgba(15, 23, 42, 0.14);
+}
+
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --grounded-bg: #0b0d12;
+  --grounded-surface: #111319;
+  --grounded-surface-raised: #171a21;
+  --grounded-surface-sunken: #0e1015;
+  --grounded-surface-hover: rgba(255, 255, 255, 0.04);
+
+  --grounded-text: #eceef2; /* 15.98:1 on surface */
+  --grounded-text-muted: #9ba3b0; /* 7.30:1 on surface */
+  --grounded-text-subtle: #8a92a0; /* 6.2:1 on bg */
+  --grounded-text-inverse: #0b0d12;
+
+  --grounded-border: rgba(255, 255, 255, 0.08);
+  --grounded-border-emphasis: rgba(255, 255, 255, 0.16);
+  --grounded-border-strong: #6b7383;
+
+  --grounded-primary: #5357e6; /* white text 5.42:1 (fills only; use link for text) */
+  --grounded-primary-hover: #5d61ec;
+  --grounded-primary-active: #4448d2;
+  --grounded-primary-contrast: #ffffff;
+  --grounded-primary-subtle: rgba(94, 99, 234, 0.18);
+  --grounded-primary-subtle-text: #b4b8fa;
+  --grounded-link: #a3a9f7; /* 8.47:1 on surface */
+  --grounded-link-hover: #c7cbfc;
+  --grounded-focus-ring: #8f95f5;
+  --grounded-highlight: #2dd4bf;
+
+  --grounded-danger: #c0322b;
+  --grounded-danger-subtle: #2a1215;
+  --grounded-danger-text: #fca5a5;
+  --grounded-success: #3fbf86;
+  --grounded-success-subtle: #0f2419;
+  --grounded-success-text: #6ee7a8;
+  --grounded-warning: #f5b544;
+  --grounded-warning-subtle: #2a1f0b;
+  --grounded-warning-text: #fcd27b;
+  --grounded-info: #7fa7f7;
+  --grounded-info-subtle: #111d36;
+  --grounded-info-text: #a9c4ff;
+
+  --grounded-shadow-1: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --grounded-shadow-2: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.4),
+    0 4px 12px -2px rgba(0, 0, 0, 0.4);
+  --grounded-shadow-3: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.4),
+    0 12px 28px -6px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --grounded-bg: #0b0d12;
+    --grounded-surface: #111319;
+    --grounded-surface-raised: #171a21;
+    --grounded-surface-sunken: #0e1015;
+    --grounded-surface-hover: rgba(255, 255, 255, 0.04);
+
+    --grounded-text: #eceef2;
+    --grounded-text-muted: #9ba3b0;
+    --grounded-text-subtle: #8a92a0;
+    --grounded-text-inverse: #0b0d12;
+
+    --grounded-border: rgba(255, 255, 255, 0.08);
+    --grounded-border-emphasis: rgba(255, 255, 255, 0.16);
+    --grounded-border-strong: #6b7383;
+
+    --grounded-primary: #5357e6;
+    --grounded-primary-hover: #5d61ec;
+    --grounded-primary-active: #4448d2;
+    --grounded-primary-contrast: #ffffff;
+    --grounded-primary-subtle: rgba(94, 99, 234, 0.18);
+    --grounded-primary-subtle-text: #b4b8fa;
+    --grounded-link: #a3a9f7;
+    --grounded-link-hover: #c7cbfc;
+    --grounded-focus-ring: #8f95f5;
+    --grounded-highlight: #2dd4bf;
+
+    --grounded-danger: #c0322b;
+    --grounded-danger-subtle: #2a1215;
+    --grounded-danger-text: #fca5a5;
+    --grounded-success: #3fbf86;
+    --grounded-success-subtle: #0f2419;
+    --grounded-success-text: #6ee7a8;
+    --grounded-warning: #f5b544;
+    --grounded-warning-subtle: #2a1f0b;
+    --grounded-warning-text: #fcd27b;
+    --grounded-info: #7fa7f7;
+    --grounded-info-subtle: #111d36;
+    --grounded-info-text: #a9c4ff;
+
+    --grounded-shadow-1: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --grounded-shadow-2: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 1px 2px rgba(0, 0, 0, 0.4),
+      0 4px 12px -2px rgba(0, 0, 0, 0.4);
+    --grounded-shadow-3: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.4),
+      0 12px 28px -6px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/*
+ * Tailwind theme: utilities such as bg-brand-surface, text-brand-muted,
+ * border-brand-border, bg-brand-primary, text-brand-link, rounded-card,
+ * shadow-brand-2 and font-sans.
+ */
+@theme inline {
+  --color-brand-bg: var(--grounded-bg);
+  --color-brand-surface: var(--grounded-surface);
+  --color-brand-surface-raised: var(--grounded-surface-raised);
+  --color-brand-surface-sunken: var(--grounded-surface-sunken);
+  --color-brand-surface-hover: var(--grounded-surface-hover);
+  --color-brand-text: var(--grounded-text);
+  --color-brand-muted: var(--grounded-text-muted);
+  --color-brand-subtle: var(--grounded-text-subtle);
+  --color-brand-inverse: var(--grounded-text-inverse);
+  --color-brand-border: var(--grounded-border);
+  --color-brand-border-emphasis: var(--grounded-border-emphasis);
+  --color-brand-border-strong: var(--grounded-border-strong);
+  --color-brand-primary: var(--grounded-primary);
+  --color-brand-primary-hover: var(--grounded-primary-hover);
+  --color-brand-primary-active: var(--grounded-primary-active);
+  --color-brand-primary-contrast: var(--grounded-primary-contrast);
+  --color-brand-primary-subtle: var(--grounded-primary-subtle);
+  --color-brand-primary-subtle-text: var(--grounded-primary-subtle-text);
+  --color-brand-link: var(--grounded-link);
+  --color-brand-link-hover: var(--grounded-link-hover);
+  --color-brand-focus: var(--grounded-focus-ring);
+  --color-brand-highlight: var(--grounded-highlight);
+  --color-brand-danger: var(--grounded-danger);
+  --color-brand-danger-subtle: var(--grounded-danger-subtle);
+  --color-brand-danger-text: var(--grounded-danger-text);
+  --color-brand-success: var(--grounded-success);
+  --color-brand-success-subtle: var(--grounded-success-subtle);
+  --color-brand-success-text: var(--grounded-success-text);
+  --color-brand-warning: var(--grounded-warning);
+  --color-brand-warning-subtle: var(--grounded-warning-subtle);
+  --color-brand-warning-text: var(--grounded-warning-text);
+  --color-brand-info: var(--grounded-info);
+  --color-brand-info-subtle: var(--grounded-info-subtle);
+  --color-brand-info-text: var(--grounded-info-text);
+
+  --shadow-brand-1: var(--grounded-shadow-1);
+  --shadow-brand-2: var(--grounded-shadow-2);
+  --shadow-brand-3: var(--grounded-shadow-3);
+
+  /* Radii: 4 / 6 / 8 / 12 / 16 px; controls 8 px, cards 12 px. */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-popover: 8px;
+
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-sans--font-feature-settings: "cv11", "ss01";
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}

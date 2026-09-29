@@ -1,0 +1,60 @@
+---
+title: Model gateways
+description: Connect any OpenAI-compatible gateway, and tune self-hosted servers such as vLLM and SGLang.
+---
+
+Grounded talks to models only through OpenAI-compatible APIs: `/models`, `/embeddings`, `/chat/completions`, and `/moderations` for moderation endpoints, plus `POST /v1/systemone` for SystemOne models. Any gateway or server that speaks them works: LiteLLM, vLLM, SGLang, a hosted API, or a gateway in front of several of them. Grounded has no vendor-specific code.
+
+You need at least one **chat** model and one **embedding** model. Public agents also need a **moderation** provider. Admins add connections and models in the admin portal; see [Connections and models](/docs/administration/models).
+
+## Connecting a gateway
+
+- The base URL includes `/v1`, for example `https://gateway.example.org/v1`. `GET /v1/models` should answer.
+- Set the connection's **requests per minute** just below your key's limit, measured on your gateway. Grounded paces every process to it, and treats a 429, or a 503 with `Retry-After`, as back-pressure rather than failure.
+- Interactive chat and search take precedence over ingestion: ingestion only uses a request slot that's free now, and waits otherwise.
+- Every call is tagged with the team, agent and user, so your gateway's spend reports can be compared with Grounded's usage ledger.
+- Gateways count embedding tokens differently; one tested gateway reported characters, about 4.7 times Grounded's own count. The ledger keeps the gateway's figure with Grounded's count beside it. Compare the two before you price embeddings.
+
+The Kubernetes NetworkPolicies allow egress on ports 443 and 80. A gateway on another port, or on a private address outside the cluster, needs an egress rule in your overlay.
+
+## Self-hosted models
+
+Self-hosted models are candidates for your most sensitive data, subject to your policy: tag them with the right maximum classification. Some things measured by the project on vLLM and SGLang:
+
+- **One GPU serves few requests at once**: about two chat streams for a 27B model. Further requests queue on the server. Chat and embeddings on the same GPU slow each other.
+- **Turn off thinking** for Qwen3-style models unless you need it. On one GPU it took answers from a median of about 14 s to 83 s for the same quality, and a small output limit can go entirely to reasoning. Use the model's **Extra body**:
+
+  ```json
+  {"chat_template_kwargs": {"enable_thinking": false}}
+  ```
+
+### Embeddings: Qwen3-Embedding
+
+For example `Qwen/Qwen3-Embedding-4B` (2,560 dimensions):
+
+- Model: kind embedding, dimensions 2560, maximum input tokens 32768. Turn on **Dimensions parameter** only if the server was started with Matryoshka support (vLLM: `--hf-overrides '{"is_matryoshka": true}'`); otherwise it answers 400 and Grounded shortens the vectors itself, which gives the same result.
+- Profile:
+  - **Query prefix** `Instruct: <task>\nQuery: `, with a one-sentence task such as "Given a question, retrieve passages from the organisation's web pages that answer it". Without an instruction the model loses noticeably in retrieval quality.
+  - **Document prefix** empty.
+  - **Output dimensions 768**, `halfvec`: no measurable loss against 2,560 in the project's tests, at about a quarter of the storage.
+  - **Default fusion weights**: vector 1, keyword 0–0.02. Keyword fusion lowered this model's scores.
+  - Chunk size 512, overlap 64.
+
+### Chat: Qwen3 on SGLang
+
+- Kind chat, tool support on, context window the server's `max_model_len`, maximum output tokens 8192.
+- Compatibility: **Extra body** as above; **Tool choice** on (SGLang honours `tool_choice: "required"`); **Developer role** off (SGLang rejects it); **Stream usage** on; **Max tokens field** `max_tokens`; **Reasoning effort** off.
+- Reasoning tokens and the blank lines Qwen streams before answers need no setting.
+
+vLLM serving other model families accepts `tool_choice` but may ignore it; leave **Tool choice** off unless the server honours it.
+
+### nomic-embed-text
+
+`nomic-embed-text-v1.5` (768 dimensions, `halfvec`) is the embedding model the project's benchmarks used as the default. Its prefixes are `search_document: ` and `search_query: `; Grounded fills them in when you add a profile for it. The platform's default fusion weights (vector 1, keyword 0.1) were tuned with it.
+
+## Diagnosing a slow or failing gateway
+
+- **Test connection** and **Test model** in the admin portal, and `grounded doctor`, report DNS, connect, TLS and first-byte times, and name failures (untrusted certificate, wrong host, refused connection, DNS, timeouts with the phase).
+- `grounded doctor --probe https://gateway.example.org/v1/models` times a request to any URL from inside the pod.
+- If DNS takes seconds from the cluster, try `ndots: 2` in the pods' `dnsConfig` or fix the upstream resolver.
+- The **Models & moderation** dashboard and the connection alerts show failures, 429s and latency per connection.

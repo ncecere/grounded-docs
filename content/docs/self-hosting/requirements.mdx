@@ -1,0 +1,47 @@
+---
+title: Requirements
+description: What an install of Grounded needs, and what's optional.
+---
+
+## Required
+
+| Dependency | Version and notes |
+|---|---|
+| **Kubernetes** | 1.30 or later, with a CNI that enforces NetworkPolicy. The manifests are validated against the 1.34 schemas. `kubectl` 1.27+ or `kustomize` v5. |
+| **PostgreSQL** | **17**, with **pgvector 0.8 or later** (filtered vector search relies on its iterative index scans) and the `vector`, `citext`, `btree_gin` and `pg_trgm` extensions. Use the `postgres-single` component, CloudNativePG 1.26+ (the `postgres-cnpg` component), or a managed service. Postgres holds everything durable, including the vectors and the job queue. |
+| **Valkey or Redis** | **7 or later**, as one endpoint. Grounded doesn't speak the Sentinel protocol, so for high availability use a managed service or a proxy that presents one endpoint. It holds only state that can be rebuilt: rate-limit counters and crawl pacing. |
+| **Object storage** | An S3-compatible bucket for original files and parsed text. Keep backups on a different storage system. |
+| **Model gateway** | Any **OpenAI-compatible** gateway (LiteLLM, vLLM, SGLang, a hosted API) serving at least one chat model and one embedding model. "Let the model decide when to search" needs tool calling. Public agents also need a moderation provider. |
+| **Identity** | An **OIDC provider** with a confidential client whose redirect URI is `<APP_URL>/auth/callback`. |
+| **Ingress** | TLS termination, because `APP_URL` must be `https://`. The ingress must **not buffer responses**, since chat answers stream over Server-Sent Events, and must allow uploads up to `MAX_UPLOAD_BYTES` (100 MB). |
+
+## Optional
+
+| Optional | For |
+|---|---|
+| SMTP relay | Email notifications (invites, sync failures, break-glass notices). Without it, notifications are in-app only. |
+| Apache Tika | A fallback parser, or an OCR backend with its `-full` image. |
+| The `grounded-ocr` sidecar | Tesseract OCR for scanned documents. |
+| A groups claim from your OIDC provider | SSO group mapping. |
+| Prometheus and Grafana (or Mimir) | Metrics, the shipped dashboards and alerts. The backup and volume alerts also need kube-state-metrics and kubelet volume stats. |
+| A SystemOne service | Passage judging, citation checks, scope checks, and a moderation provider. It must answer `POST /v1/systemone`. |
+| A secrets operator | External Secrets, Sealed Secrets or similar. The base only names the secrets it needs. |
+| Cloudflare Turnstile | CAPTCHA for public agents. |
+
+To build from source you need Go 1.26 or later and Node 22 or later.
+
+## Sizing
+
+Grounded is designed for more than a million documents and tens of millions of passages per install, but capacity depends mostly on your model gateway and Postgres. What the project has measured:
+
+- **Model latency sets the pace.** On a single GPU, a 27B chat model with thinking turned off took a median of about 14 s per answer (83 s with thinking on) and served about two streams at once. Turn thinking off for self-hosted Qwen3-style models (see [Model gateways](/docs/self-hosting/model-gateways)).
+- **Retrieval is bound by Postgres CPU**: about 45 searches per second at 2 CPUs and 95 at 4, in load tests.
+- **Storage**: at 768 dimensions in half precision, each passage's vector is about 1.5 KB, so 10 million passages is about 15 GB before indexes.
+- **Embedding a backfill** is bounded by your gateway's requests per minute per key. Set each connection's limit just below it, and measure throughput before a large backfill.
+- Load tests at twice the design estimates passed on a **single-node test cluster**, not production hardware. Load-test your own install; the repository has `make k8s-load` for that.
+
+A very large vector table in which each vector has many near-duplicates from other sources (many teams crawling the same pages) lost recall in a stress test. Platform-shared sources avoid that duplication; partitioned vector tables, which fix it, aren't built yet.
+
+## Availability
+
+The design target is 99.9%. It needs the high-availability topology (the `example-ha` overlay: CloudNativePG with three instances, three API replicas on separate nodes, and an HA Valkey service), which is validated as manifests but hasn't been proven by a long-running install. A single-Postgres install can't meet it through node or storage failures.

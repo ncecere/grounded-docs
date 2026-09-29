@@ -1,0 +1,73 @@
+---
+title: v0.1.0
+description: The first release — teams, sources, knowledge bases and agents with citations, three audiences, governance, and a Kubernetes deployment.
+---
+
+Released 2026-09-28. This is Grounded's first release, and the release that made the repository public. Teams turn files and websites into knowledge bases and publish agents that answer only from them, with citations. Platform admins govern models, data classification, moderation, retention and access.
+
+## Highlights
+
+- **Teams, sources, knowledge bases and agents.** Upload files or crawl websites, combine them into knowledge bases with hybrid retrieval, and publish versioned agents with strict grounding and numbered citations.
+- **Three audiences and three channels.** An agent can serve its team, everyone who signs in, or the public, through the web app, an embeddable widget, or the OpenAI-compatible API (`agent:<team>/<agent>` on `POST /v1/chat/completions`).
+- **Governance built in.** Classification levels limit which models see which data and who may use an agent. Public agents are moderated and fail closed. Retention runs with a dry-run report, legal holds stop deletion, break-glass access is time-boxed and audited per read, and every change goes to the audit log.
+- **Optional SystemOne models** check each cited claim against its source, re-rank passages, drop prompt injections and spot off-topic questions. Every one of these is off until an admin turns it on.
+- **Ready for Kubernetes.** A generic Kustomize base with components and example overlays, signed multi-arch images, zero-downtime upgrades with expand/contract migrations, `grounded doctor`, key rotation, maintenance mode, and embedding-profile migration.
+- **Observable.** Prometheus metrics, five Grafana dashboards, 23 alerts with runbooks, and SLO burn-rate rules.
+- **Tested end to end.** CI runs a browser test suite with accessibility checks, an authorization matrix over every API route and kind of caller, a smoke test of the manifests on a throwaway cluster, and an upgrade test.
+- **Try it with Docker only.** The demo seeds a sample team over the Go documentation and answers with a built-in fake model, so no model keys are needed ([Try it locally](/docs/getting-started/try-it-locally)).
+
+## Requirements
+
+| Dependency | Version and notes |
+|---|---|
+| Kubernetes | 1.30 or later, with a CNI that enforces NetworkPolicy. `kubectl` 1.27+ or `kustomize` v5. |
+| PostgreSQL | **17**, with **pgvector 0.8 or later** and the `vector`, `citext`, `btree_gin` and `pg_trgm` extensions. |
+| Valkey or Redis | **7 or later**, as one endpoint (no Sentinel protocol). Holds only rebuildable state. |
+| Object storage | An S3-compatible bucket. Keep backups on a different system. |
+| Model gateway | Any **OpenAI-compatible** gateway with at least one chat and one embedding model. Public agents also need a moderation provider. |
+| Identity | An **OIDC provider** with a confidential client whose redirect URI is `<APP_URL>/auth/callback`. |
+| Ingress | TLS termination (`APP_URL` must be https), without response buffering, since chat streams over SSE. |
+| Optional | An SMTP relay, Apache Tika, Prometheus and Grafana (or Mimir), and a SystemOne service. |
+
+To build from source you need Go 1.26 or later and Node 22 or later.
+
+## Installing
+
+Every install of v0.1.0 was a first install; follow [Install on Kubernetes](/docs/self-hosting/kubernetes), which is current for the latest release.
+
+## Known limitations
+
+v0.1.0 is pre-1.0: parts of the API, the configuration and the manifests may change in minor releases. The project has one maintainer.
+
+**Performance and capacity**
+
+- **Model latency sets the pace, and one GPU is slow.** On a single-GPU host, a 27B chat model with thinking off took a median of about 14 s per answer (83 s with thinking on) and served about two streams at once.
+- **SystemOne judging costs latency**: about 0.7 s per candidate passage on one GPU. That's why it's off by default and judges 10 candidates when on.
+- **Capacity was measured on a laptop, not production hardware.** Load tests at twice the design estimates passed on a single-node test cluster with the real manifests: 100 streaming answers, retrieval, the OpenAI-compatible API, uploads and page reads together. Retrieval is bound by Postgres CPU (about 45 requests/s at 2 CPUs, 95/s at 4). Load-test your own install, and rehearse a restore, before relying on it.
+- **Very large vector tables.** In one stress case (a 1.56M-row table in which each vector has many near-duplicates from other sources), approximate search recall dropped to 0.845. Partitioning the vector tables fixes this but isn't built yet.
+- **Availability.** The 99.9% target is a design target. It needs the HA topology, which is validated as manifests but hasn't been proven by a long-running install.
+
+**Optional pieces**
+
+- **SystemOne is optional.** Without it, answers still carry citations, but claims aren't verified one by one, passages aren't re-ranked or screened by a model, and there's no scope check.
+- **Public agents need setup**: a moderation provider and the platform's public switch.
+
+**Smaller items**
+
+- Only platform admins create teams. `TEAM_REQUEST_URL` can point people to your own request form.
+- The default `CRAWL_USER_AGENT` points site owners to a `/bot` page that Grounded doesn't serve. Set a user agent with a real contact URL.
+- An auditor sending a malformed body to an admin write route gets 400 instead of 403, and the distroless base image is referenced by tag.
+
+**Not in v0.1.0** (roadmap candidates at the time, not commitments): cross-encoder reranking and in-product evaluation sets; connectors such as Microsoft 365, Google Drive and Confluence, document-level permissions, crawling sites behind a sign-in, JavaScript rendering, and OCR; PII scanning at ingest; MCP support, chat-platform bots, client SDKs, webhooks and configuration as code; SSO group mapping, SCIM, in-app team requests and cost reporting; OpenTelemetry tracing, partitioned vector tables, a Helm chart and a translated UI. v0.2.0 later added evaluation sets, OCR, SSO group mapping and cost reporting.
+
+## Verifying the images
+
+Images are published to `ghcr.io/ncecere/grounded` for linux/amd64 and linux/arm64, tagged `v0.1.0`, `v0.1` and `latest-release`. Each is built only in CI, scanned with Trivy, and signed with cosign keyless signing:
+
+```sh
+cosign verify ghcr.io/ncecere/grounded@sha256:<digest> \
+  --certificate-identity-regexp '^https://github.com/ncecere/grounded/\.github/workflows/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Each image carries an SPDX SBOM and SLSA provenance as attestations. The v0.1.0 binary reports its version as `v0.1`; later releases report their full tag.

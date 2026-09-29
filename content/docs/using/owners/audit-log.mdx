@@ -1,0 +1,29 @@
+---
+title: Audit log
+description: Every change made in the team, who made it and what changed.
+---
+
+**Team settings → Audit log** lists every change in the team, newest first. Owners and admins see it; editors can read it without the team's budget entries. It can't be edited: the log is append-only.
+
+## What's recorded
+
+- Members, invites and roles, including changes made by SSO group rules (the actor reads "System (group mapping: *group* → *team*)").
+- API keys created and revoked, and publishable widget keys.
+- Data sources, uploads and deletions, classification changes with their reasons, and domain requests.
+- Knowledge bases, including profile migrations started by platform admins.
+- Agents: versions published, audience changes, disabling, and a platform admin's kill switch.
+- Evaluation sets, questions, imports and runs.
+- Limits and budgets set for the team by platform admins (owners and admins only).
+- Break-glass sessions on the team, and every read made under them: the kind of thing and which one, never its content.
+
+Legal holds are not shown in team audit logs.
+
+## Reading it
+
+Filter by **Area** (type a word such as "budget" to find actions by their label), **Person** (including **System (group mapping)**), target and date. A row sums up simple changes ("Monthly budget $5.00 → none"); open it for a table of what changed, with plain field names and values.
+
+Entries link to what they're about. A link to a revoked API key opens it read-only. Configuration changes keep their before and after values.
+
+## Retention
+
+The audit log is kept until your platform sets a retention period for it (at least 30 days if one is set). Entries about legal holds are never deleted.

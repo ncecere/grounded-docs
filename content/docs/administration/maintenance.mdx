@@ -1,0 +1,27 @@
+---
+title: Maintenance mode
+description: Pause new ingestion across the platform while chat, search and reading keep working.
+---
+
+**Operations → Maintenance** pauses new ingestion for every team: uploads, syncs and crawls. Chat, search, reading and admin work carry on. Use it for risky changes, database work, or while a very large [profile migration](/docs/administration/embedding-profiles) competes for the embedding model.
+
+## Turning it on
+
+1. Turn on **Pause ingestion**.
+2. Write a **Reason**. It's shown in a banner to people who manage content, and whenever an upload, sync or crawl is refused.
+3. Optionally set a **Planned end**, to tell people when to expect ingestion back. Maintenance mode doesn't end by itself.
+4. Confirm. New ingestion pauses on every server within a few seconds.
+
+## While it's on
+
+- New uploads, syncs and crawls are refused with `503 maintenance_mode`, the reason, and a `Retry-After` of the time to the planned end (or 5 minutes).
+- Documents already queued are parked, not failed.
+- Chat, retrieval, reading documents and conversations, and admin pages work as usual.
+- Profile migrations keep running.
+- The admin Overview's Features card shows maintenance as on. After 4 hours, the `GroundedMaintenanceModeLong` alert fires.
+
+Refused uploads and crawls count against the availability objective, so keep maintenance windows short.
+
+## Turning it off
+
+Turn **Pause ingestion** off. Paused work continues when you save. Turning it on and off is audited.

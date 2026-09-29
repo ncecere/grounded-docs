@@ -1,0 +1,25 @@
+# Weekly dependency updates, grouped so each ecosystem opens at most one
+# pull request a week (security updates still arrive individually).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      images:
+        patterns: ["*"]

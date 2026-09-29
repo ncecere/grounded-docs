@@ -1,0 +1,29 @@
+---
+title: Shared sources, agents and crawl domains
+description: The admin portal's Content group — platform-shared sources, every team's agents with the kill switch and short names, and the crawl allowlist.
+---
+
+## Shared sources
+
+**Content → Shared sources** holds data sources owned by the platform rather than a team. Any team may attach them to its knowledge bases, as long as the source's classification is within the team's approved level. They work like a team's sources (uploads or websites, the same settings and documents), but only platform admins manage them, and they don't count against any team's limits.
+
+- A shared source's **Used by** tab lists the knowledge bases, in every team, that use it.
+- Raising its classification is refused while any team approved below the new level uses it. The error lists them, and an impact preview shows what's affected before you save.
+- Deleting it requires every team's knowledge bases to detach it first.
+- Sharing one copy is also the answer to duplication: one shared source indexes a site once, instead of once per team.
+
+## Agents
+
+**Content → Agents** lists every team's agents with their team, audience, status and classification: metadata only, never their conversations. Platform admins can:
+
+- **Disable** an agent (the kill switch), with a reason. It stops answering in every channel, including the widget. The team's admins and owners are notified, and only a platform admin can enable it again.
+- Assign a **short name**, which makes the agent reachable at `/a/<short-name>`. Short names are unique, lower-case letters, digits and hyphens (2–40 characters), and some are reserved, such as `admin`, `api` and `embed`. Changes are audited.
+
+## Crawl domains
+
+Web sources can only fetch hosts on the platform's **crawl allowlist**. **Content → Crawl domains** has two tabs:
+
+- **Allowlist**: host patterns such as `example.org` or `*.example.org`, or `*` for anything. A new install's allowlist is empty, so no web source can crawl until you add patterns (or set `CRAWL_ALLOWLIST_SEED`, which adds patterns once, on first start). An empty allowlist is shown under Needs attention.
+- **Requests**: domains teams have asked for, with their reason. **Approve** allows the domain for that team only; **Deny** refuses it with a note. An approval can later be revoked. The requester is notified of the decision.
+
+Whatever the allowlist says, the crawler always refuses private, loopback and link-local addresses, cloud metadata addresses and ports other than 80 and 443. Every hop of a redirect is checked, and addresses are pinned when the connection is made.

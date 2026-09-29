@@ -1,0 +1,31 @@
+{
+  "title": "Administration",
+  "description": "Running the platform in the admin portal",
+  "root": true,
+  "pages": [
+    "index",
+    "features",
+    "---People---",
+    "people-and-teams",
+    "sso-groups",
+    "---Content---",
+    "content",
+    "parsing-and-ocr",
+    "---Models---",
+    "models",
+    "embedding-profiles",
+    "systemone",
+    "---Usage & spend---",
+    "analytics-and-logs",
+    "costs",
+    "limits",
+    "---Safety---",
+    "classifications",
+    "moderation-and-public-access",
+    "---Records---",
+    "retention",
+    "break-glass",
+    "---Operations---",
+    "maintenance"
+  ]
+}

@@ -1,0 +1,110 @@
+---
+title: Backups and restore
+description: What to back up, the backup components, and how to restore Postgres and the bucket after a loss.
+---
+
+## What to back up
+
+| Data | Backed up by | Gives you |
+|---|---|---|
+| **Postgres**: every table, including vectors and the job queue | `backup-pgdump`: a daily `pg_dump` (03:17 UTC), checked with `pg_restore --list`, kept 14 days on a volume, optionally copied off-site | A 24-hour recovery point |
+| **Postgres on CloudNativePG** | `postgres-cnpg`: WAL archiving and a daily base backup | A recovery point of minutes |
+| **The bucket**: original files and parsed text | `backup-objects`: a daily off-site copy (03:47 UTC), with files changed or deleted since the last run kept 14 days | A 24-hour recovery point |
+| **`ENCRYPTION_KEY` and `API_KEY_PEPPER`** | Your secret store | Without them, stored credentials must be re-entered and every API key recreated |
+| **Valkey** | Nothing needed | It holds only rate-limit counters and crawl pacing |
+
+The design targets are a 15-minute recovery point for Postgres (which needs CloudNativePG or a managed Postgres with point-in-time recovery), 24 hours for object storage, and 4 hours to recover.
+
+<Callout type="warn" title="Keep backups somewhere else">
+  Keep the off-site copies on a **different system** from the primary storage. A copy on the same disk or NAS survives a mistake, not a hardware loss. Keep old copies of `ENCRYPTION_KEY` for as long as you keep backups made with them.
+</Callout>
+
+### Setting up the components
+
+- **`backup-pgdump`**: set `UPLOAD_S3_BUCKET` (and `UPLOAD_S3_ENDPOINT`, `UPLOAD_S3_PREFIX`, optionally `UPLOAD_RETENTION_DAYS`) in the `grounded-postgres-backup` ConfigMap, with the secret `grounded-backup-s3`, to copy each dump off-site. Patch `schedule` and `timeZone` as you like. Run one on demand with `kubectl -n grounded create job --from=cronjob/grounded-postgres-backup manual-backup`.
+- **`backup-objects`**: set `UPLOAD_S3_ENDPOINT`, `UPLOAD_S3_BUCKET` and `UPLOAD_S3_PREFIX` in the `grounded-objects-backup` ConfigMap, with `grounded-backup-s3`. With the bucket empty it does nothing.
+- **`postgres-cnpg`**: patch the object store's destination and endpoint. Backups are kept 30 days.
+
+The `GroundedBackupMissing` and `GroundedBackupJobFailed` alerts watch the `pg_dump` job.
+
+## Restoring
+
+This is the `pg_dump` path, adapted from the project's runbook and rehearsed on a throwaway cluster (46 seconds end to end for a small install). Time each step: the log is your recovery-time record. A database-only incident (a bad migration, a dropped table) needs steps 1–3, 5 and 6.
+
+<Steps>
+<Step>
+
+### Stop the app and the backups
+
+So an empty or half-restored database is never dumped, and becomes "the newest dump":
+
+```sh
+flux suspend kustomization grounded   # or your GitOps tool's equivalent, first
+kubectl -n grounded patch cronjob grounded-postgres-backup -p '{"spec":{"suspend":true}}'
+kubectl -n grounded patch cronjob grounded-objects-backup -p '{"spec":{"suspend":true}}'
+kubectl -n grounded scale deployment grounded-api grounded-worker --replicas=0
+```
+
+</Step>
+<Step>
+
+### Get an empty database
+
+If the volume is gone, re-apply only the Postgres objects (applying everything would start the app, whose migrations would create an empty schema that the restore then refuses):
+
+```sh
+kustomize build <your overlay> | kubectl -n grounded apply -l app.kubernetes.io/component=postgres -f -
+```
+
+If the server is fine but the data is bad, drop and recreate the `grounded` database.
+
+</Step>
+<Step>
+
+### Restore the dump
+
+The repository's `deploy/kubernetes/restore/` has two Jobs: `pg-restore-pvc.yaml` (the dump is on the backups volume) and `pg-restore-offsite.yaml` (fetch it from the off-site copy). Both refuse a database that already has tables and restore in a single transaction. They take the newest dump unless a `grounded-restore` ConfigMap names one (`DUMP=grounded-<time>.dump`).
+
+```sh
+kubectl -n grounded apply -f deploy/kubernetes/restore/pg-restore-offsite.yaml
+kubectl -n grounded wait --for=condition=complete job/grounded-pg-restore --timeout=4h
+kubectl -n grounded logs job/grounded-pg-restore --all-containers
+```
+
+The log ends with `restored:` and the counts. On failure nothing was written: fix the cause, delete the Job and apply it again. Restore time grows with the database, mostly rebuilding indexes; time a restore of your own size once.
+
+</Step>
+<Step>
+
+### Restore the bucket
+
+`objects-restore.yaml` copies the off-site copy back, and never deletes. Give it the bucket in a `grounded-restore` ConfigMap (`S3_ENDPOINT`, `S3_BUCKET`, and `S3_PREFIX`, `S3_REGION` if set). `SNAPSHOT=previous/<time>` restores files a later run replaced or deleted.
+
+</Step>
+<Step>
+
+### Start the app
+
+Delete the `grounded-restore` ConfigMap and the restore Jobs, resume your GitOps tool (or re-apply the overlay), and wait for the rollout. Make sure the backup CronJobs are unsuspended.
+
+</Step>
+<Step>
+
+### Verify
+
+- `grounded doctor` passes.
+- Row counts (teams, documents, passages, conversations) match the backup.
+- Every document's files exist in the bucket.
+- Sign in, search a knowledge base, ask an agent a question, and use an existing API key.
+- Take a fresh backup of both now.
+
+</Step>
+</Steps>
+
+The database and bucket are copied half an hour apart, so after restoring both you may have files without rows (harmless) or, if the bucket copy is older, rows without files: re-upload those documents, or re-fetch web pages.
+
+If you restore a backup taken before a key rotation, set the old key as `ENCRYPTION_KEY_PREVIOUS` and run `grounded rotate-keys`. For CloudNativePG, restore by creating a new cluster that bootstraps from its object store (optionally to a point in time), then point `DATABASE_URL` at it; see the CloudNativePG documentation.
+
+## Rehearse
+
+Rehearse a restore after any change to the backup components, and at least once a year at your install's size. The repository's `make k8s-restore-rehearsal` runs the whole procedure on a throwaway kind cluster, destroying and restoring both Postgres and the bucket, and times each step.

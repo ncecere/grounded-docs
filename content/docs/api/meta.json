@@ -1,0 +1,6 @@
+{
+  "title": "API",
+  "description": "API keys, the OpenAI-compatible endpoint and the reference",
+  "root": true,
+  "pages": ["index", "authentication", "openai-compatible", "chat-api", "---Reference---", "reference"]
+}

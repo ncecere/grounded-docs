@@ -1,0 +1,61 @@
+---
+title: Moderation and public access
+description: Moderation providers and per-audience policies, and the switch and safeguards for public agents.
+---
+
+## Moderation
+
+Moderation checks questions before retrieval and answers before (or as) they're shown. It's **required** for public agents and optional for the other audiences. **Safety → Moderation** has the providers and a policy per audience.
+
+### Providers
+
+A provider is a catalog model of kind **Moderation** (or **SystemOne**), added under [Models](/docs/administration/models). Four kinds are supported, so each install can use what its gateway offers:
+
+| Provider kind | What it is |
+|---|---|
+| **Moderations endpoint** | An OpenAI-style `/moderations` endpoint. |
+| **Guardrail model** | A guardrail model served as chat: Llama Guard, Granite Guardian or ShieldGemma. |
+| **Chat classifier** | Any chat model, used as a classifier with Grounded's prompt. |
+| **SystemOne** | A SystemOne model; adds a severity score and a support action for self-harm. |
+
+Every provider's result is mapped onto the same categories: violence, self-harm, sexual content, sexual content involving minors, harassment and hate, illicit activity, personal data, and prompt injection. Categories a provider doesn't cover are reported as unsupported. Swapping the provider doesn't change what the policy means.
+
+**Test model** runs a benign and a harmful sample and shows the scores. The page also has a test box for trying a policy.
+
+### Policies
+
+Each audience (team, everyone who signs in, public) has a policy:
+
+- **Provider**.
+- Per category, for questions and for answers: a **threshold** (0–1) and an **action**: block, flag or off.
+- **Output mode**: **Stream, then retract** (answers appear as they're written; a failing answer is replaced by the notice) or **Buffer** (answers are checked before anyone sees them; people see "Thinking…" meanwhile).
+- **Fail closed** or open: what happens when the provider is unavailable.
+- A **notice** shown in place of a blocked question or answer.
+
+The public policy blocks every category at 0.5 on questions and answers, buffers answers and fails closed by default; the other audiences are off by default. Agents can make their policy stricter (a lower threshold, block instead of flag, buffer instead of stream), never weaker.
+
+<Screenshot slot="admin-moderation" />
+
+### How it behaves
+
+- A blocked question is never searched and never reaches the chat model: the reply is the notice.
+- Each check attempt is bounded (`MODERATION_TIMEOUT`, 10 s by default; at least 30 s for chat classifiers) and retried once. If it still fails and the policy fails closed, the reply is "The safety check is unavailable right now. Please try again."
+- Scores from uncalibrated providers (chat classifiers, guardrails without probabilities) block only at or above a high threshold (0.95 by default) and flag below it.
+- Decisions and scores are recorded for analytics and audit, never the text. Admins can list decisions with their category and score in Analytics.
+- With a SystemOne provider, a **support** action for self-harm replies with your configured support message (for example, crisis resources) instead of an answer or a refusal.
+
+## Public access
+
+**Safety → Public access** controls public agents for the whole platform.
+
+- **Allow public agents**: off on a new install. While it's off, public pages, embedded widgets and the public API refuse, and the directory hides public agents. Turning it off asks first. It's audited.
+- The **public audience** can't be chosen until it has a moderation provider. Grounded warns (`public_agents_without_moderation`) if public agents are on without one.
+- The page lists the published public agents and the **visitor safeguards**: per-IP and per-session question limits, daily question and token caps per agent, concurrent chats per agent and the longest question. Set their defaults under [Limits](/docs/administration/limits#public-agents).
+- **CAPTCHA** runs when a visitor starts a session, if configured. The only provider is Cloudflare Turnstile, set in the server configuration (`CAPTCHA_PROVIDER`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
+- Anonymous sessions end `ANON_SESSION_TTL` (24 hours) after their last use, and anonymous conversations are deleted after their level's anonymous retention.
+
+The per-agent kill switch under [Content → Agents](/docs/administration/content#agents) also stops an agent's public page and widget.
+
+<Callout type="warn" title="What protects a public agent">
+  Widget keys are public by design. What bounds abuse is the allowed-origins check, the rate limits and daily caps, CAPTCHA, moderation, and the switches. A flood spread across many addresses below the per-address limit is bounded only by the daily caps, so set them to what you're willing to spend.
+</Callout>

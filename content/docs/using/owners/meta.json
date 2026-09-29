@@ -1,0 +1,5 @@
+{
+  "title": "For team owners",
+  "defaultOpen": true,
+  "pages": ["members", "usage-and-spend", "api-keys", "audit-log"]
+}

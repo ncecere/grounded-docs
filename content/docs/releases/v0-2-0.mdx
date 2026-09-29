@@ -1,0 +1,61 @@
+---
+title: v0.2.0
+description: Evaluations, SSO group mapping, costs and budgets, OCR for scanned documents, and search in the command palette.
+---
+
+Released 2026-09-29. v0.2.0 is about measuring answer quality and running many teams. Teams can test their knowledge bases and agents with evaluation sets. Platform admins can map identity-provider groups to teams, price model use and enforce monthly budgets, and read scanned documents with OCR. Every new feature is optional, and all but evaluations are off until an admin turns them on. A release candidate, v0.2.0-rc.1, ran on the reference install first.
+
+## Highlights
+
+- **[Evaluations](/docs/using/editors/evaluations).** Knowledge bases and agents have an Evaluations tab for editors and above. A set is a list of test questions with the documents a good result finds and, for answers, phrases it must mention. Questions are typed, imported from CSV or URL-judged JSONL, or added from your own conversations and the agent's Try it panel. A **retrieval check** (recall@k and MRR, nearly free) or a **full-answer check** shows what failed and what came back instead, with a score over time and a comparison of two runs. Sets can run automatically after a publish, a profile migration switch, or nightly when documents changed, and a drop notifies the team's editors. Nothing from other people's conversations is copied.
+- **[Costs and budgets](/docs/administration/costs).** Off by default. Admins enter dated prices per model and unit, and choose **Track only** (spend per team, agent and model, with a daily chart and CSV) or **Enforce** (monthly team budgets, a warning at 80%, and at 100% the team's chats, searches and ingestion pause until an admin raises the budget, grants an extension, or the month ends). Teams can override the platform's mode, so one team can pilot Enforce.
+- **[OCR for scanned documents](/docs/administration/parsing-and-ocr).** Off by default. One backend: the new Tesseract sidecar image `ghcr.io/ncecere/grounded-ocr`, Apache Tika's `-full` image, or a vision model. Only pages without a text layer are read, and PNG, JPEG and single-page TIFF uploads become one-page documents. OCR is bounded per document, per worker and per team per day, where documents wait rather than fail.
+- **[SSO group mapping](/docs/administration/sso-groups).** Map an identity-provider group to a team role. At each sign-in, memberships the mapping created are added, raised, lowered or removed. Memberships made by hand are never touched, and a rule never removes a team's last owner. Every rule shows a dry run before it's saved.
+- **Search in the command palette.** ⌘K finds agents, knowledge bases, sources and your conversations across all your teams and, for platform staff, teams, users, models, connections, embedding profiles and shared sources.
+- **Many smaller fixes.** A deleted agent's conversations open read-only; a raised crawl limit wakes waiting crawls at once; one date rule across the app; an agent Settings tab; a knowledge base's passages per search inherited by agents until overridden; clearer feedback buttons.
+- **Release and CI.** Each release attaches SPDX SBOMs, digest files and `checksums.txt`, and a tag build fails unless the image reports exactly its tag.
+
+## Requirements
+
+Unchanged from [v0.1.0](/docs/releases/v0-1-0#requirements): Kubernetes 1.30+, PostgreSQL 17 with pgvector 0.8+ (and the `vector`, `citext`, `btree_gin` and `pg_trgm` extensions), Valkey or Redis 7+, S3-compatible storage, an OpenAI-compatible gateway and an OIDC provider. New optional pieces:
+
+| Optional | Notes |
+|---|---|
+| Tesseract OCR | The `ocr-tesseract` component runs `ghcr.io/ncecere/grounded-ocr` (Tesseract 5, common languages built in; derive an image for more). Or use Tika's `-full` image, or a vision model. |
+| A groups claim | For SSO group mapping, your OIDC provider must send groups in the ID token (`OIDC_GROUPS_CLAIM`, default `groups`). |
+
+## Upgrading from v0.1.0
+
+A rolling upgrade with no downtime. Take and validate a backup first.
+
+1. **Bump the base and the image together.** Change every `?ref=v0.1.0` to `?ref=v0.2.0` and pin the new digest. If you still vendor the base, re-vendor at v0.2.0 or switch to the remote base. The image is public, so the `private-registry` component and its pull secret can go.
+2. **Migrations** `00030` to `00034` only add tables, columns, indexes and allowed values, so v0.1.0 pods keep working while the new ones start.
+3. **New settings, all optional**: `OIDC_GROUPS_CLAIM`, `OCR_TESSERACT_URL`, `OCR_TIMEOUT`, `OCR_MAX_PAGES_PER_DOCUMENT`, `OCR_CONCURRENCY`, `EVALUATION_CONCURRENCY` and `RETENTION_EVALUATION_RUNS_DAYS`.
+4. **OCR, if you want it.** Add the `ocr-tesseract` component and pin its image by digest. Then turn OCR on in the admin portal and press **Test**.
+5. **What changes for users straight away**: only evaluations, for team editors. Costs, OCR and group mapping stay off until an admin sets them up. Evaluation runs are deleted after 180 days by default, unlike other data, which is kept until you set a period.
+
+Downgrading isn't supported. To go back, restore a backup taken before the upgrade.
+
+## Known limitations
+
+The [v0.1.0 limitations](/docs/releases/v0-1-0#known-limitations) about performance, capacity and availability still apply. New in this release:
+
+- **Budgets are checked with a short cache**, so a team can overshoot by about 30 seconds of use. Documents already being ingested when a budget runs out finish. Re-embedding during a profile migration isn't checked against budgets.
+- **Costs before v0.2.0**: usage retention had purged before the upgrade is kept only per UTC day.
+- **OCR** reads only the first page of a multi-page TIFF, and the per-document page cap is an environment setting, not an admin setting. Tesseract's accuracy depends on the scan; a vision model reads forms and tables better.
+- **Evaluations** check retrieval and answers, not tools beyond knowledge search. Questions come only from editors, imports and their own conversations.
+- **Not in v0.2.0** (roadmap candidates, not commitments): cross-encoder reranking, SCIM, per-agent budgets, per-page prices for Tesseract and Tika, and multi-page TIFF.
+
+## Verifying the images
+
+Images are published for linux/amd64 and linux/arm64 to `ghcr.io/ncecere/grounded` and `ghcr.io/ncecere/grounded-ocr`, tagged `v0.2.0`, `v0.2` and `latest-release`. Verify a digest before you deploy it:
+
+```sh
+docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.2.0   # prints the index digest
+
+cosign verify ghcr.io/ncecere/grounded@sha256:<digest> \
+  --certificate-identity-regexp '^https://github.com/ncecere/grounded/\.github/workflows/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+`docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.2.0 (<commit>)`. The GitHub release lists the digests and attaches each image's SPDX SBOM per platform and a `checksums.txt` (`sha256sum -c checksums.txt`). The same SBOMs and SLSA provenance are attached to the images as attestations; see [Upgrades](/docs/self-hosting/upgrades#verifying-images).

@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-openapi/css/preset.css';
+@import '@fontsource-variable/inter';
+@import './brand.css';
+
+/*
+ * Fumadocs' theme variables, mapped onto Grounded's brand tokens (brand.css),
+ * so the docs use the app's indigo and slate neutrals in light and dark mode.
+ */
+:root,
+.light,
+.dark {
+  --color-fd-background: var(--grounded-bg);
+  --color-fd-foreground: var(--grounded-text);
+  --color-fd-muted: var(--grounded-surface-sunken);
+  --color-fd-muted-foreground: var(--grounded-text-muted);
+  --color-fd-popover: var(--grounded-surface-raised);
+  --color-fd-popover-foreground: var(--grounded-text);
+  --color-fd-card: var(--grounded-surface);
+  --color-fd-card-foreground: var(--grounded-text);
+  --color-fd-border: var(--grounded-border-emphasis);
+  --color-fd-primary: var(--grounded-link);
+  --color-fd-primary-foreground: var(--grounded-text-inverse);
+  --color-fd-secondary: var(--grounded-surface-sunken);
+  --color-fd-secondary-foreground: var(--grounded-text);
+  --color-fd-accent: var(--grounded-primary-subtle);
+  --color-fd-accent-foreground: var(--grounded-primary-subtle-text);
+  --color-fd-ring: var(--grounded-focus-ring);
+  --color-fd-overlay: rgba(11, 13, 18, 0.45);
+}
+
+/* Fumadocs' neutral theme darkens the sidebar in dark mode; keep Grounded's. */
+.dark #nd-sidebar {
+  --color-fd-muted: var(--grounded-surface-sunken);
+  --color-fd-secondary: var(--grounded-surface-sunken);
+  --color-fd-muted-foreground: var(--grounded-text-muted);
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+body {
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+/* Links in prose use Grounded's link colour and stay underlined (not colour alone). */
+.prose a:not([data-card]):not(.not-prose a) {
+  color: var(--grounded-link);
+  text-decoration-color: color-mix(in srgb, var(--grounded-link) 45%, transparent);
+}
+.prose a:not([data-card]):hover {
+  color: var(--grounded-link-hover);
+}
+
+/* A visible focus indicator everywhere (WCAG 2.4.7). */
+:focus-visible {
+  outline: 2px solid var(--grounded-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* HTTP method labels in the API reference's sidebar. Text colours meet 4.5:1. */
+.api-method {
+  margin-inline-start: auto;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--grounded-text-muted);
+}
+.api-method[data-method='get'] {
+  color: var(--grounded-success-text);
+}
+.api-method[data-method='post'] {
+  color: var(--grounded-info-text);
+}
+.api-method[data-method='put'],
+.api-method[data-method='patch'] {
+  color: var(--grounded-warning-text);
+}
+.api-method[data-method='delete'] {
+  color: var(--grounded-danger-text);
+}

@@ -1,0 +1,53 @@
+---
+title: SystemOne
+description: Optional SystemOne models that judge passages, check each claim against its citation, spot off-topic questions and moderate.
+---
+
+**SystemOne** models are an optional kind of model that answer typed questions (yes/no, a choice, a score) with probabilities, over `POST /v1/systemone`. Grounded can use one to check its own work. Every SystemOne feature is **off** by default, and without a SystemOne model nothing changes: no requests, no extra fields, no change to prompts.
+
+To use one, add a connection to a service that answers `POST /v1/systemone`, then add a model of kind **SystemOne** under [Models](/docs/administration/models). Its classification ceiling applies like any model's. Then configure the features under **Models → SystemOne**.
+
+<Callout type="warn" title="Each check costs time">
+  SystemOne requests run on the model service, often one GPU. Passage judging makes one request per candidate passage (in the project's tests on one GPU, about 0.7 s each); citation checks one per claim and cited source, after the answer. Measure on your own hardware before turning them on for busy agents.
+</Callout>
+
+## Features
+
+The SystemOne page sets the platform defaults. Each agent can turn each check on or off for itself in Build → **SystemOne checks**; thresholds are platform-only. The page shows, for each check, its default and how many agents have it on ("Default: off", "On for 2 agents").
+
+### Passage judging
+
+After retrieval and before the prompt is built, the model judges the top candidate passages (10 by default) against the question: is it relevant, does it contain usable evidence, does it contradict the question's premise, and is it trying to instruct an AI assistant?
+
+- Passages that look like prompt injection, or don't help, are dropped.
+- Evidence is re-ranked by relevance.
+- Passages that contradict the question's premise are kept apart, as conflicting evidence, and the model is told to point out the conflict rather than treat it as fact.
+- If nothing usable is left, a strictly grounded agent refuses **without calling the chat model**.
+
+If a judgment times out or fails, the passage keeps its place and is used (fail-open).
+
+### Citation checks
+
+After an answer, each **claim** (a factual sentence, list item or table row) is checked against each source it cites: supports, contradicts or says nothing. Each claim gets one verdict: **supported**, **not supported**, **uncited** (a factual sentence without a citation) or **unchecked** (a check failed). See [Claims and verdicts](/docs/using/chat#claims-and-verdicts) for how people see them.
+
+- **Annotate** (default mode): verdicts are shown; nothing is removed.
+- **Enforce**: citations confidently unsupported or contradicted (at or above the auto-accept threshold, 0.8 by default) are removed; if nothing in the answer is supported, a strictly grounded agent replies with its refusal instead.
+
+Checks are bounded (20 seconds per answer by default, at most 30 claim–source pairs); pairs not answered in time are unchecked. Streamed answers are checked after they finish; public agents' answers, which are held back for moderation, are checked before they're shown. Verdicts below the auto-accept threshold are never acted on, only counted for review.
+
+### Scope check
+
+Before retrieval, the model decides whether the message is small talk, and whether it's within the agent's subject (from its name, description and instructions):
+
+- Small talk gets a short reply from the chat model, without a search.
+- A question outside the subject, to a strictly grounded agent, gets "This is outside what *agent* covers." without a search or a chat model call.
+
+On an error or timeout the message is answered normally.
+
+### Moderation
+
+A SystemOne model can also be a [moderation](/docs/administration/moderation-and-public-access) provider, with a severity score and a **support** action for self-harm: the reply is your configured support message (for example, crisis resources) instead of an answer or a refusal.
+
+## What's recorded
+
+Each check records counts and scores, never text: passages judged, kept and dropped by reason; claims supported, not supported and uncited; small talk and out-of-scope decisions. They appear in the **Checks** tab of the platform's [Analytics](/docs/administration/analytics-and-logs) and of each agent's Analytics. SystemOne usage is metered in the usage ledger and can be priced per request and per input token.

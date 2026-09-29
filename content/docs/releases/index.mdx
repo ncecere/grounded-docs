@@ -1,0 +1,30 @@
+---
+title: Releases
+description: Grounded's releases, what's stable before 1.0, and how releases are published.
+---
+
+| Release | Date | In short |
+|---|---|---|
+| [v0.2.1](/docs/releases/v0-2-1) | 2026-09-29 | Navigation and clarity; per-claim verification. No migrations. |
+| [v0.2.0](/docs/releases/v0-2-0) | 2026-09-29 | Evaluations, costs and budgets, OCR, SSO group mapping, search in the command palette. |
+| [v0.1.0](/docs/releases/v0-1-0) | 2026-09-28 | The first release: teams, sources, knowledge bases, agents, publishing, governance and the Kubernetes deployment. |
+
+The full list of changes is in the [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md), and each release is on [GitHub Releases](https://github.com/ncecere/grounded/releases).
+
+## Before 1.0
+
+Grounded follows semantic versioning, but before 1.0 a minor release may include breaking changes; the release notes say how to adapt.
+
+- **Meant to stay stable through 0.x**: the OpenAI-compatible chat endpoint, the widget embed, the environment variables, and the Kubernetes resource names that overlays patch.
+- **May change between minor releases**: the native REST API, metric names, the UI and component defaults.
+- **Upgrades** are forward-only and without downtime. Don't skip a release its notes mark as required. Downgrading means restoring a backup.
+- **Security fixes** are released as a patch of the latest minor release. Older minor releases don't get fixes.
+
+## How releases are published
+
+- The container images are the release artifacts: `ghcr.io/ncecere/grounded` and, since v0.2.0, the OCR sidecar `ghcr.io/ncecere/grounded-ocr`, for linux/amd64 and linux/arm64. No binary archives are published.
+- Tags are `vX.Y.Z`, `vX.Y` and `latest-release`; release candidates get only their own tag. There's no `latest`. Deploy by digest.
+- Images are built only in CI, scanned with Trivy, signed with cosign (keyless), and carry an SPDX SBOM and SLSA provenance. Since v0.2.0 each GitHub release also attaches the SBOMs, digest files and a `checksums.txt`.
+- A release candidate runs on a reference install before the release.
+
+See [Upgrades](/docs/self-hosting/upgrades) for pinning and verifying images.

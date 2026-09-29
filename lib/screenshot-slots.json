@@ -1,0 +1,89 @@
+{
+  "home-agents": {
+    "alt": "Home in the Grounded web app: the team's agents as cards, with the workspace navigation on the left."
+  },
+  "chat-answer-with-claims": {
+    "alt": "A chat answer with numbered citation chips, a one-line claim summary such as \"5 of 5 claims supported\", and the collapsed sources below it."
+  },
+  "chat-citation-card": {
+    "alt": "A citation chip's card opened in a chat answer: the claim's verdict, the claim's text and the cited passage, with \"Show source below\"."
+  },
+  "team-overview": {
+    "alt": "A team's Overview page: counts of sources, knowledge bases and agents, the Quality & spend row with evaluation scores and this month's spend."
+  },
+  "data-source-web": {
+    "alt": "A web data source's Overview: pages crawled, passages indexed, repeated blocks removed and the next scheduled sync."
+  },
+  "crawl-domains": {
+    "alt": "Data sources, Crawl domains tab: the team's domain requests with their status."
+  },
+  "kb-try-it": {
+    "alt": "A knowledge base's Try it tab: a test question and the ranked passages retrieval returned, with their sources."
+  },
+  "agent-build": {
+    "alt": "The agent editor's Build tab: Instructions, Model, Knowledge, Answering, Safety and Advanced sections, with the Try it panel beside them."
+  },
+  "agent-share": {
+    "alt": "The agent editor's Share tab: the agent's links, the widget's publishable keys and the embed snippet."
+  },
+  "agent-versions": {
+    "alt": "The agent's version menu in the editor header, with Version history, Compare versions and Revert draft."
+  },
+  "agent-analytics": {
+    "alt": "An agent's Analytics tab: answers over time, satisfaction, no-context rate and tokens by model, with no message content."
+  },
+  "evaluations-runs": {
+    "alt": "An evaluation set's Runs tab: retrieval and full-answer runs with their scores, and a chart of the score over time."
+  },
+  "evaluations-result": {
+    "alt": "An evaluation result: the expected document beside what came back, with the rank it was found at."
+  },
+  "team-evaluations": {
+    "alt": "The team's Evaluations page: every evaluation set with what it tests, its latest score, its trend and when it last ran."
+  },
+  "team-members": {
+    "alt": "Team settings, Members tab: members with their roles, pending invites and a member marked \"Managed by SSO group\"."
+  },
+  "team-usage-spend": {
+    "alt": "Team settings, Usage & spend tab: this month's spend against the budget, and the team's limits with meters."
+  },
+  "team-api-keys": {
+    "alt": "Team settings, API keys tab: personal and service keys with their scopes, restrictions, expiry and last use."
+  },
+  "admin-overview-features": {
+    "alt": "Admin Overview: the platform at a glance, Needs attention, and the Features card listing each optional feature's state."
+  },
+  "admin-teams": {
+    "alt": "Admin, Teams: every team with its approved classification, members and status."
+  },
+  "admin-sso-groups": {
+    "alt": "Admin, SSO groups: rules mapping identity-provider groups to team roles, with the memberships each rule grants."
+  },
+  "admin-models": {
+    "alt": "Admin, Models: chat, embedding, moderation and SystemOne models with their connection, maximum classification and state."
+  },
+  "admin-embedding-migrations": {
+    "alt": "Admin, Embedding profiles, Migrations tab: a knowledge base moving to a new profile, with per-source progress."
+  },
+  "admin-classifications": {
+    "alt": "Admin, Classifications: the levels Open, Sensitive and Restricted with their maximum audience and retention."
+  },
+  "admin-moderation": {
+    "alt": "Admin, Moderation: the policy for the public audience with a threshold and action for each category."
+  },
+  "admin-costs": {
+    "alt": "Admin, Costs Overview: spend over the chosen range, a daily chart by kind and the Top spenders card."
+  },
+  "admin-parsing-ocr": {
+    "alt": "Admin, Parsing & OCR: OCR turned on with the Tesseract backend, languages and the Test button."
+  },
+  "admin-retention": {
+    "alt": "Admin, Retention: the retention period for each kind of data, with the Dry run, Runs and Legal holds tabs."
+  },
+  "admin-break-glass": {
+    "alt": "Admin, Break-glass: sessions with their team, scope, reason, status and read counts."
+  },
+  "admin-analytics": {
+    "alt": "Admin, Analytics: platform totals, the daily chart and top agents and teams, without message content."
+  }
+}

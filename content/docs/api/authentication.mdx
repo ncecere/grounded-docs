@@ -1,0 +1,45 @@
+---
+title: Authentication
+description: API keys and their scopes, publishable widget keys, and browser sessions.
+---
+
+## API keys
+
+Programs authenticate with a team **API key**, sent as a bearer token:
+
+```sh
+curl -H "Authorization: Bearer rag_<id>_<secret>" https://grounded.example.org/v1/models
+```
+
+Keys are created in the app under **Team settings → API keys** ([API keys](/docs/using/owners/api-keys)); the secret is shown once. A key:
+
+- belongs to **one team**, and reaches only that team's agents and knowledge bases;
+- has **scopes**: `query` (chat and search), `ingest` (upload and manage documents), `manage` (change sources and knowledge bases);
+- may be **restricted** to some knowledge bases and some agents;
+- may **expire**;
+- can never administer the platform.
+
+| | Personal key | Service key |
+|---|---|---|
+| Acts as | You, within the team | The team |
+| Scopes | By your role: members `query`; editors `query`, `ingest`; admins and owners all | Any (created by admins and owners) |
+| Conversations | Stored for you; send `conversationId` to continue one | Stateless: send earlier turns in `history`; `conversationId` is refused |
+| When the owner leaves the team | Revoked | Keeps working |
+
+Keys are stored only as HMAC digests. Per-key rate limits apply (300 queries per minute by default), as do the team's and the agent's limits. A revoked, expired or unknown key gets 401.
+
+Some routes don't accept API keys at all: evaluations, the command palette search (`/v1/search`), and everything under `/v1/admin`. Whether team keys may call a knowledge base's `/retrieve` directly depends on its classification level's setting.
+
+## Publishable keys
+
+A **publishable key** (`pk_…`) belongs to one public agent and can only start anonymous widget sessions from its allowed origins. It's meant to be embedded in web pages and isn't secret. See [Widget](/docs/using/editors/sharing#widget).
+
+## Browser sessions
+
+The web app uses a server-side session cookie. Scripts running in a signed-in browser can call the same `/v1` routes, but every write needs the session's CSRF token in the `X-CSRF-Token` header (read it from `GET /v1/me`) and a same-origin `Origin` header. Use API keys for programs instead.
+
+Sessions last `SESSION_TTL` (12 hours by default). `GET /v1/auth/config` returns the sign-in methods and the install's identity without signing in.
+
+## Anonymous access
+
+Only public agents are reachable without credentials: their profiles, anonymous sessions and chat (`/v1/public/...`), `widget.js` and the embed page. Nothing else is available anonymously.
