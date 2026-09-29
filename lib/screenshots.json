@@ -4,6 +4,16 @@
     "width": 1440,
     "height": 900
   },
+  "admin-break-glass": {
+    "src": "/images/admin-break-glass.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-classifications": {
+    "src": "/images/admin-classifications.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-connections": {
     "src": "/images/admin-connections.webp",
     "width": 1440,
@@ -19,13 +29,33 @@
     "width": 1440,
     "height": 900
   },
+  "admin-embedding-migrations": {
+    "src": "/images/admin-embedding-migrations.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-models": {
     "src": "/images/admin-models.webp",
     "width": 1440,
     "height": 900
   },
+  "admin-moderation": {
+    "src": "/images/admin-moderation.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-overview-features": {
+    "src": "/images/admin-overview-features.webp",
+    "width": 1440,
+    "height": 1697
+  },
   "admin-parsing-ocr": {
     "src": "/images/admin-parsing-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-retention": {
+    "src": "/images/admin-retention.webp",
     "width": 1440,
     "height": 900
   },
@@ -36,6 +66,11 @@
   },
   "admin-sso-groups-dry-run": {
     "src": "/images/admin-sso-groups-dry-run.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-teams": {
+    "src": "/images/admin-teams.webp",
     "width": 1440,
     "height": 900
   },
@@ -54,6 +89,11 @@
     "width": 1440,
     "height": 900
   },
+  "agent-versions": {
+    "src": "/images/agent-versions.webp",
+    "width": 1440,
+    "height": 900
+  },
   "audit-log": {
     "src": "/images/audit-log.webp",
     "width": 1440,
@@ -66,6 +106,16 @@
   },
   "chat-citation-card": {
     "src": "/images/chat-citation-card.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "crawl-domains": {
+    "src": "/images/crawl-domains.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "data-source-web": {
+    "src": "/images/data-source-web.webp",
     "width": 1440,
     "height": 900
   },
@@ -111,6 +161,11 @@
   },
   "source-documents-ocr": {
     "src": "/images/source-documents-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "team-api-keys": {
+    "src": "/images/team-api-keys.webp",
     "width": 1440,
     "height": 900
   },

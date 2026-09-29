@@ -147,8 +147,7 @@
     "files": [
       "admin-overview-features"
     ],
-    "alt": "Admin Overview: the platform at a glance, Needs attention, and the Features card listing each optional feature's state, with recent changes.",
-    "hold": "The v0.2.1 capture shows a Grounded layout bug in the Features card (the Evaluations description wraps into a narrow column; see the screenshots' MANIFEST.md). Remove this line once it's recaptured, then run npm run screenshots."
+    "alt": "Admin Overview: the platform at a glance, Needs attention, and the Features card listing each optional feature's state, with recent changes."
   },
   "admin-teams": {
     "files": [
