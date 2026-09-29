@@ -36,6 +36,8 @@ The Share tab lists the agent's addresses:
 
 A public agent's page is a minimal, branded chat that works without the app: the install's name, the agent's header and the conversation, with a **Sign in** link. Anonymous visitors chat in a session that ends 24 hours after its last use. Their conversations are deleted after the classification level's anonymous retention (24 hours by default). If the platform turned on CAPTCHA, visitors complete it when a session starts.
 
+<Screenshot slot="public-agent-page" />
+
 Public traffic is bounded: questions per minute per IP address and per visitor session, daily questions and tokens per agent, concurrent chats per agent, and a maximum question length. Platform admins set the defaults; a widget key can override the per-minute limits within them.
 
 ## Widget
@@ -68,7 +70,7 @@ Paste it into the site's HTML:
         integrity="sha384-…" crossorigin="anonymous" async></script>
 ```
 
-`data-position="bottom-left"` moves the launcher from the default bottom right. The Share tab fills in the real values, including the script's Subresource Integrity hash.
+`data-position="bottom-left"` moves the launcher from the default bottom right. The Share tab fills in your install's address, the agent's ID and the script's Subresource Integrity hash; replace `pk_…` with your key, which is shown only once, when it's created.
 
 </Step>
 <Step>

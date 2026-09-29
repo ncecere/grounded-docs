@@ -56,7 +56,7 @@ const sections = [
 
 export default function HomePage() {
   return (
-    <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 md:py-16">
+    <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 md:py-16">
       <div className="flex flex-col gap-4">
         <p className="inline-flex items-center gap-2 text-sm font-medium text-fd-muted-foreground">
           <GroundedMark />
@@ -110,6 +110,6 @@ export default function HomePage() {
         </a>
         .
       </p>
-    </main>
+    </div>
   );
 }

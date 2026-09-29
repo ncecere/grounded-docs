@@ -54,7 +54,7 @@ Dockerfile                    builds the export, then serves it with nginx
 
 ### Screenshots
 
-Screenshots come only from the public demo instance ("Example University"), never from a real install. Each image has a named slot in `lib/screenshot-slots.json` (with its alt text and the file names it may have) and is placed with `<Screenshot slot="…" />`. Until an image is imported, the slot shows a clearly marked placeholder.
+Screenshots come only from the public demo instance ("Example University"), never from a real install. Each image has a named slot in `lib/screenshot-slots.json` (its alt text, the file names it may have, and optionally a `hold` reason that keeps a known-bad capture out) and is placed with `<Screenshot slot="…" />`. Until an image is imported, the slot shows a clearly marked placeholder. When you replace an image, check that its slot's alt text still describes it.
 
 ```sh
 SCREENSHOTS_DIR=../grounded-assets/screenshots npm run screenshots

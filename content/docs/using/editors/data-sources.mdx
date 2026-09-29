@@ -83,6 +83,8 @@ Scanned PDF pages and images have no text layer. If your platform has turned OCR
 - A document's page says which pages were read with OCR, for example "Pages 3–7 were read with OCR (Tesseract)".
 - Each source has its own switch, **Settings → Read scanned pages with OCR**, on by default. Turn it off where scans are noise. With it off, scanned pages are skipped and images can't be uploaded to the source.
 
+<Screenshot slot="source-document-ocr" />
+
 Documents skipped as scanned before OCR was on show as **Needs OCR**. On the source's **Documents** tab, filter **Needs OCR**, then **Retry all that need OCR**. The button is disabled, with the reason, while OCR is off for the source or the platform.
 
 A PDF with only some pages lacking text is indexed with a warning that those pages were skipped. To read them once OCR is on, delete the document and upload it again.
@@ -90,6 +92,8 @@ A PDF with only some pages lacking text is indexed with a warning that those pag
 OCR has limits: pages per document (200 by default) and **OCR pages per day** for the team (1,000 by default). A document that would pass the daily limit waits with "Waiting for the team's daily OCR page limit" and continues the next day (UTC), or as soon as the limit is raised.
 
 ## Document states
+
+<Screenshot slot="source-documents-ocr" />
 
 A document moves through pending, fetching, parsing, chunking and embedding to **ready**. Others end as **failed** (with the error; you can retry), **skipped** (empty, or needs OCR) or **deleted**. A document can also **wait**: for the team's daily OCR or crawl page limit, for its monthly budget when the platform enforces budgets, or while the platform is in maintenance mode.
 

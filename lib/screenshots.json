@@ -1,1 +1,137 @@
-{}
+{
+  "admin-analytics": {
+    "src": "/images/admin-analytics.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-connections": {
+    "src": "/images/admin-connections.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-costs": {
+    "src": "/images/admin-costs.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-costs-budgets": {
+    "src": "/images/admin-costs-budgets.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-models": {
+    "src": "/images/admin-models.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-parsing-ocr": {
+    "src": "/images/admin-parsing-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-sso-groups": {
+    "src": "/images/admin-sso-groups.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-sso-groups-dry-run": {
+    "src": "/images/admin-sso-groups-dry-run.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "agent-analytics": {
+    "src": "/images/agent-analytics.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "agent-build": {
+    "src": "/images/agent-build.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "agent-share": {
+    "src": "/images/agent-share.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "audit-log": {
+    "src": "/images/audit-log.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "chat-answer-with-claims": {
+    "src": "/images/chat-answer-with-claims.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "chat-citation-card": {
+    "src": "/images/chat-citation-card.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "discover-agents": {
+    "src": "/images/discover-agents.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "evaluations-answer-result": {
+    "src": "/images/evaluations-answer-result.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "evaluations-result": {
+    "src": "/images/evaluations-result.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "evaluations-runs": {
+    "src": "/images/evaluations-runs.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "home-agents": {
+    "src": "/images/home-agents.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "kb-try-it": {
+    "src": "/images/kb-try-it.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "public-agent-page": {
+    "src": "/images/public-agent-page.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "source-document-ocr": {
+    "src": "/images/source-document-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "source-documents-ocr": {
+    "src": "/images/source-documents-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "team-evaluations": {
+    "src": "/images/team-evaluations.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "team-members": {
+    "src": "/images/team-members.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "team-overview": {
+    "src": "/images/team-overview.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "team-usage-spend": {
+    "src": "/images/team-usage-spend.webp",
+    "width": 1440,
+    "height": 900
+  }
+}

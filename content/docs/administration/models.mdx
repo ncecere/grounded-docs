@@ -18,6 +18,8 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 | **Requests per minute** | Optional. Enforced across every Grounded process. Set it just below your gateway key's limit (for example 110 for a key allowed 120). Without it, bulk work sends requests as fast as the gateway answers. |
 | **Maximum concurrent requests** | Default 8, per process. Applies to SystemOne calls, since a GPU serves few at once. |
 
+<Screenshot slot="admin-connections" />
+
 **Test connection** calls `GET /models` and lists the gateway's model IDs to help you fill in the model form. It reports timings for each phase (DNS, connect, TLS, first byte) and names the cause of a failure, such as an untrusted certificate or a refused connection.
 
 Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/completions`, and `/moderations` for moderation endpoints) plus `POST /v1/systemone` for SystemOne models. It has no vendor-specific code.

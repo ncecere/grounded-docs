@@ -99,3 +99,22 @@ body {
 .api-method[data-method='delete'] {
   color: var(--grounded-danger-text);
 }
+
+/*
+ * Contrast fixes for third-party UI (WCAG 1.4.3):
+ * - the API reference's method labels use Tailwind's -600 greens, blues,
+ *   oranges, reds and yellows, too light on Grounded's off-white; use the
+ *   app's darker status colours instead (>= 4.5:1 on the page and accent tints);
+ * - the dark code theme's comments (#6a737d) are lightened on Grounded's dark surface.
+ */
+@theme {
+  --color-green-600: #0e6b3f;
+  --color-blue-600: #1d55c9;
+  --color-orange-600: #92560a;
+  --color-red-600: #b42318;
+  --color-yellow-600: #7a4508;
+}
+
+.dark .shiki span[style*='--shiki-dark:#6A737D'] {
+  --shiki-dark: #8b949e !important;
+}

@@ -9,8 +9,7 @@ export const metadata = {
 export default function NotFound() {
   return (
     <HomeLayout {...baseOptions()}>
-      <main
-        id="main"
+      <div
         className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-start justify-center gap-4 px-4 py-24"
       >
         <p className="text-sm font-medium text-fd-muted-foreground">404</p>
@@ -41,7 +40,7 @@ export default function NotFound() {
             </Link>
           </li>
         </ul>
-      </main>
+      </div>
     </HomeLayout>
   );
 }

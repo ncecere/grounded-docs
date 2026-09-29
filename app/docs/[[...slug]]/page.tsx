@@ -9,6 +9,7 @@ import {
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/components/mdx';
 import { OpenAPIPage } from '@/components/api-page';
+import { ApiA11y } from '@/components/api-a11y';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { editUrl } from '@/lib/shared';
@@ -33,6 +34,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
         <DocsTitle>{page.data.title}</DocsTitle>
         <DocsBody>
           <OpenAPIPage {...pruned} />
+          <ApiA11y />
         </DocsBody>
         <div className="mt-8 border-t border-fd-border pt-4">
           <EditOnGitHub href={editUrl('openapi/grounded.yaml')}>

@@ -1,89 +1,244 @@
 {
   "home-agents": {
-    "alt": "Home in the Grounded web app: the team's agents as cards, with the workspace navigation on the left."
+    "files": [
+      "home-agents",
+      "home"
+    ],
+    "alt": "Home in the Grounded app for a team member: cards for the agents they can use (Go docs, Help Desk Assistant, HR Answers and Library Guide), each with its team and audience, and their latest conversations below."
+  },
+  "discover-agents": {
+    "files": [
+      "discover-agents"
+    ],
+    "alt": "Discover agents: the agents a signed-in person can use, grouped by their own teams, the organisation and public."
   },
   "chat-answer-with-claims": {
-    "alt": "A chat answer with numbered citation chips, a one-line claim summary such as \"5 of 5 claims supported\", and the collapsed sources below it."
+    "files": [
+      "chat-answer-sources"
+    ],
+    "alt": "A Help Desk Assistant answer to \"I forgot my NetID password. How do I reset it?\": numbered steps with citation chips marked with check marks, one sentence marked Uncited, the summary \"5 of 6 claims supported · 1 uncited\", and the two sources opened below."
   },
   "chat-citation-card": {
-    "alt": "A citation chip's card opened in a chat answer: the claim's verdict, the claim's text and the cited passage, with \"Show source below\"."
+    "files": [
+      "chat-citation-card",
+      "chat-answer-with-claims"
+    ],
+    "alt": "The same answer with a citation chip's card open: \"Claim supported by this source (100% confidence)\", the claim's text, the cited passage, and \"Show source 1 below\"."
+  },
+  "public-agent-page": {
+    "files": [
+      "public-agent-page-answer"
+    ],
+    "alt": "A public agent's page, used without signing in: the Library Guide answering \"How do I book a study room?\" with citations."
   },
   "team-overview": {
-    "alt": "A team's Overview page: counts of sources, knowledge bases and agents, the Quality & spend row with evaluation scores and this month's spend."
+    "files": [
+      "team-overview",
+      "team-overview-quality-and-spend"
+    ],
+    "alt": "An IT Help Desk team's Overview for its owner: counts of data sources, knowledge bases, agents and documents; evaluation scores with one set down 17 points; spend this month against a $50 budget, not enforced; and recent changes."
   },
   "data-source-web": {
+    "files": [
+      "data-source-web",
+      "web-source"
+    ],
     "alt": "A web data source's Overview: pages crawled, passages indexed, repeated blocks removed and the next scheduled sync."
   },
+  "source-documents-ocr": {
+    "files": [
+      "source-documents-with-ocr"
+    ],
+    "alt": "An upload source's Documents tab: status filters including Needs OCR, and its documents with kind, size, status and passages, among them a scanned PDF."
+  },
+  "source-document-ocr": {
+    "files": [
+      "source-document-ocr-detail"
+    ],
+    "alt": "The scanned PDF's record page, saying it was read with OCR (Tesseract), with the passage its text produced."
+  },
   "crawl-domains": {
+    "files": [
+      "crawl-domains"
+    ],
     "alt": "Data sources, Crawl domains tab: the team's domain requests with their status."
   },
   "kb-try-it": {
-    "alt": "A knowledge base's Try it tab: a test question and the ranked passages retrieval returned, with their sources."
+    "files": [
+      "kb-try-it",
+      "kb-try-it-with-systemone"
+    ],
+    "alt": "A knowledge base's Try it tab with Judge with SystemOne on: the question \"What are the computer lab hours?\", ten results, SystemOne keeping 1 of the 10 passages, and the top passage, from a scanned PDF, with its scores."
   },
   "agent-build": {
-    "alt": "The agent editor's Build tab: Instructions, Model, Knowledge, Answering, Safety and Advanced sections, with the Try it panel beside them."
+    "files": [
+      "agent-build",
+      "agent-editor-build-try-it"
+    ],
+    "alt": "The agent editor's Build tab for Help Desk Assistant: the instructions and the collapsed Model, Knowledge, Answering, Safety, SystemOne checks and Advanced sections, beside the Try it panel with a draft answer, its claim summary and Add to evaluations."
   },
   "agent-share": {
-    "alt": "The agent editor's Share tab: the agent's links, the widget's publishable keys and the embed snippet."
+    "files": [
+      "agent-share",
+      "agent-share-widget-preview"
+    ],
+    "alt": "An agent's Share tab: a widget key with its allowed origins, the embed code with the launcher position, and a live preview of the widget with the agent's welcome and starter questions."
   },
   "agent-versions": {
+    "files": [
+      "agent-versions"
+    ],
     "alt": "The agent's version menu in the editor header, with Version history, Compare versions and Revert draft."
   },
   "agent-analytics": {
-    "alt": "An agent's Analytics tab: answers over time, satisfaction, no-context rate and tokens by model, with no message content."
+    "files": [
+      "agent-analytics"
+    ],
+    "alt": "An agent's Analytics tab, Usage view: conversations, answers, satisfaction, citations supported and refusals over the last 30 days, and answers per day."
   },
   "evaluations-runs": {
-    "alt": "An evaluation set's Runs tab: retrieval and full-answer runs with their scores, and a chart of the score over time."
+    "files": [
+      "evaluations-runs",
+      "evaluation-runs-chart"
+    ],
+    "alt": "An evaluation set's Runs tab: three completed retrieval runs scoring 100%, 100% and 83%, and the score-over-time chart with markers where results per search changed."
   },
   "evaluations-result": {
-    "alt": "An evaluation result: the expected document beside what came back, with the rank it was found at."
+    "files": [
+      "evaluations-result",
+      "evaluation-result-expected-vs-came-back"
+    ],
+    "alt": "A failed retrieval result: the expected document, found at #4 beyond the top 3, beside the two documents that came back, with Try this search, Open expected document and Edit question."
+  },
+  "evaluations-answer-result": {
+    "files": [
+      "evaluation-answer-result"
+    ],
+    "alt": "A full-answer result: the agent's answer with its citations, citing the expected document, mentioning the required phrase, with all its claims supported."
   },
   "team-evaluations": {
-    "alt": "The team's Evaluations page: every evaluation set with what it tests, its latest score, its trend and when it last ran."
+    "files": [
+      "team-evaluations",
+      "evaluations-team-page"
+    ],
+    "alt": "The team's Evaluations page: two sets with what they test, their questions, latest score and trend (one down 17 points), and the Regressions filter."
   },
   "team-members": {
-    "alt": "Team settings, Members tab: members with their roles, pending invites and a member marked \"Managed by SSO group\"."
+    "files": [
+      "team-members",
+      "team-settings-members-sso-managed"
+    ],
+    "alt": "Team settings, Members tab: the team's only owner, an editor marked \"Managed by SSO group it-staff\", and two members whose roles can be changed."
   },
   "team-usage-spend": {
-    "alt": "Team settings, Usage & spend tab: this month's spend against the budget, and the team's limits with meters."
+    "files": [
+      "team-usage-spend",
+      "team-settings-usage-and-spend"
+    ],
+    "alt": "Team settings, Usage & spend tab: \"$0.03 of $50.00 this month · Within budget · not enforced · resets Oct 1\" with a meter, and the spend breakdown by agent and by model."
   },
   "team-api-keys": {
+    "files": [
+      "team-api-keys"
+    ],
     "alt": "Team settings, API keys tab: personal and service keys with their scopes, restrictions, expiry and last use."
   },
   "admin-overview-features": {
-    "alt": "Admin Overview: the platform at a glance, Needs attention, and the Features card listing each optional feature's state."
+    "files": [
+      "admin-overview-features"
+    ],
+    "alt": "Admin Overview: the platform at a glance, Needs attention, and the Features card listing each optional feature's state, with recent changes.",
+    "hold": "The v0.2.1 capture shows a Grounded layout bug in the Features card (the Evaluations description wraps into a narrow column; see the screenshots' MANIFEST.md). Remove this line once it's recaptured, then run npm run screenshots."
   },
   "admin-teams": {
+    "files": [
+      "admin-teams"
+    ],
     "alt": "Admin, Teams: every team with its approved classification, members and status."
   },
   "admin-sso-groups": {
-    "alt": "Admin, SSO groups: rules mapping identity-provider groups to team roles, with the memberships each rule grants."
+    "files": [
+      "admin-sso-groups"
+    ],
+    "alt": "Admin, SSO groups: one rule mapping the it-staff group to the Editor role in the IT Help Desk team, the claim read at sign-in, and how many people's last sign-in carried it."
+  },
+  "admin-sso-groups-dry-run": {
+    "files": [
+      "admin-sso-groups-dry-run"
+    ],
+    "alt": "The Add rule dialog with its dry run: one person would be added to the team when the rule is saved."
+  },
+  "admin-connections": {
+    "files": [
+      "admin-connections"
+    ],
+    "alt": "Admin, Connections: three OpenAI-compatible connections (a model gateway, an embedding service and a SystemOne service) with their base URLs."
   },
   "admin-models": {
-    "alt": "Admin, Models: chat, embedding, moderation and SystemOne models with their connection, maximum classification and state."
+    "files": [
+      "admin-models"
+    ],
+    "alt": "Admin, Models: a chat model, an embedding model and a SystemOne model with their connection, maximum classification, what uses them and their status, above filters by kind."
   },
   "admin-embedding-migrations": {
+    "files": [
+      "admin-embedding-migrations"
+    ],
     "alt": "Admin, Embedding profiles, Migrations tab: a knowledge base moving to a new profile, with per-source progress."
   },
   "admin-classifications": {
+    "files": [
+      "admin-classifications"
+    ],
     "alt": "Admin, Classifications: the levels Open, Sensitive and Restricted with their maximum audience and retention."
   },
   "admin-moderation": {
+    "files": [
+      "admin-moderation"
+    ],
     "alt": "Admin, Moderation: the policy for the public audience with a threshold and action for each category."
   },
   "admin-costs": {
-    "alt": "Admin, Costs Overview: spend over the chosen range, a daily chart by kind and the Top spenders card."
+    "files": [
+      "admin-costs",
+      "admin-costs-overview"
+    ],
+    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens, requests and unpriced usage, and spend per day by kind."
+  },
+  "admin-costs-budgets": {
+    "files": [
+      "admin-costs-budgets"
+    ],
+    "alt": "Admin, Costs, Budgets tab: each team's mode, monthly budget, spend this month and projection."
   },
   "admin-parsing-ocr": {
-    "alt": "Admin, Parsing & OCR: OCR turned on with the Tesseract backend, languages and the Test button."
+    "files": [
+      "admin-parsing-ocr"
+    ],
+    "alt": "Admin, Parsing & OCR: OCR turned on with the Tesseract backend and its languages."
   },
   "admin-retention": {
+    "files": [
+      "admin-retention"
+    ],
     "alt": "Admin, Retention: the retention period for each kind of data, with the Dry run, Runs and Legal holds tabs."
   },
   "admin-break-glass": {
+    "files": [
+      "admin-break-glass"
+    ],
     "alt": "Admin, Break-glass: sessions with their team, scope, reason, status and read counts."
   },
   "admin-analytics": {
-    "alt": "Admin, Analytics: platform totals, the daily chart and top agents and teams, without message content."
+    "files": [
+      "admin-analytics"
+    ],
+    "alt": "Admin, Analytics: platform answers per day and usage totals, without message content."
+  },
+  "audit-log": {
+    "files": [
+      "audit-log"
+    ],
+    "alt": "Admin, Logs, Audit log: recent changes with who made them, the area and the target."
   }
 }
