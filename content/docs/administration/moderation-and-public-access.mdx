@@ -28,7 +28,7 @@ Each audience (team, everyone who signs in, public) has a policy:
 
 - **Provider**.
 - Per category, for questions and for answers: a **threshold** (0–1) and an **action**: block, flag or off.
-- **Output mode**: **Stream, then retract** (answers appear as they're written; a failing answer is replaced by the notice) or **Buffer** (answers are checked before anyone sees them; people see "Thinking…" meanwhile).
+- **Output mode**: **Stream, then retract** (answers appear as they're written; a failing answer is replaced by the notice) or **Buffer** (answers are checked before anyone sees them; after the search steps people see "Writing and checking the answer…" meanwhile).
 - **Fail closed** or open: what happens when the provider is unavailable.
 - A **notice** shown in place of a blocked question or answer.
 
@@ -38,7 +38,7 @@ The public policy blocks every category at 0.5 on questions and answers, buffers
 
 ### How it behaves
 
-- A blocked question is never searched and never reaches the chat model: the reply is the notice.
+- A blocked question never reaches the chat model: the reply is the notice. With "search before every answer" the search starts while the question is being checked, to save time, but a blocked question's results are discarded before any passage judging or model call.
 - Each check attempt is bounded (`MODERATION_TIMEOUT`, 10 s by default; at least 30 s for chat classifiers) and retried once. If it still fails and the policy fails closed, the reply is "The safety check is unavailable right now. Please try again."
 - Scores from uncalibrated providers (chat classifiers, guardrails without probabilities) block only at or above a high threshold (0.95 by default) and flag below it.
 - Decisions and scores are recorded for analytics and audit, never the text. Admins can list decisions with their category and score in Analytics.
