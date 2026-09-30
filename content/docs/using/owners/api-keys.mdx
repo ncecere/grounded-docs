@@ -3,7 +3,7 @@ title: API keys
 description: Personal and team service keys, their scopes and restrictions, and how to keep them safe.
 ---
 
-API keys let programs use the team's agents and knowledge bases without a browser: the [OpenAI-compatible endpoint](/docs/api/openai-compatible), the agent chat API, knowledge base search, and uploads. Create them under **Team settings → API keys**. Admins and owners see every key of the team; others see their own.
+API keys let programs use the team's agents and knowledge bases without a browser: the [OpenAI-compatible endpoint](/docs/api/openai-compatible), the agent chat API, knowledge base search, uploads, and [AI tools over MCP](/docs/using/mcp). Create them under **Team settings → API keys**. Admins and owners see every key of the team; others see their own.
 
 <Screenshot slot="team-api-keys" />
 
@@ -26,16 +26,19 @@ A service key has a **responsible contact**, a team member to ask about it, show
 | **Query** | Chat with agents and search knowledge bases | Everyone |
 | **Ingest** | Upload and manage documents | Editors, admins, owners |
 | **Manage** | Change sources and knowledge bases | Admins, owners |
+| **MCP** | Search knowledge bases and ask agents from AI tools, over the [MCP server](/docs/using/mcp). Nothing on the REST API | Everyone |
 
 A key can also be **restricted** to some knowledge bases and some agents. Leave them unchecked to allow every knowledge base, or every agent, of the team. A key can have an **expiry date**; it stops working at the end of that day.
 
 Keys always belong to one team, and can never administer the platform.
 
+The **MCP** scope works only while a platform admin has turned the MCP server on; the form says when it's off. A key with only the MCP scope can't call the REST API, and a key for AI tools doesn't need Query. Over MCP a key reaches exactly what it could reach as a query key: its team, and only the knowledge bases and agents it's restricted to.
+
 ## Creating one
 
 1. **Team settings → API keys → New API key.**
 2. Name it after what will use it ("Course site search"), pick personal or service, the scopes, any restrictions, and optionally an expiry date.
-3. Copy the secret. **It's shown once**, right after creation; Grounded stores only a keyed hash of it. The dialog also shows an example request.
+3. Copy the secret. **It's shown once**, right after creation; Grounded stores only a keyed hash of it. The dialog also shows an example request, and for a key with the MCP scope the MCP server's address.
 
 Keys look like `rag_<id>_<secret>`. Send them as a bearer token:
 
@@ -48,6 +51,10 @@ curl -H "Authorization: Bearer $GROUNDED_API_KEY" https://grounded.example.org/v
 **Revoke…** stops the key at once; programs using it get 401. It can't be undone. Revoked keys stay visible from the audit log, read-only, so the history keeps making sense.
 
 Each key's page shows when it was created and last used. Revoke keys nobody uses. If a key may have leaked, revoke it and create a new one.
+
+## Connected apps
+
+When the platform allows [OAuth sign-in for AI tools](/docs/using/mcp#oauth-sign-in-experimental) (experimental), this page also lists **your own** connected apps: the AI tools you signed in to with your Grounded account, with **Disconnect…**. They aren't team keys, and only you (and platform admins) see them.
 
 <Callout title="When the platform rotates its pepper">
   Platform operators occasionally rotate the secret used to hash API keys. Keys keep working if they're used during the grace period the operators set. A key that isn't used in that time stops working, and you'll need to create a new one. See [Security](/docs/self-hosting/security#rotating-keys).

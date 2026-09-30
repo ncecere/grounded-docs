@@ -48,6 +48,9 @@ Each factual sentence should end with a numbered citation chip such as **[1]**. 
 - Hover, click, or press Enter or Space on a chip to open its card: the cited passage, with its heading path and pages. Focus moves into the card; Escape returns you to the chip.
 - **Show source *n* below** opens the answer's sources, which start collapsed, and moves to that source.
 - A web page is linked to its original URL when the agent's citation mode includes links. Uploaded files are cited by title only; you can't download them from a chat.
+- Some agents can also call **tools** while they answer, such as a service status check. A tool's result is cited like a document and reads **From *Service status* · check_outage** among the sources: the service, then the tool. Claim checks treat it like any other source. A tool gets only the details the agent puts in a call, not your conversation. See [Tools from MCP servers](/docs/administration/mcp-servers#results-are-sources).
+
+<Screenshot slot="chat-tool-source" />
 
 ## Claims and verdicts
 

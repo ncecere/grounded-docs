@@ -25,8 +25,8 @@ The first platform admin is set by configuration ([First platform admin](/docs/s
 The admin portal opens on **Overview**:
 
 1. **Platform at a glance**: teams, people, agents, documents and answers, compared with the week before. A new install also gets a **Set up this install** checklist: add a connection and models, embedding profiles, moderation, and the first team.
-2. **Needs attention**, beside **Features**. Needs attention lists what an admin should act on: domain requests, teams near or over budget, documents that failed to index, keys still on a previous pepper, and configuration warnings such as an empty crawl allowlist or no email. [Features](/docs/administration/features) lists each optional feature with its state.
-3. **Recent changes**: the last five audit entries, with **All logs**.
+2. **Needs attention**, beside **Features**. Needs attention lists what an admin should act on: domain requests, teams near or over budget, documents that failed to index, keys still on a previous pepper, connections, models and MCP servers whose [stored health](/docs/self-hosting/health) is failing ("1 connection is failing", each linking to its filtered list), and configuration warnings such as an empty crawl allowlist or no email. [Features](/docs/administration/features) lists each optional feature with its state.
+3. **Recent changes**: the last five audit entries, with **All logs**. Sign-ins, MCP tool calls and OAuth sign-ins are left out; the audit log has them.
 
 <Screenshot slot="admin-overview-features" />
 
@@ -38,7 +38,7 @@ The admin sidebar has Overview and seven groups. Only Overview and the group of 
 |---|---|
 | **People** | [Users, Teams](/docs/administration/people-and-teams), [SSO groups](/docs/administration/sso-groups) |
 | **Content** | [Shared sources, Agents, Crawl domains](/docs/administration/content), [Parsing & OCR](/docs/administration/parsing-and-ocr) |
-| **Models** | [Connections, Models](/docs/administration/models), [Embedding profiles](/docs/administration/embedding-profiles) (Profiles · Migrations), [SystemOne](/docs/administration/systemone) |
+| **Models** | [Connections, Models](/docs/administration/models), [Embedding profiles](/docs/administration/embedding-profiles) (Profiles · Migrations), [MCP servers](/docs/administration/mcp-servers), [SystemOne](/docs/administration/systemone) |
 | **Usage & spend** | [Analytics](/docs/administration/analytics-and-logs), [Costs](/docs/administration/costs), [Limits](/docs/administration/limits) |
 | **Safety** | [Classifications](/docs/administration/classifications), [Moderation, Public access](/docs/administration/moderation-and-public-access) |
 | **Records** | [Logs](/docs/administration/analytics-and-logs#logs), [Retention](/docs/administration/retention) (Periods · Dry run · Runs · Legal holds), [Break-glass](/docs/administration/break-glass) |

@@ -14,7 +14,7 @@ curl -H "Authorization: Bearer rag_<id>_<secret>" https://grounded.example.org/v
 Keys are created in the app under **Team settings → API keys** ([API keys](/docs/using/owners/api-keys)); the secret is shown once. A key:
 
 - belongs to **one team**, and reaches only that team's agents and knowledge bases;
-- has **scopes**: `query` (chat and search), `ingest` (upload and manage documents), `manage` (change sources and knowledge bases);
+- has **scopes**: `query` (chat and search), `ingest` (upload and manage documents), `manage` (change sources and knowledge bases), `mcp` (search and ask from AI tools over [`/mcp`](/docs/using/mcp); it grants nothing on the REST API);
 - may be **restricted** to some knowledge bases and some agents;
 - may **expire**;
 - can never administer the platform.
@@ -22,13 +22,17 @@ Keys are created in the app under **Team settings → API keys** ([API keys](/do
 | | Personal key | Service key |
 |---|---|---|
 | Acts as | You, within the team | The team |
-| Scopes | By your role: members `query`; editors `query`, `ingest`; admins and owners all | Any (created by admins and owners) |
+| Scopes | By your role: members `query`, `mcp`; editors `query`, `ingest`, `mcp`; admins and owners all | Any (created by admins and owners) |
 | Conversations | Stored for you; send `conversationId` to continue one | Stateless: send earlier turns in `history`; `conversationId` is refused |
 | When the owner leaves the team | Revoked | Keeps working |
 
 Keys are stored only as HMAC digests. Per-key rate limits apply (300 queries per minute by default), as do the team's and the agent's limits. A revoked, expired or unknown key gets 401.
 
 Some routes don't accept API keys at all: evaluations, the command palette search (`/v1/search`), and everything under `/v1/admin`. Whether team keys may call a knowledge base's `/retrieve` directly depends on its classification level's setting.
+
+## MCP
+
+The MCP server at `POST /mcp` takes an API key with the `mcp` scope as a bearer token, or, when a platform admin turns on the experimental [OAuth sign-in](/docs/self-hosting/mcp-server#oauth-sign-in-experimental), a short-lived access token (`gat_…`) issued to a signed-in person. Those tokens only work on `/mcp`: the REST API answers `401`. See [Connect AI tools](/docs/using/mcp).
 
 ## Publishable keys
 

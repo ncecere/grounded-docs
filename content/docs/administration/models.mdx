@@ -20,7 +20,11 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 
 <Screenshot slot="admin-connections" />
 
-**Test connection** calls `GET /models` and lists the gateway's model IDs to help you fill in the model form. It reports timings for each phase (DNS, connect, TLS, first byte) and names the cause of a failure, such as an untrusted certificate or a refused connection.
+**Test connection** calls `GET /models` and lists the gateway's model IDs to help you fill in the model form. It reports timings for each phase (DNS, connect, TLS, first byte) and names the cause of a failure, such as an untrusted certificate or a refused connection. For a SystemOne service, which lists no models, it asks one small SystemOne question instead.
+
+### Health
+
+Since v0.3.0 every **Test connection** and **Test model** stores its result, and the worker re-tests enabled connections every 15 minutes at no cost. **Connections** and **Models** have a **Health** column ("Healthy · 3 minutes ago", "Failing · since 2 hours ago" or "Not tested yet") with a Health filter; a record page shows the last test's time, who ran it, and the error class and message when it failed. Failures appear under **Needs attention** on the admin Overview. See [Stored health](/docs/self-hosting/health).
 
 Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/completions`, and `/moderations` for moderation endpoints) plus `POST /v1/systemone` for SystemOne models. It has no vendor-specific code.
 

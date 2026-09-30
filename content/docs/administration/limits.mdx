@@ -29,10 +29,11 @@ Limits keep one team from using more than its share of storage, ingestion, queri
 | **Queries per minute per person** | 120 | 429. |
 | **Chat tokens per day** (team) | 2,000,000 | 429 `quota_exceeded` until midnight UTC. |
 | **Concurrent chats per person** (or service key) | 3 | 429. |
+| **MCP tool calls per answer** (Queries & chat tab; a value above 25 acts as 25) | 5 | Further calls to [MCP server tools](/docs/administration/mcp-servers) in that answer are refused; the model reads why and answers with what it has. |
 | **Evaluation sets** | 50 | Creation is refused. |
 | **Questions per evaluation set** | 500 | Adding or importing is refused. |
 
-Chat answers count towards the query limits too: each answer is one query. Evaluation runs work within the same query and chat limits.
+Chat answers count towards the query limits too: each answer is one query. Evaluation runs work within the same query and chat limits, and so do searches and answers from AI tools over the [MCP server](/docs/using/mcp).
 
 ### Public agents
 

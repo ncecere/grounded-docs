@@ -10,7 +10,7 @@ description: Platform analytics without message content, the audit log of every 
 | Tab | Shows |
 |---|---|
 | **Overview** | The daily chart first, then answers, conversations, unique users, public share, satisfaction, refusals and no-context answers, latency and time to first token, errors, and moderation (questions blocked, answers withheld, flagged, support messages). |
-| **Breakdown** | Answers by audience and by channel (app, API, OpenAI-compatible API, public page, widget, test chats). |
+| **Breakdown** | Answers by audience and by channel (app, API, OpenAI-compatible API, public page, widget, test chats, and **MCP server** for AI tools). |
 | **Models & tokens** | Tokens by model, from the usage ledger (chat and embedding, ingestion included). |
 | **Top agents & teams** | The most used agents and teams. |
 | **Checks** | Shown while a SystemOne model is configured: passage judging, citation checks (claims supported, and "Cited sources that support their claim" per source), and the scope check. |
@@ -38,11 +38,14 @@ Every change on the platform, newest first, append-only:
 - uploads and deletions of documents;
 - break-glass sessions and every read under them (kind and target, never content);
 - legal holds, and retention runs (as the system, with counts only);
-- evaluation sets, questions and runs.
+- evaluation sets, questions and runs;
+- the MCP switches (`platform.mcp`, `platform.mcp_oauth`), and every search or question from an AI tool over the [MCP server](/docs/self-hosting/mcp-server) (`mcp.search`, `mcp.ask`: the knowledge base or agent and the outcome, never the text);
+- OAuth sign-in: apps registering themselves, people connecting and disconnecting apps, and tokens issued (never a token);
+- [MCP servers](/docs/administration/mcp-servers) added, changed, refreshed and deleted, tools approved and withdrawn, and every call an agent makes to a tool (`mcp.tool_call`: the server, tool, outcome and result size, never the arguments or result).
 
 <Screenshot slot="audit-log" />
 
-Configuration changes keep before and after values, shown as a table in words ("Monthly budget $5.00 → none"), with money, dates and plain names instead of IDs. Filter by **Area** (type a word such as "budget" to find actions by label), **Person** (including **System (group mapping)**), target type and time. An entry names its team and links to what it's about.
+Configuration changes keep before and after values, shown as a table in words ("Monthly budget $5.00 → none"), with money, dates and plain names instead of IDs. Filter by **Area** (type a word such as "budget" to find actions by label; MCP entries are under **MCP server**, **MCP servers (client)**, **MCP tools** and **Connected apps (OAuth)**), **Person** (including **System (group mapping)**), target type and time. An entry names its team and links to what it's about.
 
 Platform auditors see everything; team owners and admins see their team's entries in [Team settings](/docs/using/owners/audit-log). The audit log is kept until you set a [retention](/docs/administration/retention) period for it (at least 30 days). Entries about legal holds are never deleted.
 

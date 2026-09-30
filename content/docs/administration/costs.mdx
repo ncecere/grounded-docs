@@ -28,6 +28,8 @@ Prices can be entered while the mode is still Off, so tracking starts with corre
 
 The currency is a display code only; there's no conversion. Tesseract and Tika OCR pages are counted but not priced.
 
+**MCP tool calls** are priced on the MCP server itself, not on this tab: its **Price per call** (Models → MCP servers) is a dated price from today, like the rows here. Each call that reaches the server is one unit (`mcp_calls`); without a price, calls are counted but unpriced. See [Tools from MCP servers](/docs/administration/mcp-servers#costs).
+
 ## 2. Choose a mode
 
 **Costs → Settings**:
@@ -50,7 +52,7 @@ A team's own mode overrides the platform's: **Inherit**, **Off**, **Track only**
 
 <Screenshot slot="admin-costs" />
 
-- **Overview**: total spend over a date range, a daily chart by kind (chat, embedding, SystemOne, moderation, OCR) with the day table behind **Show data**, and **Top spenders** by Teams, Agents or Models. One CSV button downloads the grouping shown, every row.
+- **Overview**: total spend over a date range, a daily chart by kind (chat, embedding, SystemOne, moderation, OCR, and **MCP tools** for calls to MCP servers) with the day table behind **Show data**, and **Top spenders** by Teams, Agents or Models. One CSV button downloads the grouping shown, every row.
 - **Budgets**: every active team's mode, budget (plus this month's extensions), month-to-date spend, share and projected month-end.
 
 <Screenshot slot="admin-costs-budgets" />
@@ -63,7 +65,7 @@ Figures come from an hourly rollup of the ledger, plus the latest hour read live
 
 - **Track only**: nothing below happens.
 - **At the threshold**: the team's owners and admins are notified once a month (in the app and by email; it can't be turned off). Everyone in the team sees a banner; only owners and admins see amounts.
-- **At 100% (Enforce)**: everything that calls a model stops for the team. Chats in every channel and knowledge base searches are refused (429 `budget_exhausted`); anonymous visitors of public agents see only "This assistant is unavailable right now". New ingestion waits and crawls pause. Nothing is deleted or failed, and the team appears under Needs attention.
+- **At 100% (Enforce)**: everything that calls a model stops for the team. Chats in every channel (including AI tools over MCP) and knowledge base searches are refused (429 `budget_exhausted`), and agents make no further MCP tool calls; anonymous visitors of public agents see only "This assistant is unavailable right now". New ingestion waits and crawls pause. Nothing is deleted or failed, and the team appears under Needs attention.
 - At the start of the next month, in the platform time zone, everything continues by itself.
 
 ## 5. A team whose budget is used up

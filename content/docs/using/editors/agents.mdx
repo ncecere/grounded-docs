@@ -42,6 +42,22 @@ The knowledge bases the agent searches (up to five). Each gives its own number o
 
 **Pinned filters** narrow every search the agent makes: sources, document kinds, tags, URL prefixes and dates. Use them when one agent should answer from part of a broader knowledge base.
 
+### Tools
+
+Tools from outside services that the agent may call while it answers, such as a service status check or a room booking lookup. They come from MCP servers that your platform admins registered, and only tools they approved are listed. Until they approve some, the section says "No tools are available yet".
+
+- Each tool shows its name, the server it's from, the most sensitive data it's approved for, and its description. Tick up to 10.
+- A tool approved for less sensitive data than the agent's knowledge bases hold can't be ticked ("not approved for this agent's data"). The same check runs again when you publish and before every call.
+- The chat model must support tools. If it doesn't, the section says so.
+- Tools are part of the draft, like the knowledge bases: people get them when you publish.
+- Only the details the model puts in a call are sent to the tool, never the conversation or the passages. An answer makes at most a few calls (your team's **MCP tool calls per answer** limit, 5 by default).
+- A tool's result is cited like a document: "From *Service status* · check_outage". Claim checks verify sentences against it, and a strictly grounded agent answers only from passages and tool results.
+- If a tool later loses its approval, or its server is turned off, the agent keeps answering without it and the section warns: **Remove it from the draft**.
+
+<Screenshot slot="agent-build-tools" />
+
+See [Tools from MCP servers](/docs/administration/mcp-servers) for how tools are registered, approved and priced.
+
 ### Answering
 
 - **When to search**

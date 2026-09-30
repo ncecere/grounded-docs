@@ -54,7 +54,8 @@ A platform admin can give your team a monthly budget. The month follows the plat
 
 - **Track only**: the budget shows progress ("not enforced"). Nothing is refused, and nobody is notified.
 - **Enforce**: at the warning threshold (80% by default), the team's owners and admins are notified, and everyone in the team sees a banner (members without amounts). At 100%, everything that calls a model stops until the month ends, the budget is raised, or an admin grants an extension:
-  - chats in every channel and knowledge base searches are refused ("budget exhausted"); visitors to public agents see only "This assistant is unavailable right now";
+  - chats in every channel and knowledge base searches are refused ("budget exhausted"), including those from AI tools over MCP; visitors to public agents see only "This assistant is unavailable right now";
+  - agents stop calling tools on MCP servers (calls that have a price count towards the budget);
   - new ingestion waits: pending documents stay queued and crawls pause.
 
 Nothing is deleted or failed, and work continues by itself when the budget allows. Budgets are checked against a figure cached for about 30 seconds, so a busy team can go slightly over.

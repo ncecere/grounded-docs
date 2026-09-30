@@ -70,7 +70,7 @@ The chosen tools join the agent's knowledge search. The model decides whether to
 
 - **What's sent:** only the arguments the model chose, with the static header. Never the conversation, the question or the passages, unless the model puts them in an argument. The classification ceiling is the guard against sensitive data leaving.
 - **Checked before each call:** the server is still enabled and approved for the agent's data, the team's budget isn't used up, and the answer hasn't reached its call limit. A refused call isn't made; the model reads why and answers with what it has.
-- **Bounds:** the server's timeout; one response of at most 1 MiB; the result the model reads is cut to 8,000 characters (the citation says it was cut); and the team limit **MCP tool calls per answer** (default 5, at most 25; see [Limits](/docs/administration/limits)).
+- **Bounds:** the server's timeout; one response of at most 1 MiB; the result the model reads is cut to 8,000 characters (the citation says it was cut); and the team limit **MCP tool calls per answer** (default 5; a value above 25 acts as 25; see [Limits](/docs/administration/limits)).
 - **Refused:** a server's requests for more input (elicitation), sampling and roots. An agent answering a person can't answer a remote server's questions.
 - **Errors:** a timeout, an unreachable server or a tool that reports an error become a tool error the model reads; the answer goes on.
 
