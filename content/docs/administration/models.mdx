@@ -49,7 +49,7 @@ Gateways differ in small ways. A model's **Compatibility** section adjusts what 
 | Flag | Kind | Default | Effect |
 |---|---|---|---|
 | Developer role | chat | off | Send the system prompt with role `developer` instead of `system`. SGLang rejects `developer`. |
-| Reasoning effort | chat | off | Send the agent's `reasoning_effort`. Unknown fields break some gateways. |
+| Accepts reasoning effort | chat | not sent | For a reasoning model: send `reasoning_effort` (low, medium or high). Agents using the model can then choose a **Reasoning effort** under Build → Advanced (until it's on, that field is disabled and says why), and query rewrites ask for low effort. Leave it off for models that don't reason: unknown fields break some gateways. |
 | Stream usage | chat | on | Ask for usage in the last streamed chunk. |
 | Max tokens field | chat | `max_tokens` | `max_tokens` or `max_completion_tokens`. |
 | Tool choice | chat | off | Send `tool_choice`, only for servers that honour it. |
