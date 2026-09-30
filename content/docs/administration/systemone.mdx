@@ -8,7 +8,7 @@ description: Optional SystemOne models that judge passages, check each claim aga
 To use one, add a connection to a service that answers `POST /v1/systemone`, then add a model of kind **SystemOne** under [Models](/docs/administration/models). Its classification ceiling applies like any model's. Then configure the features under **Models → SystemOne**.
 
 <Callout type="warn" title="Each check costs time">
-  SystemOne requests run on the model service, often one GPU. Passage judging makes one request per candidate passage (in the project's tests on one GPU, about 0.7 s each); citation checks one per claim and cited source, after the answer. Measure on your own hardware before turning them on for busy agents.
+  SystemOne requests run on the model service, often one GPU. Passage judging makes one request per candidate passage (in the project's tests on one GPU, about 0.7 s each), and an answer waits for it at most the **Passage judging time limit**; citation checks one per claim and cited source, after the answer. Measure on your own hardware before turning them on for busy agents.
 </Callout>
 
 ## Features
@@ -26,6 +26,15 @@ After retrieval and before the prompt is built, the model judges the top candida
 
 If a judgment times out or fails, the passage keeps its place and is used (fail-open).
 
+With **Judge passages for every agent** on (the agents' default), the card also sets:
+
+- **Candidates**: how many fused passages are judged per search (1–50; 10 by default). Each is one request.
+- **Timeout per request (ms)**: a slower request keeps its passage (500–60,000; 5,000 by default).
+- **Passage judging time limit (seconds)**: the longest an answer waits for one search's judging (0.5–10; 1.5 by default; never more than twice the per-request timeout). Since v0.3.0. Requests still running then are cancelled, and their passages are used unjudged at their search rank, so an answer is never worse than without judging. They're counted as skipped. The knowledge base playground's judging waits for every judgment.
+- **Requests**: **One request per passage** (recommended) or **One request for all passages** (faster, less discriminating).
+
+With "search before every answer", judging starts only once moderation and the scope check allow an answer: small talk, out-of-scope questions and blocked questions make no judging requests.
+
 ### Citation checks
 
 After an answer, each **claim** (a factual sentence, list item or table row) is checked against each source it cites: supports, contradicts or says nothing. Each claim gets one verdict: **supported**, **not supported**, **uncited** (a factual sentence without a citation) or **unchecked** (a check failed). See [Claims and verdicts](/docs/using/chat#claims-and-verdicts) for how people see them.
@@ -37,12 +46,12 @@ Checks are bounded (20 seconds per answer by default, at most 30 claim–source 
 
 ### Scope check
 
-Before retrieval, the model decides whether the message is small talk, and whether it's within the agent's subject (from its name, description and instructions):
+Before the passages are used, the model decides whether the message is small talk, and whether it's within the agent's subject (from its name, description and instructions):
 
 - Small talk gets a short reply from the chat model, without a search.
 - A question outside the subject, to a strictly grounded agent, gets "This is outside what *agent* covers." without a search or a chat model call.
 
-On an error or timeout the message is answered normally.
+The check runs at the same time as input moderation and, with "search before every answer", the search, so it adds little to the wait. When it answers small talk or out of scope, the search's results are discarded (its embedding tokens are still recorded) and nothing is judged. On an error or timeout the message is answered normally.
 
 ### Moderation
 
