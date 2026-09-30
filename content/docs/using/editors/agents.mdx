@@ -61,7 +61,7 @@ See [Tools from MCP servers](/docs/administration/mcp-servers) for how tools are
 ### Answering
 
 - **When to search**
-  - **Search before every answer** (default): the question, rewritten to stand on its own, is searched once and the passages go to the model. Fast and predictable.
+  - **Search before every answer** (default): the question is searched once and the passages go to the model. A follow-up that depends on the conversation is first rewritten to stand on its own; a question that already stands alone is searched as it is. Fast and predictable.
   - **Let the model decide when to search**: the model gets a search tool and may search several times, or not at all. Needs a chat model with tool support.
 - **Answer only from the sources** (on by default, recommended): strict grounding. When the sources don't answer the question, the agent replies with the refusal message rather than general knowledge. If they cover part of it, it answers that part and says what isn't covered.
 - **Refusal message**: sent word for word when the sources have no answer. The default is "I couldn't find an answer to that in the sources I have."
@@ -69,7 +69,7 @@ See [Tools from MCP servers](/docs/administration/mcp-servers) for how tools are
 
 ### Safety
 
-- **Check answers before showing them**: people see "Thinking…" until the answer passes moderation, instead of a streamed answer that may be withdrawn. Public agents always work this way.
+- **Check answers before showing them**: people see "Writing and checking the answer…" until the answer passes moderation, instead of a streamed answer that may be withdrawn. Public agents always work this way.
 - **Stricter category rules**: tighten the platform's moderation policy for this agent, per category, for questions and answers. An agent can make moderation stricter than the platform's policy, never weaker. The section says when the rules have no effect yet (for example when the audience has no moderation).
 
 ### SystemOne checks
@@ -80,7 +80,7 @@ Shown when the platform has a [SystemOne model](/docs/administration/systemone).
 - **Citation checks**, with **Citation mode**: **annotate** marks each claim's verdict; **enforce** also removes confidently unsupported citations, and a strictly grounded agent with nothing supported refuses. See [Claims and verdicts](/docs/using/chat#claims-and-verdicts).
 - **Scope check**: before searching, spots small talk (answered briefly without a search) and questions outside the agent's subject (a strictly grounded agent refuses without a search).
 
-Each check adds latency: passage judging roughly one SystemOne request per passage, citation checks one per claim and source after the answer.
+Each check adds latency: passage judging roughly one SystemOne request per passage, but an answer waits for it at most the platform's passage judging time limit (1.5 s by default; passages not judged by then are used unjudged); citation checks one per claim and source after the answer. The scope check runs while the knowledge bases are searched, and passage judging starts only once it (and moderation) allow an answer, so small talk and out-of-scope questions spend no judging requests.
 
 ### Advanced
 
@@ -88,11 +88,11 @@ Each check adds latency: passage judging roughly one SystemOne request per passa
 |---|---|
 | **Temperature** | The model's sampling temperature. Blank uses the model's default. |
 | **Maximum answer length (tokens)** | Blank uses the model's limit. |
-| **Reasoning effort** | How long a reasoning model thinks before answering, when the model supports it. |
+| **Reasoning effort** | How long a reasoning model thinks before answering: **Model default**, **Low**, **Medium** or **High**. Lower starts answering sooner. Available once a platform admin turns on **Accepts reasoning effort** for the chat model ([Models](/docs/administration/models#compatibility)); until then the field is disabled and says why. |
 | **Source token budget** | Passages are trimmed to about this many tokens (500–32,000; default 6,000). |
 | **Maximum searches** | With "let the model decide", how many model turns may search (1–8; default 4). The last turn must answer. |
 | **Minimum similarity** | Drop passages less similar than this (0–1). 0 turns it off. |
-| **Rewrite follow-up questions** | Rewrite a follow-up into a question that stands alone before searching (on by default). |
+| **Rewrite follow-up questions** | With "search before every answer", rewrite a follow-up that depends on the conversation ("what about summer?", "can I pay for it by card?") into a question that stands alone before searching (on by default). It adds a short model call, asked for low reasoning effort when the model accepts one. A question that stands alone isn't rewritten. |
 
 ### Try it
 
