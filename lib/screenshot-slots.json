@@ -239,5 +239,77 @@
       "audit-log"
     ],
     "alt": "Admin, Logs, Audit log: recent changes with who made them, the area and the target."
+  },
+  "mcp-key-created": {
+    "files": [
+      "mcp-key-created"
+    ],
+    "alt": "Team settings, API keys: a new personal key with the scope \"MCP: search and ask from AI tools\", its secret shown once, and the MCP server address to give AI tools."
+  },
+  "oauth-consent": {
+    "files": [
+      "oauth-consent"
+    ],
+    "alt": "The consent page an AI tool opens: the tool's name with the host that vouches for it, \"Search knowledge bases and ask agents you can use, as you\", where the browser goes back to, and Allow and Deny."
+  },
+  "connected-apps": {
+    "files": [
+      "connected-apps"
+    ],
+    "alt": "Team settings, API keys, Connected apps: one AI tool with its host, when it was connected and last used, and Disconnect."
+  },
+  "admin-features-mcp": {
+    "files": [
+      "admin-features-mcp"
+    ],
+    "alt": "Admin Overview, Features: the MCP server row switched on, with the address clients use and a setup guide link, and the OAuth sign-in for MCP clients row marked Experimental."
+  },
+  "admin-user-connected-apps": {
+    "files": [
+      "admin-user-connected-apps"
+    ],
+    "alt": "Admin, a person's page: the Connected apps card listing the AI tools they connected with OAuth sign-in, with Disconnect for platform admins."
+  },
+  "admin-mcp-servers": {
+    "files": [
+      "admin-mcp-servers"
+    ],
+    "alt": "Admin, Models, MCP servers: a Service status server with its approved tools (2 of 3), its data ceiling, status and health (Healthy · 3 minutes ago)."
+  },
+  "admin-mcp-server-tools": {
+    "files": [
+      "admin-mcp-server-tools"
+    ],
+    "alt": "An MCP server record: its URL, the header shown only by its last characters, data ceiling, timeout and price, and its tools, each with its description, input schema and approval state, under \"Read before you approve\"."
+  },
+  "agent-build-tools": {
+    "files": [
+      "agent-build-tools"
+    ],
+    "alt": "The agent editor Build tab, Tools section: approved MCP tools with their server and description, one of them ticked."
+  },
+  "chat-tool-source": {
+    "files": [
+      "chat-tool-source"
+    ],
+    "alt": "A chat answer that cites a tool result: the sources list shows \"From Service status · check_outage\" beside passages from documents."
+  },
+  "admin-connections-health": {
+    "files": [
+      "admin-connections-health"
+    ],
+    "alt": "Admin, Connections with the Health column: \"Healthy · 3 minutes ago\" for two connections and \"Failing · since 2 hours ago\" for one, with the Health filter."
+  },
+  "admin-needs-attention-health": {
+    "files": [
+      "admin-needs-attention-health"
+    ],
+    "alt": "Admin Overview, Needs attention: \"1 connection is failing\" and \"1 MCP server is failing\", each linking to its list filtered to the failing ones."
+  },
+  "tracing-answer-trace": {
+    "files": [
+      "tracing-answer-trace"
+    ],
+    "alt": "One chat answer as a trace in Jaeger: the HTTP request, agent.answer, retrieval (vector, lexical and fusion), a model call, and an MCP tool call with its HTTP exchange."
   }
 }
