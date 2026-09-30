@@ -22,7 +22,7 @@ The Kubernetes NetworkPolicies allow egress on ports 443 and 80. A gateway on an
 Self-hosted models are candidates for your most sensitive data, subject to your policy: tag them with the right maximum classification. Some things measured by the project on vLLM and SGLang:
 
 - **One GPU serves few requests at once**: about two chat streams for a 27B model. Further requests queue on the server. Chat and embeddings on the same GPU slow each other.
-- **Turn off thinking** for Qwen3-style models unless you need it. On one GPU it took answers from a median of about 14 s to 83 s for the same quality, and a small output limit can go entirely to reasoning. Use the model's **Extra body**:
+- **Turn off thinking** for Qwen3-style models unless you need it. On one GPU it took answers from a median of about 14 s to 83 s for the same quality, and a small output limit can go entirely to reasoning. Use the model's **Extra request fields (JSON)**:
 
   ```json
   {"chat_template_kwargs": {"enable_thinking": false}}
