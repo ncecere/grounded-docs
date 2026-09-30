@@ -1,11 +1,11 @@
 ---
 title: v0.3.0
-description: Reach — MCP in both directions (AI tools use Grounded; agents call approved tools, cited as sources), stored health for models and MCP servers, and OpenTelemetry tracing.
+description: Reach — MCP in both directions (AI tools use Grounded; agents call approved tools, cited as sources), stored health for models and MCP servers, OpenTelemetry tracing, and faster answers that say what they're doing.
 ---
 
-v0.3.0 brings Grounded to the tools people already use, through the [Model Context Protocol](https://modelcontextprotocol.io), in both directions. It also keeps the health of every model connection, model and MCP server, and can trace one answer from the HTTP request to each model and tool call. **Every new feature is optional and off** until a platform admin or operator turns it on, apart from the scheduled health check, which costs nothing.
+Released 2026-09-30. v0.3.0 brings Grounded to the tools people already use, through the [Model Context Protocol](https://modelcontextprotocol.io), in both directions. It also keeps the health of every model connection, model and MCP server, can trace one answer from the HTTP request to each model and tool call, and starts answers sooner. **Every new feature is optional and off** until a platform admin or operator turns it on, apart from the scheduled health check, which costs nothing.
 
-A release candidate, `v0.3.0-rc.1`, runs on the reference install before the release.
+A walkthrough by role (platform admin, auditor, team owner and editor, member) came before this release, and its findings were fixed. `v0.3.0-rc.1` runs on the reference install before `v0.3.0` is tagged.
 
 ## Highlights
 
@@ -14,6 +14,10 @@ A release candidate, `v0.3.0-rc.1`, runs on the reference install before the rel
 - **Agents call approved tools (MCP client).** Platform admins register remote MCP servers (Models → MCP servers), read and approve each tool, and set a classification ceiling and an optional price per call. Editors choose approved tools in **Build → Tools**. A tool's result is treated as untrusted data and **cited as a numbered source** ("From *Service status* · check_outage"), and claim checks verify answers against it. Every call is bounded, metered and audited. See [Tools from MCP servers](/docs/administration/mcp-servers).
 - **Stored health.** Every Test button stores its result, and the worker re-tests enabled connections, models and MCP servers every 15 minutes at no cost. The admin lists show "Healthy · 3 minutes ago" or "Failing · since 2 hours ago", failures appear under **Needs attention**, and a new alert fires after 30 minutes of failure. See [Stored health](/docs/self-hosting/health).
 - **OpenTelemetry tracing.** Set `OTEL_EXPORTER_OTLP_ENDPOINT` and one answer becomes one trace across HTTP, retrieval, model calls, SystemOne checks, MCP tool calls and background jobs, with trace context carried through MCP `_meta`. Spans never hold questions, answers, passages or tool data. See [Tracing](/docs/self-hosting/tracing).
+- **Faster answers, and they say what they're doing.** An answer's first words come sooner: a follow-up is rewritten into a search query only when it depends on the conversation, the search runs while the question's moderation and scope checks answer, and SystemOne passage judging waits at most a time limit (**Admin → SystemOne → Passage judging time limit**, 1.5 s by default; passages not judged by then are kept, as if unjudged). Until the first words, the chat says the step: "Understanding the question…", "Searching *agent*'s knowledge…", "Checking the passages…", "Writing the answer…" (or "Writing and checking the answer…" when answers are checked before they're shown). See [Asking a question](/docs/using/chat#asking-a-question) and [SystemOne](/docs/administration/systemone#passage-judging).
+- **Reasoning effort.** A chat model marked **Accepts reasoning effort** (Admin → Models → Compatibility) lets each agent choose low, medium or high (**Build → Advanced**), and query rewrites ask it for low effort. **Publish** is disabled while the draft has problems publishing would refuse, and says how many. See [Agents](/docs/using/editors/agents#advanced).
+- **A clearer audit log.** Each entry says how the person acted: signed in, with an API key or through a connected app, by name. The platform log shows the caller's address. OAuth and tool-call entries say what happened ("App renewed its sign-in", "Connection revoked: a refresh token was reused (possible theft)", "An agent's MCP tool call was refused (call limit)").
+- **Quieter server errors.** A request its client cancelled (a reload, a closed tab) is logged at info and counted as status `499`, not as a `500` in the 5xx metrics and the error objective, and every log line uses the configured format.
 
 ## Requirements
 
@@ -51,6 +55,12 @@ Things people will notice:
 - **Admin → Connections and Models** have a **Health** column. The first scheduled check runs shortly after the new worker starts.
 - **Limits** has a new team limit, **MCP tool calls per answer** (default 5), and spend reports a new category, **MCP tools**.
 - **Analytics and the access log** show a new channel, **MCP server**.
+- **Agent → Build** has a **Tools** section. It lists tools only once a platform admin has approved some, and the agent's chat model must support tool calling.
+- **The audit log** has the areas and actions of the new features (`mcp.*`, `mcp_server.*`, `mcp_tool.*`, `oauth.*`, `platform.mcp`, `platform.mcp_oauth`), and each entry says how the person acted.
+- **Admin → SystemOne** has a **Passage judging time limit** (1.5 s). Answers from agents with passage judging may start sooner, with some passages used unjudged when judging is slow.
+- **Admin → Models → Compatibility** has **Accepts reasoning effort**, and an agent's **Reasoning effort** (Build → Advanced) is disabled, with the reason, until its model accepts one.
+- **Chat** says which step the agent is on until the first words.
+- **Streamed chat:** a new `status` event names each step before the first words, and a model failure after the stream has started arrives as an `error` event instead of an HTTP `503` (JSON answers and the OpenAI-compatible endpoint are unchanged). Clients that read the stream should handle `error` events; the web client does. See [Native chat API](/docs/api/chat-api#the-event-stream).
 
 ## API changes
 
@@ -60,11 +70,14 @@ All additive; see the [API reference](/docs/api):
 - `/v1/admin/mcp-servers` (list, create, get, update, delete, test, refresh, tools, tool approval) and `GET /v1/mcp-tools`; `tools` in agent configurations; `kind`, `server` and `tool` on citations and retrieval hits.
 - `GET /v1/admin/health-checks`; the Test endpoints store their results.
 - `GET`/`POST /v1/oauth/consent`, `/v1/me/oauth-grants`, `/v1/admin/users/{userId}/oauth-grants`.
-- `mcp` in spend by kind, the `mcp_calls_per_answer` limit; the audit log's `excludeAction` takes comma-separated prefixes.
+- `mcp` in spend by kind, the `mcp_calls_per_answer` limit, `max` on limits; the audit log's `excludeAction` takes comma-separated prefixes; `via` and `clientIp` on audit entries.
+- The chat stream's `status` event (`step`: `rewriting`, `searching`, `checking` or `answering`); `judging.timeLimitMs` in the SystemOne settings (a `PUT` without it keeps the saved value).
+
+One change in behaviour: a streamed answer now starts with its first `status` event, so `model_unavailable` or `model_busy` from the model after that is an `error` event rather than an HTTP `503`. JSON answers and the OpenAI-compatible endpoint are unchanged.
 
 `POST /mcp` and the OAuth protocol endpoints (`/.well-known/…`, `/oauth/…`) speak protocols and are described in [MCP server and OAuth](/docs/self-hosting/mcp-server), not in the OpenAPI document.
 
-New metrics: `grounded_mcp_tool_calls_total`, `grounded_mcp_client_calls_total`, `grounded_mcp_client_call_duration_seconds`, `grounded_health_failing`, `grounded_health_failing_seconds`, `grounded_health_checks_total` and `grounded_health_check_duration_seconds`; a new route group `mcp`; and a new alert, `GroundedHealthCheckFailing`.
+New metrics: `grounded_mcp_tool_calls_total`, `grounded_mcp_client_calls_total`, `grounded_mcp_client_call_duration_seconds`, `grounded_health_failing`, `grounded_health_failing_seconds`, `grounded_health_checks_total` and `grounded_health_check_duration_seconds`; a new route group `mcp`, outside the latency objective; status `499` for requests the client cancelled; and a new alert, `GroundedHealthCheckFailing`.
 
 ## Known limitations
 
@@ -72,11 +85,12 @@ The [v0.2.0 limitations](/docs/releases/v0-2-0#known-limitations) still apply, a
 
 - **OAuth sign-in is experimental**: one resource and one scope, public clients only, no private-use redirect schemes, no CORS on its endpoints, and two concurrent refreshes with the same token revoke the connection.
 - The MCP server's `ask` isn't streamed; there are no documents as MCP resources, prompts or list-changed notifications, and `search` has no metadata filters.
-- Agents reach outside MCP servers with a static header only; OAuth to outside servers comes later. Servers must be at public https addresses.
+- Agents reach outside MCP servers with a static header only; OAuth to outside servers comes later. Servers must be Streamable HTTP at public https addresses; a host name's addresses are checked when Grounded dials it, not when the server is saved.
+- Requests for more input from an MCP server (elicitation) are refused: an agent answering a person can't ask a remote server's questions.
 - A scheduled health check proves that a gateway lists a model, not that the model answers: **Test model** and real traffic catch the rest.
 - No trace links from the dashboards or metric exemplars yet, and no per-stage timings in the product.
 - The Teams and Slack bot isn't in this release.
 
 ## Verifying the images
 
-As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.3.0`: `docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.3.0 (<commit>)`, and the release has SPDX SBOMs, digest files and a `checksums.txt`.
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.3.0`: `docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.3.0 (<commit>)`, and so does the MCP server's `serverInfo.version`. The release has SPDX SBOMs, digest files and a `checksums.txt`. Tracing adds about 3.5 MB to the binary.
