@@ -3,9 +3,10 @@ title: API overview
 description: How Grounded's API is organised, its conventions, and where to start.
 ---
 
-Everything the web app does goes through Grounded's HTTP API, and the same routes serve programs. There are two surfaces:
+Everything the web app does goes through Grounded's HTTP API, and the same routes serve programs. There are three surfaces:
 
 - **The OpenAI-compatible API**: `POST /v1/chat/completions` and `GET /v1/models`, where each agent is a model named `agent:<team>/<agent>`. Any OpenAI client library works. This surface is meant to stay stable through 0.x. See [OpenAI-compatible chat](/docs/api/openai-compatible).
+- **The MCP server**: `POST /mcp`, for AI tools that speak the Model Context Protocol. It's JSON-RPC rather than REST, so it isn't in the OpenAPI document. See [Connect AI tools](/docs/using/mcp).
 - **The native REST API** under `/v1`: teams, sources, documents, knowledge bases, agents, chat, evaluations, and the admin API. It's described by an OpenAPI 3.0 document that covers every route (a test in the Grounded repository enforces it), and it **may change between minor releases** before 1.0. See the [reference](/docs/api/reference/operations/getHealthz), generated from that document.
 
 <Cards>
@@ -37,4 +38,4 @@ Everything the web app does goes through Grounded's HTTP API, and the same route
 
 ## Keeping the spec
 
-The reference is generated from `openapi/grounded.yaml` in this documentation's repository, a copy of `api/openapi.yaml` from the Grounded release these docs describe (v0.2.1). The Grounded repository's copy is the source of truth.
+The reference is generated from `openapi/grounded.yaml` in this documentation's repository, a copy of `api/openapi.yaml` from the Grounded release these docs describe (v0.3.0). The Grounded repository's copy is the source of truth.

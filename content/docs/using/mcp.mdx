@@ -1,0 +1,236 @@
+---
+title: Connect AI tools (MCP)
+description: Use your team's knowledge bases and agents from AI tools such as coding agents and desktop assistants, over the Model Context Protocol.
+---
+
+Grounded is an [MCP](https://modelcontextprotocol.io) (Model Context Protocol) server. An AI tool that speaks MCP, such as a coding agent or a desktop assistant, can **search** your team's knowledge bases and **ask** its agents, and gets back passages or answers with citations. It uses the same permissions and limits as the rest of Grounded: a tool can reach only what you could reach with an API key.
+
+<Callout title="Is it on?">
+  The MCP server is off until a platform admin turns it on. While it's off, the API key form says so and tools get "not found". Ask your platform admins, or point them to [Enabling the MCP server](/docs/self-hosting/mcp-server).
+</Callout>
+
+There are two ways for a tool to sign in:
+
+- **An API key with the MCP scope** (below). Works with every MCP client.
+- **OAuth sign-in** ([experimental](#oauth-sign-in-experimental)), when your platform turns it on: you sign in to Grounded in your browser and approve the tool. No key to copy.
+
+## 1. Create a key
+
+<Steps>
+<Step>
+
+In your team, open **Team settings → API keys → New API key**.
+
+</Step>
+<Step>
+
+Tick **MCP: search and ask from AI tools**. Every team role can give a key this scope. It doesn't need the Query scope, and it grants nothing on the REST API: a key with only this scope works only for AI tools.
+
+</Step>
+<Step>
+
+Optionally restrict the key to some knowledge bases or agents, and give it an expiry date.
+
+</Step>
+<Step>
+
+Copy the secret. It's shown once. The dialog also shows the **MCP server** address to give your tool, for example `https://grounded.example.edu/mcp`.
+
+</Step>
+</Steps>
+
+<Screenshot slot="mcp-key-created" />
+
+What the key reaches over MCP is what it could reach as a query key, and nothing more:
+
+- **Its team only**, and only the knowledge bases and agents it's restricted to (all of the team's when it's unrestricted). An agent is offered only when the key may use every knowledge base the agent searches.
+- **A personal key** acts as you. It stops working if you leave the team or are suspended. Its conversations are stored as yours, so a follow-up can continue one.
+- **A service key** belongs to the team and keeps no conversations: each question stands alone.
+- Revoking a key, or letting it expire, takes effect on the next request.
+
+See [API keys](/docs/using/owners/api-keys) for kinds, scopes and revoking.
+
+## 2. Connect your tool
+
+Every client needs the same two things: the address and a header.
+
+```text
+URL:     https://grounded.example.edu/mcp
+Header:  Authorization: Bearer rag_XXXXXXXXXXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+Keep the key out of files you share or commit. Most clients can read it from an environment variable, as in the examples below. They follow each client's documented format at the time of writing. Clients change their configuration formats often, so if one doesn't work, check your client's documentation.
+
+<Tabs items={['Any client', 'Claude Code', 'OpenCode', 'VS Code']}>
+<Tab value="Any client">
+
+Most clients take a JSON entry like this one. The field names vary: `type` is sometimes `transport`, and some clients want `"streamable-http"` or `"http"`. Whether `${GROUNDED_API_KEY}` is read from the environment depends on the client; if it isn't, paste the key and keep the file private.
+
+```json
+{
+  "mcpServers": {
+    "grounded": {
+      "type": "http",
+      "url": "https://grounded.example.edu/mcp",
+      "headers": { "Authorization": "Bearer ${GROUNDED_API_KEY}" }
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="Claude Code">
+
+```sh
+export GROUNDED_API_KEY=rag_...
+claude mcp add --transport http grounded https://grounded.example.edu/mcp --header "Authorization: Bearer $GROUNDED_API_KEY"
+```
+
+</Tab>
+<Tab value="OpenCode">
+
+In `opencode.json` (or `opencode.jsonc`):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "grounded": {
+      "type": "remote",
+      "url": "https://grounded.example.edu/mcp",
+      "enabled": true,
+      "headers": { "Authorization": "Bearer {env:GROUNDED_API_KEY}" }
+    }
+  }
+}
+```
+
+</Tab>
+<Tab value="VS Code">
+
+In `.vscode/mcp.json`. VS Code asks for the key the first time and stores it:
+
+```json
+{
+  "inputs": [{ "type": "promptString", "id": "grounded-key", "description": "Grounded API key", "password": true }],
+  "servers": {
+    "grounded": {
+      "type": "http",
+      "url": "https://grounded.example.edu/mcp",
+      "headers": { "Authorization": "Bearer ${input:grounded-key}" }
+    }
+  }
+}
+```
+
+</Tab>
+</Tabs>
+
+Grounded speaks MCP over **Streamable HTTP** only. A client that can only start local (stdio) servers needs a bridge that forwards to a remote Streamable HTTP server with a header.
+
+### Checking the connection
+
+```sh
+curl -s https://grounded.example.edu/mcp \
+  -H "Authorization: Bearer $GROUNDED_API_KEY" \
+  -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
+```
+
+The answer names the server (`grounded`), the protocol versions it supports and its `tools` capability. A `404` means the MCP server is off; a `401`, a wrong, expired or revoked key; a `403`, a key without the MCP scope.
+
+## What your tool can do
+
+Grounded offers two tools. Each lists, as a fixed choice, exactly the knowledge bases or agents your key may use, with the first line of each one's description, so the AI tool can pick the right one. A key that may search no knowledge base has no `search` tool, and one that may use no agent has no `ask` tool.
+
+### `search`: passages from a knowledge base
+
+| Argument | | |
+|---|---|---|
+| `knowledge_base` | required | One of the key's knowledge bases, by a name made from its title (`Student handbook` → `student-handbook`) |
+| `query` | required | 1–4,000 characters |
+| `top_k` | optional | 1–50 passages; by default the knowledge base's own setting |
+
+It returns the passages as text for the model to read, and the same as structured data: each passage's citation number, title, heading path, the URL for a web page (or the file name for an upload, and the pages for a paged document), and its text.
+
+```json
+{
+  "knowledge_base": "student-handbook",
+  "passages": [
+    {
+      "n": 1,
+      "title": "Parking",
+      "heading_path": ["Permits"],
+      "url": "https://www.example.edu/parking",
+      "text": "Students must display a valid parking permit…"
+    }
+  ]
+}
+```
+
+Knowledge bases whose classification level keeps API keys to agents aren't offered, just as the REST API's search refuses them.
+
+### `ask`: an agent's answer
+
+| Argument | | |
+|---|---|---|
+| `agent` | required | One of the published agents the key may chat with, by its address name (`help-desk`) |
+| `question` | required | 1–8,000 characters |
+| `conversation` | optional | The `conversation` value a previous `ask` returned, to ask a follow-up (personal keys only) |
+
+It returns the whole answer at once (it isn't streamed): the text with its `[n]` markers, the sources, and a handle for follow-ups.
+
+```json
+{
+  "agent": "help-desk",
+  "answer": "Reset your password from the account page [1].",
+  "citations": [
+    { "n": 1, "title": "Passwords", "heading_path": ["Resetting"], "url": "https://kb.example.edu/passwords", "snippet": "…" }
+  ],
+  "claims": [{ "text": "Reset your password from the account page.", "verdict": "supported", "sources": [1] }],
+  "conversation": "c1_…"
+}
+```
+
+- **`claims`** are there when the agent's citations are checked by SystemOne: each factual sentence with its verdict (`supported`, `not_supported`, `uncited` or `unchecked`), as in [Claims and verdicts](/docs/using/chat#claims-and-verdicts).
+- **`refused`** is true when the agent declined, for example a strictly grounded agent with nothing to answer from.
+- **Follow-ups:** pass `conversation` back with the next question. The handle only works with the key (or OAuth connection) that received it; any other gets "That conversation wasn't found". A service key keeps no conversations, so each question stands alone.
+
+With a personal key, `ask` conversations are stored as yours, like chats in the app.
+
+## Limits and errors
+
+Everything that applies in the app and the API applies here:
+
+- The agent's audience and model ceilings are checked on every question.
+- The key's requests per minute, and the team's query and chat limits.
+- When the team's enforced monthly budget is used up, `search` and `ask` return an error that says so.
+- A request is at most 1 MiB, and a tool call stops after 5 minutes.
+
+A problem inside a tool (a limit, a used-up budget, an unavailable model, a follow-up that can't be found) comes back as a tool error with a sentence saying what happened, so the AI tool can tell you. Every call is recorded for your team: usage with the channel **MCP server**, and an audit entry naming the knowledge base or agent, never the query, question or answer.
+
+## OAuth sign-in (experimental)
+
+When a platform admin turns on **OAuth sign-in for MCP clients**, a tool can connect without a key. It's **experimental**: it may change in a later release, and API keys keep working either way.
+
+1. Add `https://grounded.example.edu/mcp` to your tool **without a header**. The tool finds out from Grounded that it needs to sign in, and opens your browser.
+2. Sign in to Grounded as usual, if you aren't already.
+3. A consent page names the tool and **the host that vouches for it**, says what it may do ("Search knowledge bases and ask agents you can use, as you") and where your browser goes back to. A tool that registered itself, rather than being vouched for by a host, is marked **Unverified**: its name could be anything, so only allow it if you started the connection yourself.
+4. Choose **Allow**. Your browser goes back to the tool, which can now search and ask. The next time the same tool asks, you aren't asked again.
+
+<Screenshot slot="oauth-consent" />
+
+A tool connected this way acts **as you, across all your teams**: it can search the knowledge bases of every team you belong to and ask their published agents, following your memberships as they change. It can't reach other teams' agents open to everyone, public agents, anything on the REST API, or your platform role if you have one. It can't change anything. Its conversations are yours, and a follow-up handle only works with the same connection.
+
+### Connected apps
+
+**Team settings → API keys** lists the tools you connected under **Connected apps**, with each one's host, when you connected it and when it was last used. **Disconnect…** stops a tool at once and forgets your consent; its conversations are kept. Your consent is per tool, not per computer: disconnecting a tool disconnects it everywhere you use it. Platform admins can also see and disconnect a person's connected apps.
+
+<Screenshot slot="connected-apps" />
+
+## Not yet
+
+- Answers aren't streamed, and there are no progress notifications.
+- Documents aren't offered as MCP resources, and `search` has no metadata filters.
+
+The other direction, agents that call tools on outside MCP servers while they answer, is described in [Tools from MCP servers](/docs/administration/mcp-servers).
