@@ -3,7 +3,7 @@ title: Native chat API
 description: Ask an agent with conversations, retrieval events and citation verdicts, streamed over Server-Sent Events.
 ---
 
-`POST /v1/agents/{team}/{agent}/chat` is the API the web app's chat uses. Compared with the [OpenAI-compatible endpoint](/docs/api/openai-compatible), it keeps conversations for personal keys and sessions, and streams richer events: retrieval results, tool calls, moderation, and the citation check. It's part of the native API, which may change between minor releases before 1.0.
+`POST /v1/agents/{team}/{agent}/chat` is the API the web app's chat uses. Compared with the [OpenAI-compatible endpoint](/docs/api/openai-compatible), it keeps conversations for personal keys and sessions, and streams richer events: what the agent is doing before the first words, retrieval results, tool calls, moderation, and the citation check. It's part of the native API, which may change between minor releases before 1.0.
 
 It needs a signed-in session or an API key with the `query` scope.
 
@@ -33,6 +33,7 @@ Named events whose data is JSON, in this order:
 | Event | When |
 |---|---|
 | `conversation` | First: the conversation's ID. |
+| `status` | What the agent is doing before the answer's first words, once per step: `{"step": "rewriting"}` (turning a follow-up that depends on the conversation into a search query), `searching` ("search before every answer"), `checking` (SystemOne passage judging), `answering` (the model is writing, until its first token). Since v0.3.0. Ignore steps you don't know. |
 | `retrieval` | With "search before every answer": the passages found (numbered, with title, URL and snippet), and with passage judging the counts judged, kept and dropped. |
 | `message_start` | The answer begins. |
 | `thinking_delta`, `text_delta`, `tool_call`, `retrieval`, `tool_result` | As they happen. `text_delta` carries raw model text. |
@@ -44,11 +45,11 @@ Named events whose data is JSON, in this order:
 
 A citation of a tool's result (an agent's [MCP tool](/docs/administration/mcp-servers)) has `kind: "tool"`, `server`, `tool` and `truncated`, and nil document and source IDs; passages have no `kind`.
 
-A blocked question gets `conversation`, `message_start`, `moderation` and `message_end`. A `: ping` comment is sent every 15 seconds. Closing the connection stops the answer; the partial answer is saved with the stop reason `aborted`.
+Steps that don't apply are skipped: a question that stands on its own isn't rewritten, an agent that searches only when needed sends just `answering` before its first turn, and without passage judging there's no `checking`. A blocked question gets `conversation`, `status`, `message_start`, `moderation` and `message_end`. A `: ping` comment is sent every 15 seconds. Closing the connection stops the answer; the partial answer is saved with the stop reason `aborted`.
 
 In `message_end.text`, unknown `[n]` markers are removed, `[1, 2]` is written as `[1][2]`, and markers are removed entirely when the agent's citation mode is "No citations". `noContextReason` is `judged_out` (passage judging left nothing), `small_talk` or `out_of_scope` (the scope check) when those apply.
 
-Errors before the answer starts (`agent_disabled`, `agent_policy_violation`, `rate_limited`, `quota_exceeded`, `budget_exhausted`, `model_unavailable`, `model_busy`) are plain HTTP errors, not events.
+Errors before the stream starts (`agent_disabled`, `agent_policy_violation`, `rate_limited`, `quota_exceeded`, `budget_exhausted`, and `model_unavailable` when the agent's model is unusable) are plain HTTP errors, not events. The stream starts with the first `status` event, so a failure after it (`model_unavailable` or `model_busy` when the model is called) is an `error` event after `conversation`, and you still learn the conversation's ID. Before v0.3.0 these were HTTP `503` errors; clients that read the stream should handle `error` events. JSON answers (`stream: false`) and the [OpenAI-compatible endpoint](/docs/api/openai-compatible) are unchanged: the OpenAI-compatible stream sends no `status` and still starts with the answer.
 
 ## Conversations and feedback
 
