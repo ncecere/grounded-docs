@@ -1,6 +1,6 @@
 ---
 title: Observability
-description: Prometheus metrics, the five Grafana dashboards, 23 alerts, the service level objectives, health checks and logs.
+description: Prometheus metrics, the five Grafana dashboards, 24 alerts, the service level objectives, health checks and logs.
 ---
 
 Grounded exposes Prometheus metrics and ships five Grafana dashboards and a set of alerting and recording rules. They work with any Prometheus-compatible stack: Prometheus, Mimir, Cortex or Thanos, with Grafana on top.
@@ -11,9 +11,10 @@ Grounded exposes Prometheus metrics and ships five Grafana dashboards and a set 
 | Worker metrics | `GET /metrics` on `WORKER_HTTP_ADDR` (`:9090`). |
 | Dashboards | `deploy/observability/dashboards/` in the repository (Grafana JSON), or the `dashboards` component. |
 | Alert and recording rules | `deploy/observability/alerts/grounded.rules.yaml`, or the `alerts` component. |
-| Logs | JSON on stdout, one line per request with `route`, `status`, `duration_ms` and `request_id`. |
+| Logs | JSON on stdout, one line per request with `route`, `status`, `duration_ms` and `request_id` (and `trace_id`, `span_id` when traced). |
+| Traces | Optional OpenTelemetry traces over OTLP. See [Tracing](/docs/self-hosting/tracing). |
 
-No metric carries a team, user, agent, document or conversation ID. Labels are bounded: route patterns (never raw paths), channels, kinds, outcomes and connection names an admin chose.
+No metric carries a team, user, agent, document or conversation ID. Labels are bounded: route patterns (never raw paths), channels, kinds, outcomes, and the connection, model, MCP server and tool names an admin chose.
 
 ## Scraping
 
@@ -33,7 +34,9 @@ The main families (histograms have the usual `_bucket`, `_sum` and `_count` seri
 | Checks | `grounded_systemone_requests_total` and its duration by feature; `grounded_moderation_decisions_total` by stage and decision |
 | Model connections | `grounded_model_requests_total` by connection, kind and outcome (`ok`, `rate_limited`, `throttled`, `unavailable`, `auth`, …); `grounded_model_request_duration_seconds` |
 | Ingestion and jobs | `grounded_ingest_documents_total` by outcome, `grounded_crawl_pages_total`, `grounded_jobs_worked_total` and `grounded_job_duration_seconds` by job kind |
-| Install state (workers) | `grounded_jobs` by kind and state, the oldest waiting and running job's age, `grounded_maintenance_mode`, open break-glass sessions |
+| Install state (workers) | `grounded_jobs` by kind and state, the oldest waiting and running job's age, `grounded_maintenance_mode`, open break-glass sessions, `grounded_health_failing` and `grounded_health_failing_seconds` ([stored health](/docs/self-hosting/health)) |
+| Health checks | `grounded_health_checks_total` by kind, trigger and status; `grounded_health_check_duration_seconds` |
+| MCP | `grounded_mcp_tool_calls_total` by tool and outcome (the [MCP server](/docs/self-hosting/mcp-server)); `grounded_mcp_client_calls_total` and `grounded_mcp_client_call_duration_seconds` by server and tool ([agents' MCP tools](/docs/administration/mcp-servers)) |
 | Governance | `grounded_retention_deleted_total`, `grounded_retention_held`, `grounded_retention_last_success_timestamp_seconds`, break-glass sessions and reads |
 | Process | `grounded_build_info` (version, commit, mode), the Postgres pool, Valkey errors, Go runtime and process metrics |
 
@@ -53,7 +56,7 @@ Each picks its data source through a `DS_PROMETHEUS` variable (Mimir works), fil
 
 ## Alerts
 
-The rule file has 23 alerts, each with a severity, a summary, a description and a runbook link:
+The rule file has 24 alerts, each with a severity, a summary, a description and a runbook link:
 
 | Alert | Severity | Fires when |
 |---|---|---|
@@ -67,6 +70,7 @@ The rule file has 23 alerts, each with a severity, a summary, a description and 
 | `GroundedMaintenanceModeLong` | warning | Maintenance mode on for over 4 hours |
 | `GroundedModelConnectionFailing` | critical | Over half of a connection's requests fail for 10 minutes |
 | `GroundedModelConnectionRateLimited` | warning | Over 20% refused by 429 or the connection's limit for 30 minutes |
+| `GroundedHealthCheckFailing` | warning | An enabled connection, model or MCP server has failed every [health check](/docs/self-hosting/health) for over 30 minutes |
 | `GroundedDBPoolSaturated`, `GroundedValkeyErrors` | warning | The Postgres pool over 90% full; repeated Valkey errors |
 | `GroundedBackupMissing`, `GroundedBackupJobFailed` | critical / warning | The `pg_dump` CronJob hasn't succeeded for 26 hours; a backup Job failed |
 | `GroundedVolumeFillingUp`, `GroundedVolumeFull` | warning / critical | A Grounded volume over 85% full; over 95% or full within a day |
@@ -87,7 +91,7 @@ The backup alerts need kube-state-metrics, and the volume alerts the kubelet's v
 | Availability | API requests (health checks excluded) that don't fail with 5xx | 99.9% over 30 days |
 | Latency | Non-streaming API requests that finish within 1 s | 95% |
 
-Streamed chat is outside the latency objective; its speed depends mostly on the model. Uploads and crawls refused during maintenance mode count as 5xx. Your model gateway, identity provider and SMTP relay bound what you can reach, and a single-Postgres install can't meet 99.9% through node or storage failures.
+Streamed chat and the MCP server (route group `mcp`, whose answers can take minutes) are outside the latency objective; their speed depends mostly on the model. Uploads and crawls refused during maintenance mode count as 5xx. Your model gateway, identity provider and SMTP relay bound what you can reach, and a single-Postgres install can't meet 99.9% through node or storage failures.
 
 ## Health checks
 

@@ -50,9 +50,9 @@ Defaults shown are the binary's own. The Kubernetes base sets a few differently;
 
 | Variable | Meaning |
 |---|---|
-| `ENCRYPTION_KEY` | Encrypts secrets stored in the database (gateway, SMTP and moderation credentials). 32 random bytes, base64: `openssl rand -base64 32`. Back it up. |
+| `ENCRYPTION_KEY` | Encrypts secrets stored in the database (gateway, MCP server, SMTP and moderation credentials). 32 random bytes, base64: `openssl rand -base64 32`. Back it up. |
 | `ENCRYPTION_KEY_PREVIOUS` | The old key during a rotation, still accepted for reads. |
-| `API_KEY_PEPPER` | Keys the HMAC of stored API keys and widget keys. Generate it like `ENCRYPTION_KEY`. Changing it without keeping the old value invalidates all keys. |
+| `API_KEY_PEPPER` | Keys the HMAC of stored API keys, widget keys and MCP OAuth tokens. Generate it like `ENCRYPTION_KEY`. Changing it without keeping the old value invalidates all keys. |
 | `API_KEY_PEPPER_PREVIOUS` | The old pepper during a rotation; keys on it are re-hashed when next used. |
 
 Grounded refuses to start off loopback with the example values from `.env.example`. See [Rotating keys](/docs/self-hosting/security#rotating-keys).
@@ -176,6 +176,27 @@ Empty or `keep` keeps the data. A platform admin can override each one under Ret
 | `RETENTION_EVALUATION_RUNS_DAYS` | 1–36500 or `keep` | Evaluation runs and results. Default `180`. |
 | `RETENTION_BATCH_SIZE` | default `500` | Rows per transaction. |
 | `RETENTION_MAX_BATCHES` | default `100` | Batches per kind per run (runs are every 10 minutes). |
+
+## Health checks
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `HEALTH_CHECK_INTERVAL` | `15m` | How often the worker re-tests enabled connections, models and MCP servers, at no cost: `5m` to `24h`, or `0` / `off` to stop the scheduled check. See [Stored health](/docs/self-hosting/health). |
+
+## Tracing
+
+Off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. See [Tracing](/docs/self-hosting/tracing).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | (empty: off) | The OTLP receiver's base URL, `http://` or `https://`. |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` | `http/protobuf` (port 4318) or `grpc` (port 4317). |
+| `OTEL_EXPORTER_OTLP_HEADERS` | (empty; secret) | Headers for every export, `name=value` pairs separated by commas, values URL-encoded. Never logged. |
+| `OTEL_SERVICE_NAME` | `grounded` | The `service.name` of every span. |
+| `OTEL_TRACES_SAMPLER` | `parentbased_traceidratio` | `always_on`, `always_off`, `traceidratio` or their `parentbased_*` forms. |
+| `OTEL_TRACES_SAMPLER_ARG` | `1.0` | The share of new traces kept (0–1). The `tracing` component sets `0.2`. |
+
+The MCP server and its OAuth sign-in have no environment variables: platform admins switch them on in the admin portal ([MCP server and OAuth](/docs/self-hosting/mcp-server)).
 
 ## The demo
 

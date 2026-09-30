@@ -46,17 +46,17 @@ namespace: grounded
 
 resources:
   - namespace.yaml   # your namespace, labelled for the restricted Pod Security Standard
-  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.2.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.3.0
 
 components:
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.2.1
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.2.1
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.2.1
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.2.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.3.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.3.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.3.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.3.0
 
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.2.1             # informational
+    newTag: v0.3.0             # informational
     digest: sha256:<digest>    # what is deployed
 
 configMapGenerator:
@@ -74,7 +74,7 @@ configMapGenerator:
 Copy `example-small` or `example-ha` from the repository as a starting point. Flux and Argo CD both build remote bases. Keep `?ref=` on a tag, and bump it together with the image digest.
 
 <Callout title="Pin by digest">
-  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.2.1`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
+  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.3.0`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
 </Callout>
 
 ### Components
@@ -91,6 +91,7 @@ Copy `example-small` or `example-ha` from the repository as a starting point. Fl
 | `ocr-tesseract` | The OCR sidecar; see [OCR sidecar](/docs/self-hosting/ocr-sidecar). |
 | `monitoring` or `monitoring-annotations` | A ServiceMonitor (Prometheus Operator), or `prometheus.io/*` annotations. Use one. |
 | `alerts`, `dashboards` | The alert rules as a PrometheusRule, and the Grafana dashboards as ConfigMaps. See [Observability](/docs/self-hosting/observability). |
+| `tracing` | OpenTelemetry tracing: an OTLP endpoint placeholder and sampling in `grounded-config`, and egress to a collector in the `monitoring` namespace on 4318 and 4317. Since v0.3.0. See [Tracing](/docs/self-hosting/tracing). |
 | `private-registry` | A pull secret on the ServiceAccount. Not needed for the public images. |
 
 ## 2. Create the secrets
@@ -222,8 +223,8 @@ Every resource carries `app.kubernetes.io/name: grounded` and, per workload, `ap
 
 - API replicas spread across nodes with a hard topology spread constraint; workers with a soft one. Both PodDisruptionBudgets allow one pod down at a time and never let an unready pod block a node drain.
 - Pods run non-root with a read-only root filesystem, no capabilities, no privilege escalation, seccomp `RuntimeDefault`, `/tmp` on an `emptyDir` and no service account token. Everything meets the `restricted` Pod Security Standard.
-- **NetworkPolicies** deny everything in the namespace, then allow DNS, ingress to the API on 8080 from the ingress controller's namespace (`grounded-api-ingress`: patch the placeholder namespace), egress to Postgres and Valkey in the namespace, to in-cluster S3 on 9000, and to 443 and 80 anywhere (gateways, OIDC, external S3, the crawler). Add egress in your overlay for anything else: a managed database outside the namespace, SMTP (587/465), or model servers on other ports.
-- The crawler's own address checks still refuse private addresses, whatever the NetworkPolicies allow.
+- **NetworkPolicies** deny everything in the namespace, then allow DNS, ingress to the API on 8080 from the ingress controller's namespace (`grounded-api-ingress`: patch the placeholder namespace), egress to Postgres and Valkey in the namespace, to in-cluster S3 on 9000, and to 443 and 80 anywhere (gateways, OIDC, external S3, the crawler, MCP servers). Add egress in your overlay for anything else: a managed database outside the namespace, SMTP (587/465), model servers or MCP servers on other ports, or a trace collector (the `tracing` component adds its own).
+- The crawler's own address checks, and the same checks for MCP servers, still refuse private addresses, whatever the NetworkPolicies allow.
 
 ## Ingress
 
