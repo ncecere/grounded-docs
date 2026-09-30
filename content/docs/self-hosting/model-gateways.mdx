@@ -43,10 +43,10 @@ For example `Qwen/Qwen3-Embedding-4B` (2,560 dimensions):
 ### Chat: Qwen3 on SGLang
 
 - Kind chat, tool support on, context window the server's `max_model_len`, maximum output tokens 8192.
-- Compatibility: **Extra body** as above; **Tool choice** on (SGLang honours `tool_choice: "required"`); **Developer role** off (SGLang rejects it); **Stream usage** on; **Max tokens field** `max_tokens`; **Accepts reasoning effort** off.
+- Compatibility: **Extra request fields (JSON)** as above; **Honours tool_choice** set to yes (SGLang honours `tool_choice: "required"`); **System prompt role** `system` (SGLang rejects `developer`); **Stream usage** on; **Output limit parameter** `max_tokens`; **Accepts reasoning effort** off.
 - Reasoning tokens and the blank lines Qwen streams before answers need no setting.
 
-vLLM serving other model families accepts `tool_choice` but may ignore it; leave **Tool choice** off unless the server honours it.
+vLLM serving other model families accepts `tool_choice` but may ignore it; leave **Honours tool_choice** at its default unless the server honours it.
 
 ### nomic-embed-text
 

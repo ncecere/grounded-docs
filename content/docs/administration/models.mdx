@@ -48,14 +48,14 @@ Gateways differ in small ways. A model's **Compatibility** section adjusts what 
 
 | Flag | Kind | Default | Effect |
 |---|---|---|---|
-| Developer role | chat | off | Send the system prompt with role `developer` instead of `system`. SGLang rejects `developer`. |
+| System prompt role | chat | `system` | `developer` sends the system prompt with that role instead of `system`. SGLang rejects `developer`. |
 | Accepts reasoning effort | chat | not sent | For a reasoning model: send `reasoning_effort` (low, medium or high). Agents using the model can then choose a **Reasoning effort** under Build → Advanced (until it's on, that field is disabled and says why), and query rewrites ask for low effort. Leave it off for models that don't reason: unknown fields break some gateways. |
-| Stream usage | chat | on | Ask for usage in the last streamed chunk. |
-| Max tokens field | chat | `max_tokens` | `max_tokens` or `max_completion_tokens`. |
-| Tool choice | chat | off | Send `tool_choice`, only for servers that honour it. |
-| Thinking field | chat | either | The streamed reasoning field: `reasoning_content` or `reasoning`; empty reads whichever is present. |
-| Extra body | chat, moderation | none | A JSON object (at most 4,096 bytes) merged into every request, for server extensions, for example `{"chat_template_kwargs": {"enable_thinking": false}}`. It can't override the fields Grounded controls. |
-| Dimensions parameter | embedding | off | For profiles with output dimensions: send the OpenAI `dimensions` parameter. When off, Grounded shortens and renormalises the vectors itself. |
+| Stream usage (API only: `compat.supportsStreamUsage`) | chat | on | Ask for usage in the last streamed chunk. |
+| Output limit parameter | chat | `max_tokens` | `max_tokens` or `max_completion_tokens`. |
+| Honours tool_choice | chat | not sent | Send `tool_choice`, only for servers that honour it. |
+| Thinking field (API only: `compat.thinkingField`) | chat | either | The streamed reasoning field: `reasoning_content` or `reasoning`; empty reads whichever is present. |
+| Extra request fields (JSON) | chat, moderation | none | A JSON object (at most 4,096 bytes) merged into every request, for server extensions, for example `{"chat_template_kwargs": {"enable_thinking": false}}`. It can't override the fields Grounded controls. |
+| Server accepts the dimensions parameter | embedding | off | For profiles with output dimensions: send the OpenAI `dimensions` parameter. When off, Grounded shortens and renormalises the vectors itself. |
 
 [Model gateways](/docs/self-hosting/model-gateways) has recipes for self-hosted servers.
 
