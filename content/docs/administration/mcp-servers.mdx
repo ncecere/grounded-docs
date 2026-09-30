@@ -1,0 +1,106 @@
+---
+title: Tools from MCP servers
+description: Let agents call tools on remote MCP servers. Register a server, approve its tools one by one, set its classification ceiling and price; what editors see, how results are cited, and what's recorded.
+---
+
+Since v0.3.0, agents can call tools on remote **MCP servers** while they answer: a service status check, a room booking lookup, a ticket search. Platform admins register each server and approve its tools one by one; team editors choose approved tools for an agent; every call is bounded, metered and audited, and its result is cited in the answer like a document.
+
+Nothing changes until a platform admin registers a server and approves a tool.
+
+This is Grounded as an MCP *client*. For the other direction, AI tools searching Grounded, see [Connect AI tools](/docs/using/mcp).
+
+## Registering a server
+
+**Models → MCP servers → Add MCP server** (platform admins; auditors see servers and tools but change nothing).
+
+| Field | What it is |
+|---|---|
+| **Name** | How editors and answers name it: "From *Service status* · check_outage". |
+| **URL** | The server's Streamable HTTP endpoint, for example `https://status.example.edu/mcp`. **https only**, at a public address (see [Security](#security)). |
+| **Header** and **Header value** | A static header sent with every request, such as `Authorization` with `Bearer …`, or `X-API-Key`. The value is stored encrypted with `ENCRYPTION_KEY`, like connection keys, never shown again (only its last characters), and re-encrypted by `grounded rotate-keys`. Leave it blank for a server that needs none. |
+| **Data up to** | The **classification ceiling**: the most sensitive data the server may receive. Agents whose knowledge bases hold more can't use its tools. |
+| **Timeout (seconds)** | How long one call may take: 1–120, default 30. |
+| **Price per call** | Optional, in the platform currency, from today (see [Costs](#costs)). |
+| **Description** | Optional, for admins. |
+| **Enabled** | Turned off, no agent calls its tools and the health check skips it. |
+
+Then open the server and press **Read tools**. Grounded fetches its tool list; every new tool starts **Not approved**.
+
+Grounded speaks only Streamable HTTP to MCP servers and never starts local (stdio) servers. OAuth to outside servers isn't supported yet: use a static header.
+
+<Screenshot slot="admin-mcp-servers" />
+
+### Approving tools
+
+Each tool shows its name, title, the server's **description** and its **input schema**. Read both before you approve: the model reads them as part of its instructions, so a hostile or careless description is a prompt injection. Approve only the tools agents need.
+
+<Screenshot slot="admin-mcp-server-tools" />
+
+When you press **Read tools** again:
+
+- a new tool is added, not approved;
+- a tool whose title, description or input schema **changed** loses its approval: read it again, then approve;
+- a tool the server **no longer lists** is marked **No longer listed** and unapproved. It can't be approved until the server lists it again.
+
+Withdrawing an approval takes effect at once: agents stop offering the tool from their next answer.
+
+### Testing and health
+
+**Test server** connects and reads the tool list; it never calls a tool. The result is stored, and the worker re-tests every enabled server the same way on its schedule, at no cost. The list shows "Healthy · 3 minutes ago" or "Failing · since 2 hours ago" with a **Health** filter, and failing servers appear under **Needs attention** on the admin Overview. See [Stored health](/docs/self-hosting/health).
+
+### Deleting a server
+
+A server that a published agent version uses can't be deleted (the error lists the agents): turn it off instead, or publish those agents without its tools first. Deleting removes its tools from past versions; drafts that chose them show a warning until they're removed.
+
+## Choosing tools for an agent (editors)
+
+**Agent → Build → Tools** lists the approved tools of enabled servers, with the server's description. Editors tick the ones the agent may call, up to 10. The chat model must support tools; the section says so when it doesn't.
+
+<Screenshot slot="agent-build-tools" />
+
+- A tool whose server is approved for less sensitive data than the agent's knowledge bases hold can't be ticked. The same rule is checked again when the agent is published and before every call.
+- Tools are part of the draft and of each published version, like the knowledge bases, so publishing is what makes a change reach people.
+- When a tool later loses its approval, its server is turned off, or its ceiling drops below the agent's data, the agent keeps answering without it, and its page warns until an editor fixes it.
+
+See [Agents](/docs/using/editors/agents#tools) for the rest of the editor.
+
+## At answer time
+
+The chosen tools join the agent's knowledge search. The model decides whether to call one and with which arguments.
+
+- **What's sent:** only the arguments the model chose, with the static header. Never the conversation, the question or the passages, unless the model puts them in an argument. The classification ceiling is the guard against sensitive data leaving.
+- **Checked before each call:** the server is still enabled and approved for the agent's data, the team's budget isn't used up, and the answer hasn't reached its call limit. A refused call isn't made; the model reads why and answers with what it has.
+- **Bounds:** the server's timeout; one response of at most 1 MiB; the result the model reads is cut to 8,000 characters (the citation says it was cut); and the team limit **MCP tool calls per answer** (default 5, at most 25; see [Limits](/docs/administration/limits)).
+- **Refused:** a server's requests for more input (elicitation), sampling and roots. An agent answering a person can't answer a remote server's questions.
+- **Errors:** a timeout, an unreachable server or a tool that reports an error become a tool error the model reads; the answer goes on.
+
+### Results are sources
+
+A tool's result is **untrusted text**. It's given to the model as a numbered source, framed like a passage under the same rule: it's data, never instructions. With SystemOne [passage judging](/docs/administration/systemone) on, it's judged against the question first, and a result judged irrelevant isn't given to the model.
+
+The answer cites it with `[n]` like any passage. Among the answer's sources it reads **From *Service status* · check_outage** and opens like a passage. Citation checks verify claims against it, and a strictly grounded agent answers only from passages and tool results. The citation is stored with the answer, so reopening the conversation shows it. In the API, such a citation has `kind: "tool"`, `server` and `tool`.
+
+<Screenshot slot="chat-tool-source" />
+
+## Costs
+
+Each call that reaches a server is one unit of `mcp_calls`. With a **price per call** it's priced like any other usage: it shows as **MCP tools** in spend reports, counts towards team budgets, and an enforced budget that is used up stops further calls. Without a price, calls are counted but cost nothing, and reports mark the spend as incomplete. A new price applies from today; earlier days keep theirs. See [Costs and budgets](/docs/administration/costs).
+
+## Audit and metrics
+
+- **Registry changes:** `mcp_server.create`, `mcp_server.update` (with whether the header value changed, never the value), `mcp_server.delete`, `mcp_server.refresh` (counts, and the tools that lost their approval), `mcp_tool.approve` and `mcp_tool.unapprove`.
+- **Every call:** `mcp.tool_call` ("An agent called an MCP tool") with the agent, the server, the tool, the outcome (`ok`, `tool_error`, `timeout`, `too_large`, `refused`, `error`), a reason when refused (`call_limit`, `budget`, `ceiling`, `disabled`, `input_required`), the duration and the result's size. Never the arguments or the result.
+- **Metrics:** `grounded_mcp_client_calls_total{server, tool, outcome}` and `grounded_mcp_client_call_duration_seconds{server, tool}`. Server and tool names are bounded by what admins register and approve.
+- **Traces:** with [tracing](/docs/self-hosting/tracing) on, each call is a `tools/call` span, and the trace context is sent to the server in `_meta` and the `traceparent` header.
+
+## Security
+
+- **Addresses:** the URL must be https, and its host must resolve to public addresses only. Private, loopback, link-local (including cloud metadata), CGNAT and other reserved ranges are refused when the server is saved and again every time Grounded dials it, so a DNS change can't point a registered server at your internal network. Redirects are never followed. Credentials go in the header, not the URL: a URL with a query string is refused. Proxy settings from the environment aren't used for MCP servers.
+- **Development:** only a development install (`DEV_AUTH=true` on a loopback `APP_URL`) may use private addresses, and plain `http://` for a loopback host. There's no setting to allow them in production.
+- **Kubernetes:** the base NetworkPolicy lets api and worker pods reach TCP 443 and 80 anywhere. A server on another port needs an egress rule in your overlay.
+- **Tool descriptions and results are untrusted.** Descriptions and schemas are shown before approval, and a changed one loses its approval. Results are framed as data, judged when SystemOne judging is on, and cited, so readers can see where a claim came from.
+- **What leaves:** only the arguments the model chose. Set each server's ceiling to the most sensitive data you'd accept in an argument.
+
+## API
+
+Platform admins (auditors read): `/v1/admin/mcp-servers` (list, create, get, update, delete), `…/{serverId}/test`, `…/{serverId}/refresh`, `…/{serverId}/tools`, and `…/tools/{toolId}/approval`. Editors read the approved tools with `GET /v1/mcp-tools`; agent configurations have `tools`. See the [API reference](/docs/api).
