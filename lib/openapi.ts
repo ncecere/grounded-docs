@@ -43,6 +43,7 @@ export const tagLabels: Record<string, string> = {
   search: 'Search',
   evaluations: 'Evaluations',
   openai: 'OpenAI-compatible',
+  oauth: 'OAuth sign-in (MCP)',
   breakglass: 'Break-glass',
   public: 'Public agents and widget',
 };
