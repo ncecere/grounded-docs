@@ -75,7 +75,7 @@
       "agent-build",
       "agent-editor-build-try-it"
     ],
-    "alt": "The agent editor's Build tab for Help Desk Assistant: the instructions and the collapsed Model, Knowledge, Answering, Safety, SystemOne checks and Advanced sections, beside the Try it panel with a draft answer, its claim summary and Add to evaluations."
+    "alt": "The agent editor's Build tab for Help Desk Assistant: the instructions and the collapsed Model, Knowledge, Tools, Answering, Safety and SystemOne checks sections, beside the Try it panel with a draft answer that searched the knowledge base and used check_outage, its claim summary and Add to evaluations."
   },
   "agent-share": {
     "files": [
@@ -141,13 +141,13 @@
     "files": [
       "team-api-keys"
     ],
-    "alt": "Team settings, API keys tab: personal and service keys with their scopes, restrictions, expiry and last use."
+    "alt": "Team settings, API keys tab for a team owner: personal keys (one with only the MCP scope) and a service key with their scopes, restrictions, expiry and last use, and the Connected apps card below."
   },
   "admin-overview-features": {
     "files": [
       "admin-overview-features"
     ],
-    "alt": "Admin Overview: the platform at a glance, Needs attention, and the Features card listing each optional feature's state, with recent changes."
+    "alt": "Admin Overview: the platform at a glance, Needs attention with a failing connection, and the Features card listing each optional feature's state, including the MCP server and OAuth sign-in rows, with recent changes."
   },
   "admin-teams": {
     "files": [
@@ -171,13 +171,13 @@
     "files": [
       "admin-connections"
     ],
-    "alt": "Admin, Connections: three OpenAI-compatible connections (a model gateway, an embedding service and a SystemOne service) with their base URLs."
+    "alt": "Admin, Connections filtered to healthy ones: a model gateway, an embedding service and a SystemOne service with their base URLs, API key hints, status and health."
   },
   "admin-models": {
     "files": [
       "admin-models"
     ],
-    "alt": "Admin, Models: a chat model, an embedding model and a SystemOne model with their connection, maximum classification, what uses them and their status, above filters by kind."
+    "alt": "Admin, Models: a chat model, an embedding model and a SystemOne model with their connection, maximum classification, what uses them, their status and health, above filters by kind, connection and health."
   },
   "admin-embedding-migrations": {
     "files": [
@@ -202,7 +202,7 @@
       "admin-costs",
       "admin-costs-overview"
     ],
-    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens, requests and unpriced usage, and spend per day by kind."
+    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens, requests and unpriced usage, and spend per day by kind, including MCP tools."
   },
   "admin-costs-budgets": {
     "files": [
@@ -244,72 +244,72 @@
     "files": [
       "mcp-key-created"
     ],
-    "alt": "Team settings, API keys: a new personal key with the scope \"MCP: search and ask from AI tools\", its secret shown once, and the MCP server address to give AI tools."
+    "alt": "Team settings, API keys: the dialog after creating a personal key with only the scope \"MCP: search and ask from AI tools\": the secret, shown once, and the MCP server address to give AI tools."
   },
   "oauth-consent": {
     "files": [
       "oauth-consent"
     ],
-    "alt": "The consent page an AI tool opens: the tool's name with the host that vouches for it, \"Search knowledge bases and ask agents you can use, as you\", where the browser goes back to, and Allow and Deny."
+    "alt": "The consent page an AI tool opens: \"Research Assistant wants to use Grounded as you\", marked Unverified because it registered itself, with the host it says it's from and the address its answer goes to; it may search knowledge bases and ask agents in the person's teams, as them; Allow and Deny."
   },
   "connected-apps": {
     "files": [
       "connected-apps"
     ],
-    "alt": "Team settings, API keys, Connected apps: one AI tool with its host, when it was connected and last used, and Disconnect."
+    "alt": "Team settings, API keys: a member's MCP key and, under Connected apps, one AI tool with its host, when it was connected and last used, and Disconnect."
   },
   "admin-features-mcp": {
     "files": [
       "admin-features-mcp"
     ],
-    "alt": "Admin Overview, Features: the MCP server row switched on, with the address clients use and a setup guide link, and the OAuth sign-in for MCP clients row marked Experimental."
+    "alt": "Admin Overview, Features: the MCP server row switched on, with the address clients use and a Setup guide link, and the OAuth sign-in for MCP clients row switched on and marked Experimental."
   },
   "admin-user-connected-apps": {
     "files": [
       "admin-user-connected-apps"
     ],
-    "alt": "Admin, a person's page: the Connected apps card listing the AI tools they connected with OAuth sign-in, with Disconnect for platform admins."
+    "alt": "Admin, a person's page: their teams, the Connected apps card listing the AI tool they connected with OAuth sign-in, with Disconnect for platform admins, and their activity, including a search over MCP and the app signing in."
   },
   "admin-mcp-servers": {
     "files": [
       "admin-mcp-servers"
     ],
-    "alt": "Admin, Models, MCP servers: a Service status server with its approved tools (2 of 3), its data ceiling, status and health (Healthy · 3 minutes ago)."
+    "alt": "Admin, Models, MCP servers: a Service status server with its approved tools (1 of 5), its data ceiling (Sensitive), status and health (Healthy · 8 minutes ago), with the Health filter."
   },
   "admin-mcp-server-tools": {
     "files": [
       "admin-mcp-server-tools"
     ],
-    "alt": "An MCP server record: its URL, the header shown only by its last characters, data ceiling, timeout and price, and its tools, each with its description, input schema and approval state, under \"Read before you approve\"."
+    "alt": "An MCP server record: its URL, the header shown only by its last characters, data ceiling, timeout, price per call and health, then its tools under \"Read before you approve\": check_outage approved, with its input schema open and the published agent that uses it, and the others not approved."
   },
   "agent-build-tools": {
     "files": [
       "agent-build-tools"
     ],
-    "alt": "The agent editor Build tab, Tools section: approved MCP tools with their server and description, one of them ticked."
+    "alt": "The agent editor Build tab, Tools section open: the approved tool Check outage (check_outage), ticked, from Service status, approved for data up to Sensitive, with its description."
   },
   "chat-tool-source": {
     "files": [
       "chat-tool-source"
     ],
-    "alt": "A chat answer that cites a tool result: the sources list shows \"From Service status · check_outage\" beside passages from documents."
+    "alt": "A chat answer about connecting to eduroam that cites a tool result: the sources list shows \"From Service status · check_outage\", a tool result, beside three passages from a Wi-Fi help article."
   },
   "admin-connections-health": {
     "files": [
       "admin-connections-health"
     ],
-    "alt": "Admin, Connections with the Health column: \"Healthy · 3 minutes ago\" for two connections and \"Failing · since 2 hours ago\" for one, with the Health filter."
+    "alt": "Admin, Connections with the Health column: three connections \"Healthy\" a few minutes ago and a backup gateway \"Failing · since 8 minutes ago\", with the Health filter."
   },
   "admin-needs-attention-health": {
     "files": [
       "admin-needs-attention-health"
     ],
-    "alt": "Admin Overview, Needs attention: \"1 connection is failing\" and \"1 MCP server is failing\", each linking to its list filtered to the failing ones."
+    "alt": "Admin Overview, Needs attention: a domain request, \"1 connection is failing\" and \"1 MCP server is failing\", each linking to its list filtered to the failing ones."
   },
   "tracing-answer-trace": {
     "files": [
       "tracing-answer-trace"
     ],
-    "alt": "One chat answer as a trace in Jaeger: the HTTP request, agent.answer, retrieval (vector, lexical and fusion), a model call, and an MCP tool call with its HTTP exchange."
+    "alt": "One chat answer as a trace in Jaeger: the HTTP request, agent.answer, retrieval (the query embedding, vector, lexical and fusion), two agent turns with their model calls, an MCP tool call (execute_tool and tools/call check_outage) with its HTTP exchanges, and SystemOne citation checks."
   }
 }

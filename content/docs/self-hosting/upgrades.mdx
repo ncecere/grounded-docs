@@ -85,7 +85,7 @@ Since v0.2.0, each GitHub release also attaches the SBOMs per platform, the dige
 
 | From → to | Migrations | What to do |
 |---|---|---|
-| v0.2.1 or v0.2.2 → [v0.3.0](/docs/releases/v0-3-0) | `00035` to `00038`, all expand-only (schema 34 → 38) | Bump `?ref=` and the digests. Nothing new is on until an admin turns it on. Optional new settings: `HEALTH_CHECK_INTERVAL` (the scheduled health check runs by default, every 15 minutes, at no cost) and `OTEL_*` for [tracing](/docs/self-hosting/tracing), with the new `tracing` component. |
+| v0.2.1 or v0.2.2 → [v0.3.0](/docs/releases/v0-3-0) | `00035` to `00039`, all expand-only (schema 34 → 39) | Bump `?ref=` and the digests. Nothing new is on until an admin turns it on. Optional new settings: `HEALTH_CHECK_INTERVAL` (the scheduled health check runs by default, every 15 minutes, at no cost) and `OTEL_*` for [tracing](/docs/self-hosting/tracing), with the new `tracing` component. |
 | v0.2.1 → v0.2.2 | None | Small fixes ([changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md)). Bump `?ref=` and the digests. |
 | v0.2.0 → [v0.2.1](/docs/releases/v0-2-1) | None (schema stays at 34) | Bump `?ref=` and the digests. Some pages moved; old links redirect. |
 | v0.1.0 → [v0.2.0](/docs/releases/v0-2-0) | `00030` to `00034`, additive only | Bump `?ref=` and the digest. If you vendored the base, re-vendor or switch to the remote base. The image is public, so the `private-registry` component can go. New optional settings for OCR, SSO groups and evaluations. |

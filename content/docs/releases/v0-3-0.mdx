@@ -23,7 +23,7 @@ Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements). OAuth sign-in for M
 
 A rolling upgrade with no downtime. Take a backup as for any upgrade, then change every `?ref=` in your overlay to `?ref=v0.3.0` and pin the new digests of `ghcr.io/ncecere/grounded` and, if you run OCR, `ghcr.io/ncecere/grounded-ocr`. See [Upgrades](/docs/self-hosting/upgrades).
 
-**Migrations `00035` to `00038`**, all expand-only, so v0.2.x keeps running on the new schema during the rollout and a rollback to the previous digest works:
+**Migrations `00035` to `00039`**, all expand-only, so v0.2.x keeps running on the new schema during the rollout and a rollback to the previous digest works:
 
 | Migration | Adds |
 |---|---|
@@ -31,6 +31,7 @@ A rolling upgrade with no downtime. Take a backup as for any upgrade, then chang
 | `00036_health_checks` | The `health_checks` table and a view of the subjects |
 | `00037_mcp_client` | MCP servers, their tools and approvals, agents' tools per version; the `mcp_calls` price unit; MCP servers as a health subject |
 | `00038_mcp_oauth` | The OAuth setting, registered clients, grants, codes and hashed tokens |
+| `00039_message_retrieval` | A nullable column on messages, so a reopened answer keeps its "Searched the knowledge base" step |
 
 **New settings**, all optional:
 
