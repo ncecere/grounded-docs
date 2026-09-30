@@ -13,7 +13,7 @@ export const gitConfig = {
 export const productRepo = 'https://github.com/ncecere/grounded';
 
 /** The Grounded release these docs describe. */
-export const groundedVersion = 'v0.2.1';
+export const groundedVersion = 'v0.3.0';
 
 export const docsRepoUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}`;
 

@@ -1,0 +1,81 @@
+---
+title: v0.3.0
+description: Reach — MCP in both directions (AI tools use Grounded; agents call approved tools, cited as sources), stored health for models and MCP servers, and OpenTelemetry tracing.
+---
+
+v0.3.0 brings Grounded to the tools people already use, through the [Model Context Protocol](https://modelcontextprotocol.io), in both directions. It also keeps the health of every model connection, model and MCP server, and can trace one answer from the HTTP request to each model and tool call. **Every new feature is optional and off** until a platform admin or operator turns it on, apart from the scheduled health check, which costs nothing.
+
+A release candidate, `v0.3.0-rc.1`, runs on the reference install before the release.
+
+## Highlights
+
+- **Use Grounded from AI tools (MCP server).** Coding agents, desktop assistants and any client that speaks MCP over Streamable HTTP can search your knowledge bases and ask your agents, getting passages or answers with citations and claim verdicts. People connect with an API key that has the new **MCP** scope; classification, limits, budgets and the audit log apply exactly as for the REST API. Off until a platform admin turns it on. See [Connect AI tools](/docs/using/mcp) and [MCP server and OAuth](/docs/self-hosting/mcp-server).
+- **OAuth sign-in for AI tools (experimental).** With a second switch, a person can connect a tool by signing in to Grounded and approving it on a consent page, with no key to copy. Tokens last an hour, act as the person across their teams, and work only on `/mcp`. People see and disconnect their tools under **Connected apps**. Off by default, and it may change.
+- **Agents call approved tools (MCP client).** Platform admins register remote MCP servers (Models → MCP servers), read and approve each tool, and set a classification ceiling and an optional price per call. Editors choose approved tools in **Build → Tools**. A tool's result is treated as untrusted data and **cited as a numbered source** ("From *Service status* · check_outage"), and claim checks verify answers against it. Every call is bounded, metered and audited. See [Tools from MCP servers](/docs/administration/mcp-servers).
+- **Stored health.** Every Test button stores its result, and the worker re-tests enabled connections, models and MCP servers every 15 minutes at no cost. The admin lists show "Healthy · 3 minutes ago" or "Failing · since 2 hours ago", failures appear under **Needs attention**, and a new alert fires after 30 minutes of failure. See [Stored health](/docs/self-hosting/health).
+- **OpenTelemetry tracing.** Set `OTEL_EXPORTER_OTLP_ENDPOINT` and one answer becomes one trace across HTTP, retrieval, model calls, SystemOne checks, MCP tool calls and background jobs, with trace context carried through MCP `_meta`. Spans never hold questions, answers, passages or tool data. See [Tracing](/docs/self-hosting/tracing).
+
+## Requirements
+
+Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements). OAuth sign-in for MCP clients uses your existing OIDC sign-in. Tracing needs an OTLP receiver (Grafana Tempo, Jaeger or an OpenTelemetry Collector) if you turn it on.
+
+## Upgrading from v0.2.1 or v0.2.2
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade, then change every `?ref=` in your overlay to `?ref=v0.3.0` and pin the new digests of `ghcr.io/ncecere/grounded` and, if you run OCR, `ghcr.io/ncecere/grounded-ocr`. See [Upgrades](/docs/self-hosting/upgrades).
+
+**Migrations `00035` to `00038`**, all expand-only, so v0.2.x keeps running on the new schema during the rollout and a rollback to the previous digest works:
+
+| Migration | Adds |
+|---|---|
+| `00035_mcp_server` | The MCP server switch; `mcp` in the API-key scopes and answer channels |
+| `00036_health_checks` | The `health_checks` table and a view of the subjects |
+| `00037_mcp_client` | MCP servers, their tools and approvals, agents' tools per version; the `mcp_calls` price unit; MCP servers as a health subject |
+| `00038_mcp_oauth` | The OAuth setting, registered clients, grants, codes and hashed tokens |
+
+**New settings**, all optional:
+
+| Variable | Default | |
+|---|---|---|
+| `HEALTH_CHECK_INTERVAL` | `15m` | The scheduled health check: `5m` to `24h`, or `off`. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | (empty: off) | Turns tracing on. |
+| `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_EXPORTER_OTLP_HEADERS` (secret), `OTEL_SERVICE_NAME`, `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG` | See [Tracing](/docs/self-hosting/tracing) | |
+
+On Kubernetes, the new optional `tracing` component sets the endpoint and adds egress to the collector. The MCP server and OAuth have no settings: they're switches on **Admin → Overview → Features**. If you turn on OAuth sign-in, make sure your ingress routes `/.well-known/` and `/oauth/` to Grounded along with everything else.
+
+Things people will notice:
+
+- **API keys** have a fourth scope, **MCP: search and ask from AI tools**, open to every team role.
+- **The admin sidebar**: Models gains **MCP servers**.
+- **Admin → Overview**: Features gains **MCP server** and **OAuth sign-in for MCP clients** (Experimental); Needs attention can list failing connections, models and MCP servers. Recent changes leave out MCP tool calls and OAuth sign-ins.
+- **Admin → Connections and Models** have a **Health** column. The first scheduled check runs shortly after the new worker starts.
+- **Limits** has a new team limit, **MCP tool calls per answer** (default 5), and spend reports a new category, **MCP tools**.
+- **Analytics and the access log** show a new channel, **MCP server**.
+
+## API changes
+
+All additive; see the [API reference](/docs/api):
+
+- `GET`/`PUT /v1/admin/settings/mcp` (the MCP server and `oauthEnabled`); `capabilities.mcp` and `capabilities.mcpOAuth` on `GET /v1/me`; the `mcp` API-key scope.
+- `/v1/admin/mcp-servers` (list, create, get, update, delete, test, refresh, tools, tool approval) and `GET /v1/mcp-tools`; `tools` in agent configurations; `kind`, `server` and `tool` on citations and retrieval hits.
+- `GET /v1/admin/health-checks`; the Test endpoints store their results.
+- `GET`/`POST /v1/oauth/consent`, `/v1/me/oauth-grants`, `/v1/admin/users/{userId}/oauth-grants`.
+- `mcp` in spend by kind, the `mcp_calls_per_answer` limit; the audit log's `excludeAction` takes comma-separated prefixes.
+
+`POST /mcp` and the OAuth protocol endpoints (`/.well-known/…`, `/oauth/…`) speak protocols and are described in [MCP server and OAuth](/docs/self-hosting/mcp-server), not in the OpenAPI document.
+
+New metrics: `grounded_mcp_tool_calls_total`, `grounded_mcp_client_calls_total`, `grounded_mcp_client_call_duration_seconds`, `grounded_health_failing`, `grounded_health_failing_seconds`, `grounded_health_checks_total` and `grounded_health_check_duration_seconds`; a new route group `mcp`; and a new alert, `GroundedHealthCheckFailing`.
+
+## Known limitations
+
+The [v0.2.0 limitations](/docs/releases/v0-2-0#known-limitations) still apply, and:
+
+- **OAuth sign-in is experimental**: one resource and one scope, public clients only, no private-use redirect schemes, no CORS on its endpoints, and two concurrent refreshes with the same token revoke the connection.
+- The MCP server's `ask` isn't streamed; there are no documents as MCP resources, prompts or list-changed notifications, and `search` has no metadata filters.
+- Agents reach outside MCP servers with a static header only; OAuth to outside servers comes later. Servers must be at public https addresses.
+- A scheduled health check proves that a gateway lists a model, not that the model answers: **Test model** and real traffic catch the rest.
+- No trace links from the dashboards or metric exemplars yet, and no per-stage timings in the product.
+- The Teams and Slack bot isn't in this release.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.3.0`: `docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.3.0 (<commit>)`, and the release has SPDX SBOMs, digest files and a `checksums.txt`.
