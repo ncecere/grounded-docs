@@ -1,0 +1,169 @@
+---
+title: Tracing
+description: Send OpenTelemetry traces to Tempo, Jaeger or a collector. One answer is one trace, across HTTP, retrieval, model calls, SystemOne, MCP tool calls and background jobs.
+---
+
+Since v0.3.0, Grounded can send OpenTelemetry traces to a trace store such as Grafana Tempo or Jaeger. One answer is one trace: the HTTP request, retrieval (the query embedding, vector and full-text search, fusion), SystemOne checks, the agent's turns, model calls and tool calls, including calls to MCP servers. Trace context travels over HTTP and through MCP `_meta` in both directions, and into background jobs.
+
+Tracing is **off** unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. When it's off, nothing runs: no exporter, and Grounded neither reads nor writes `traceparent` headers.
+
+<Callout title="No content in spans">
+  Spans never hold prompts, questions, answers, passages, document text, tool arguments or results, or people's email addresses. See [What's recorded](#whats-recorded).
+</Callout>
+
+## Turning it on
+
+Point Grounded at an OTLP receiver and restart the api and worker:
+
+```sh
+OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo.monitoring.svc:4318
+```
+
+- **Kubernetes:** add the `tracing` component to your overlay. It sets this endpoint in `grounded-config`, sets the sampling ratio to `0.2`, and adds a NetworkPolicy that lets api and worker pods reach TCP 4318 and 4317 in the `monitoring` namespace. Patch the endpoint, and the namespace if yours differs. It isn't in the base.
+
+  ```yaml
+  components:
+    - https://github.com/ncecere/grounded//deploy/kubernetes/components/tracing?ref=v0.3.0
+  ```
+
+- **Docker Compose or a single binary:** set the variables in the environment, or in the YAML config file in lower case, like every other setting.
+
+At start-up the process logs `tracing on` with the endpoint, protocol and sampler. Headers aren't logged.
+
+## Settings
+
+| Variable | Default | Notes |
+|---|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | (empty: off) | Base URL of the OTLP receiver, `http://` or `https://`. Over HTTP, spans go to `<endpoint>/v1/traces`. Over gRPC only the scheme, host and port are used; `http://` means no TLS. |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` | `http/protobuf` (port 4318) or `grpc` (port 4317). `http/json` isn't supported. |
+| `OTEL_EXPORTER_OTLP_HEADERS` | (none) | Headers for every export, such as `Authorization=Bearer%20<token>` or `X-Scope-OrgID=tenant-1`: comma-separated, values URL-encoded. **Secret**: it can come from a file (`OTEL_EXPORTER_OTLP_HEADERS_FILE`), and is never logged. On Kubernetes, put it in the `grounded-runtime` Secret. |
+| `OTEL_SERVICE_NAME` | `grounded` | The `service.name` of every span. |
+| `OTEL_TRACES_SAMPLER` | `parentbased_traceidratio` | `always_on`, `always_off`, `traceidratio`, `parentbased_always_on`, `parentbased_always_off` or `parentbased_traceidratio`. |
+| `OTEL_TRACES_SAMPLER_ARG` | `1.0` | The share of new traces kept by the ratio samplers, from 0 to 1. |
+
+Invalid values stop the process at start-up, as with any other setting. The OpenTelemetry SDK also reads a few variables from the environment only (not the YAML file): `OTEL_EXPORTER_OTLP_TIMEOUT`, `OTEL_EXPORTER_OTLP_COMPRESSION`, `OTEL_EXPORTER_OTLP_CERTIFICATE` (a CA for a private collector), `OTEL_RESOURCE_ATTRIBUTES` (for example `deployment.environment=staging`) and the batch processor's `OTEL_BSP_*` limits.
+
+Every span carries `service.name`, `service.version`, `grounded.commit` and `grounded.mode` (`serve`, `api` or `worker`).
+
+## Sampling
+
+By default Grounded keeps every new trace and follows the caller's decision when a request arrives with a `traceparent`. An answer produces a few dozen spans, so that suits most installs. On a busy install keep a share instead, for example `OTEL_TRACES_SAMPLER_ARG=0.1` for one answer in ten.
+
+With a `parentbased_*` sampler, a caller that sends `traceparent` decides whether its request is sampled. Signed-in people and API keys are trusted with that. **Public agent and widget routes** (`/v1/public/…`, `/embed/…`, `/widget.js`) are open to anonymous visitors, so they ignore incoming trace context and always start a new trace, sampled by the ratio: an anonymous caller can't make Grounded record every request, or hide one.
+
+`/healthz`, `/readyz` and `/metrics` aren't traced.
+
+## What's traced
+
+One answer from a SystemOne-judged agent with a tool, as Jaeger or Tempo shows it:
+
+```text
+POST /v1/agents/{team}/{agent}/chat
+  agent.answer
+    agent.retrieve
+      retrieval.search                     (one per knowledge base)
+        embeddings <model>
+        retrieval.vector
+        retrieval.lexical
+        retrieval.fusion
+      systemone judging
+    agent.turn
+      chat <model>
+      execute_tool check_outage
+        tools/call check_outage            (the MCP client)
+          HTTP POST                        (each exchange with the MCP server)
+    agent.turn
+      chat <model>
+```
+
+<Screenshot slot="tracing-answer-trace" />
+
+| Span | Kind | Carries |
+|---|---|---|
+| The HTTP request, named by route pattern (never the raw path) | server | method, route, status, `grounded.request_id` (also in the log line and the `X-Request-ID` header) |
+| `agent.answer`, `agent.retrieve`, `agent.turn` | internal | team, agent and version IDs, the channel (`ui`, `api`, `openai`, `public`, `widget`, `mcp`, `test`), counts, the turn number and stop reason |
+| `retrieval.search`, `.vector`, `.lexical`, `.fusion` | internal | knowledge base and team IDs, `top_k`, candidates, results, fusion weights, embedding tokens |
+| `chat <model>`, `embeddings <model>` | client | the upstream model ID, input and output tokens, time to first token for streams, the stop reason, the number of tools offered |
+| `systemone <feature>` | client | the feature (`judging`, `citations`, `scope`, `moderation`, `test`), the model, questions, input tokens |
+| `execute_tool <tool>`, `tools/call <tool>` | internal, client | the tool's name, the MCP server's registry name and ID, the outcome, the result's size |
+| `tools/call search`, `tools/call ask`, `tools/list` | server | Grounded's own [MCP server](/docs/self-hosting/mcp-server) |
+| `job <kind>` | consumer | a background job: its kind, queue, attempt, ID and outcome |
+
+A failed span has status Error and an `error.type` (an error class, an HTTP status or an outcome such as `timeout`). The error message isn't recorded, because it can quote input.
+
+## What's recorded
+
+**Recorded:** IDs (team, agent, knowledge base, MCP server, request, job), names an admin chose in the catalog (models, MCP servers and their tools), route patterns, counts, sizes, token counts, durations, outcomes and error classes.
+
+**Never recorded:** the question, the rewritten query, the answer, prompts and system prompts, passages and document text, tool arguments and results, MCP `_meta` other than trace context, URLs with their paths and queries, API keys and headers, and people's names or email addresses. The project's tests answer a question through the full pipeline and check that no span contains its words, the answer or a passage.
+
+## Trace context
+
+Grounded uses W3C Trace Context (`traceparent`, `tracestate`). Baggage isn't propagated, because it could carry personal data between systems.
+
+- **Incoming HTTP:** a request's `traceparent` continues the caller's trace (except on public routes).
+- **Model gateways:** chat, embedding, moderation and SystemOne requests carry `traceparent`, so a traced proxy such as LiteLLM can join the trace.
+- **MCP server:** as MCP revision `2026-07-28` describes, a request's `params._meta.traceparent` continues the caller's trace, so an AI tool's trace carries on into Grounded.
+- **MCP client:** each request to an MCP server carries the trace context in `params._meta` and in the `traceparent` header.
+- **Crawler:** requests to web sites get client spans but no `traceparent`, so sites never see Grounded's trace IDs.
+- **Jobs:** a job enqueued during a traced request carries the trace context, so its `job <kind>` span continues that trace, even when it runs later, on another worker, or as a retry. Periodic jobs aren't traced; the jobs they enqueue, such as each document's processing, start their own traces.
+
+## Logs and traces
+
+Log lines written during a sampled request or job carry `trace_id` and `span_id` next to `request_id`, so every `trace_id` in the logs can be opened in the trace store:
+
+```json
+{"level":"INFO","msg":"http request","route":"POST /v1/agents/{team}/{agent}/chat","status":200,"request_id":"k3J…","trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","span_id":"00f067aa0ba902b7"}
+```
+
+In Grafana, add a derived field to the Loki data source: name `TraceID`, regex `"trace_id":"(\w+)"`, and an internal link to the Tempo data source with the query `${__value.raw}`. In the other direction, Tempo's "Trace to logs" setting with the filter `trace_id` finds a trace's log lines.
+
+## Examples
+
+<Tabs items={['Grafana Tempo', 'Jaeger (local trial)']}>
+<Tab value="Grafana Tempo">
+
+Tempo receives OTLP when its distributor enables the receiver:
+
+```yaml
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+        grpc:
+          endpoint: 0.0.0.0:4317
+```
+
+```sh
+OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo.monitoring.svc:4318
+# Multi-tenant Tempo, or a hosted Tempo behind a gateway:
+OTEL_EXPORTER_OTLP_HEADERS=X-Scope-OrgID=grounded
+```
+
+With a Grafana Alloy or OpenTelemetry Collector agent in front of Tempo, point Grounded at the agent instead, for example `http://alloy.monitoring.svc:4318` with an `otelcol.receiver.otlp` component.
+
+</Tab>
+<Tab value="Jaeger (local trial)">
+
+Jaeger accepts OTLP directly:
+
+```sh
+docker run --rm --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/jaeger:latest
+OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318 OTEL_SERVICE_NAME=grounded-dev ./bin/grounded serve
+```
+
+Ask a question, then open `http://127.0.0.1:16686` and search for the service `grounded-dev`.
+
+</Tab>
+</Tabs>
+
+## Overhead and failures
+
+Spans are batched (every 5 seconds or 512 spans, at most 2,048 waiting). If the collector is unreachable, spans are dropped once the queue is full and a warning is logged at most once a minute. **Answers never wait for the collector.** At shutdown, buffered spans get 5 seconds to flush. Tracing costs little CPU next to model calls; it adds about 3.5 MB to the binary.
+
+## Not yet
+
+- Trace links from the Grafana dashboards, and metric exemplars.
+- Per-stage timings in the product itself: today they're in the trace store.

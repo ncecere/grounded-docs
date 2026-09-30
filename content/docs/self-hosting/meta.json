@@ -10,8 +10,11 @@
     "oidc",
     "model-gateways",
     "ocr-sidecar",
+    "mcp-server",
     "---Operating---",
     "observability",
+    "tracing",
+    "health",
     "backups",
     "upgrades",
     "security"

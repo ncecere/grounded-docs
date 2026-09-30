@@ -1,0 +1,145 @@
+---
+title: MCP server and OAuth
+description: Turn on Grounded's MCP server and, optionally, experimental OAuth sign-in for MCP clients. Discovery endpoints, token lifetimes, what's recorded and the known limitations.
+---
+
+Grounded can serve the Model Context Protocol at `POST /mcp`, so AI tools can search knowledge bases and ask agents with an API key ([Connect AI tools](/docs/using/mcp) is the guide for people). Since v0.3.0. It's **off** on a new install, and so is its experimental OAuth sign-in. Both are switches on the admin Overview; neither needs a configuration change or a restart.
+
+## What it is
+
+| | |
+|---|---|
+| **Address** | `<APP_URL>/mcp`, for example `https://grounded.example.edu/mcp`. It's served by the api process on the same port and ingress as the app. |
+| **Transport** | Streamable HTTP, stateless: every request is a `POST`, with no session. |
+| **Protocol** | Revision `2026-07-28`, and `2025-11-25`, `2025-06-18`, `2025-03-26` and `2024-11-05` for clients that haven't caught up. Local (stdio) servers, the old HTTP+SSE transport, and the deprecated Roots, Sampling and Logging features aren't used. |
+| **Sign-in** | An API key with the `mcp` scope as `Authorization: Bearer <key>`; or, with OAuth sign-in on, short-lived tokens for a signed-in person. |
+| **Tools** | `search` (passages) and `ask` (an agent's answer with citations and claims). Each lists only what the caller may use. |
+
+`/mcp` is JSON-RPC, so it's described here rather than in the [API reference](/docs/api). Its settings are in the reference: `GET` and `PUT /v1/admin/settings/mcp`.
+
+## Turning the MCP server on
+
+<Steps>
+<Step>
+
+As a platform admin, open **Admin → Overview** and find **MCP server** under **Features**.
+
+</Step>
+<Step>
+
+Turn on **Allow MCP clients**. The row then shows the address clients use.
+
+</Step>
+</Steps>
+
+<Screenshot slot="admin-features-mcp" />
+
+While it's off, `/mcp` answers `404` to everyone. Turning it off asks for confirmation, since connected tools stop at once; API keys and their scopes are kept, so turning it on again brings everything back. Auditors see the switch but can't change it. Each change is audited as `platform.mcp`. `GET /v1/me` reports it as `capabilities.mcp`, and the API key form tells people when it's off.
+
+People then create keys with the **MCP** scope ([API keys](/docs/using/owners/api-keys)). Every team role may grant it; it grants nothing on the REST API.
+
+### What applies
+
+Everything the REST API applies applies to `/mcp`, unchanged: the agent's audience and model ceilings on every question, knowledge-base classification for direct search (a level that keeps API keys to agents keeps its knowledge bases out of `search`), the key's request rate and the team's query and chat limits, and enforced budgets. A request body is at most 1 MiB and a tool call stops after 5 minutes. Public agents aren't reachable over MCP: they're for anonymous visitors, and MCP needs a credential.
+
+Refusals of the call itself are HTTP statuses with a JSON-RPC error body:
+
+| Status | When |
+|---|---|
+| `404` | The MCP server is off (`mcp_off`) |
+| `401` | No key, or an invalid, expired or revoked key, or its owner left or is suspended; with OAuth sign-in on, no credential or a bad access token (with the `resource_metadata` challenge), or a token while OAuth is off (`oauth_off`) |
+| `403` | The key has no MCP scope (`missing_scope`) |
+| `405` | Anything but `POST` |
+| `429` | The key's request rate, with `Retry-After` |
+
+A problem inside a tool (a limit, a used-up budget, an unavailable model) is a tool result with `isError: true` and a sentence the AI tool can show.
+
+### Behind a proxy
+
+An `ask` can take minutes, like a chat answer, so the ingress read timeout you set for chat ([Ingress](/docs/self-hosting/kubernetes#ingress)) matters for `/mcp` too. The route group `mcp` is outside the [latency objective](/docs/self-hosting/observability#service-level-objectives).
+
+## OAuth sign-in (experimental)
+
+With OAuth sign-in on, an AI tool can connect without an API key: the person signs in to Grounded in their browser and approves the tool, and the tool gets short-lived tokens that act as that person. Grounded becomes a small OAuth 2.1 authorization server for its own `/mcp`, in front of your [OIDC sign-in](/docs/self-hosting/oidc). It follows the MCP authorization spec (`2025-11-25` and `2026-07-28`).
+
+<Callout type="warn" title="Experimental">
+  It's off by default and may change in a later release while clients and the spec settle. API keys keep working either way.
+</Callout>
+
+### Turning it on
+
+1. Turn on the MCP server (above).
+2. On **Admin → Overview → Features**, find **OAuth sign-in for MCP clients** (marked **Experimental**) and turn on **Allow OAuth sign-in**.
+
+It takes effect only while the MCP server is on. While it's off, every endpoint below answers `404`, and existing tokens are refused (`401`, `oauth_off`) until it's turned on again; the connections are kept. Each change is audited as `platform.mcp_oauth`. The API is the same `/v1/admin/settings/mcp`, with `oauthEnabled`; `GET /v1/me` reports it, in effect, as `capabilities.mcpOAuth`.
+
+### What a token reaches
+
+A token acts as the person with only the `mcp` scope, checked against their **current** teams and roles on every request:
+
+- **`search`**: the knowledge bases of every team they belong to now, except those whose classification keeps programs to agents.
+- **`ask`**: the published agents of those teams. Not other teams' agents open to everyone signed in, and not public agents.
+- **Not** their platform role, and **not** the REST API (`/v1/...` answers `401` to a token).
+- Limits: the team's query and chat limits, the person's own per-minute limit, and the per-key rates applied per connection.
+
+The difference from a personal key: a key belongs to one team and can be restricted to some knowledge bases and agents; a connection spans all of the person's teams, has no such restrictions, and follows their memberships as they change. A suspended person's tokens stop at once.
+
+**Connected apps** are listed on each person's API keys page, where they can disconnect them, and on **Admin → Users → a person** (platform admins disconnect, auditors read).
+
+<Screenshot slot="admin-user-connected-apps" />
+
+### Endpoints
+
+`<APP_URL>` is the issuer. Like `/mcp`, these speak a protocol, so they aren't in the OpenAPI document.
+
+| Endpoint | What |
+|---|---|
+| `GET /.well-known/oauth-protected-resource/mcp` (and `/.well-known/oauth-protected-resource`) | Protected resource metadata (RFC 9728): the resource is `<APP_URL>/mcp`, the authorization server is `<APP_URL>`, scope `mcp` |
+| `GET /.well-known/oauth-authorization-server` | Authorization server metadata (RFC 8414): PKCE `S256` only, public clients only, Client ID Metadata Documents supported, `iss` in authorization responses |
+| `GET /oauth/authorize` | Authorization code with PKCE; shows the consent page |
+| `POST /oauth/token` | The `authorization_code` and `refresh_token` grants |
+| `POST /oauth/register` | Dynamic Client Registration (RFC 7591), public clients only |
+| `POST /oauth/revoke` | Token revocation (RFC 7009) |
+
+A tool's first request to `/mcp` without a credential gets `401` with `WWW-Authenticate: Bearer resource_metadata="<APP_URL>/.well-known/oauth-protected-resource/mcp", scope="mcp"`, which starts the flow. Make sure your ingress routes `/.well-known/` and `/oauth/` to `grounded-api` along with everything else.
+
+**How clients identify themselves:**
+
+- **A Client ID Metadata Document** (preferred): the client ID is an https URL whose JSON document gives the client's name and redirect URIs. Grounded fetches it through the same address guard as MCP servers (public addresses only, no redirects, 5 seconds, at most 16 KiB) and caches it for its `Cache-Control` max-age, between a minute and an hour. The consent page shows the document's host, which vouches for the name.
+- **Dynamic Client Registration**, for older clients. Anyone can register any name, so the consent page marks these clients **Unverified**. A registration unused for 30 days is deleted; registration is limited to 10 per minute per address.
+
+Redirect URIs must be `https`, or `http` on `localhost`, `127.0.0.1` or `[::1]` (any port). Authorization requests need PKCE `S256` (`plain` is refused) and `resource=<APP_URL>/mcp` exactly (RFC 8707). Until the client and its redirect URI are known to be good, an error is shown as a page and never redirected.
+
+### Tokens
+
+| | Lifetime | Notes |
+|---|---|---|
+| Authorization code | 60 seconds, single use | Used up by the first exchange, even a failed one |
+| Access token (`gat_…`) | 1 hour | Bound to `<APP_URL>/mcp`; accepted only there |
+| Refresh token (`grt_…`) | 30 days, renewed on each use | Rotated on every use. Presenting an already-used refresh token revokes the whole connection, and the person connects again |
+
+Tokens are opaque random values, stored only as HMAC-SHA256 digests under the API-key pepper, like API keys. During a pepper rotation (`API_KEY_PEPPER_PREVIOUS`) existing tokens keep working; once the previous pepper is removed, tools sign in again ([Rotating keys](/docs/self-hosting/security#rotating-keys)). The authorization, token and revocation endpoints are limited to 60 requests per minute per address.
+
+## What's recorded
+
+- **Usage:** searches and answers count towards the team's usage, limits and spend like REST calls, with the channel `mcp` (shown as **MCP server** in analytics and the access log). OAuth calls are recorded as the person.
+- **Audit:** `mcp.search` and `mcp.ask` for every tool call, with the knowledge base or agent, the number of passages or citations and the outcome, never the query, question or answer. OAuth adds `oauth.client_register`, `oauth.consent`, `oauth.token_issue` (never a token), `oauth.revoke` (with the reason: `user`, `admin`, `client` or `refresh_reuse`), and tool calls carry `via: oauth` with the tool's name. The switches are `platform.mcp` and `platform.mcp_oauth`. Recent changes on the admin Overview leave out MCP and OAuth entries; the audit log has them.
+- **Metrics:** `grounded_mcp_tool_calls_total{tool, outcome}`, and the HTTP metrics for `POST /mcp` in the route group `mcp` ([Observability](/docs/self-hosting/observability)).
+- **Traces:** with [tracing](/docs/self-hosting/tracing) on, a client's `_meta.traceparent` continues its trace into Grounded.
+
+## Security notes
+
+- Keys with the `mcp` scope are ordinary API keys: one team, optional restrictions and expiry, revocable, hashed with the pepper.
+- A connected tool passes what it gets to its own model. Classification ceilings still decide what reaches the tool: agents check their audience on every question, and knowledge bases whose level keeps programs to agents are never offered to `search`.
+- OAuth consent pages name the host that vouches for a client and mark self-registered clients **Unverified**. Tell people to allow only tools they started connecting themselves.
+- Turning OAuth sign-in off refuses every token at once without deleting the connections; disconnecting a person's app on their admin page revokes that connection and forgets the consent (the person can connect again).
+
+## Known limitations
+
+- OAuth sign-in is experimental: the setting, the endpoints and the consent page may change.
+- One resource (`/mcp`) and one scope (`mcp`); no per-tool scopes or step-up.
+- Public clients only: no client secrets or `private_key_jwt`.
+- No private-use redirect schemes (`myapp://`), and no CORS on the OAuth endpoints, so browser-based clients need their own proxy.
+- Two concurrent refreshes with the same refresh token look like reuse and revoke the connection.
+- Consent is per person and tool: disconnecting a tool on one computer disconnects it everywhere that person uses it.
+- `ask` isn't streamed; there are no progress notifications, document resources, prompts or list-changed notifications, and `search` has no metadata filters.

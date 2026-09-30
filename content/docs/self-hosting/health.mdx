@@ -1,0 +1,91 @@
+---
+title: Stored health
+description: The last test result of every connection, model and MCP server, the scheduled re-test that costs nothing, error classes, retention, and the metrics and alert.
+---
+
+Since v0.3.0, Grounded keeps the latest test result of every model connection, model and [MCP server](/docs/administration/mcp-servers), and the worker re-tests them on a schedule. Admins see at a glance what's failing, and since when, without pressing every Test button.
+
+## Where it shows
+
+- **Admin → Connections**, **Models** and **MCP servers** have a **Health** column: "Healthy · 3 minutes ago", "Failing · since 2 hours ago", or **Not tested yet**, with a **Health** filter.
+- A connection's, model's or server's page shows the exact time of the last test, who ran it (an admin or the scheduled check) and, when it failed, the error class and the message.
+- The admin Overview lists failures under **Needs attention**: "1 connection is failing", "2 models are failing", "1 MCP server is failing", each linking to its list filtered to the failing ones.
+
+<Screenshot slot="admin-connections-health" />
+
+<Screenshot slot="admin-needs-attention-health" />
+
+Platform admins and auditors can see health; nobody else can. Only platform admins can run a test.
+
+## Where results come from
+
+| Trigger | What it sends | Stored as |
+|---|---|---|
+| **Test connection** (an admin) | `GET /models`, or one small SystemOne question for a SystemOne service | The connection's result, plus the result it implies for each enabled model on it |
+| **Test model** (an admin) | One small real request to the model: a short chat completion, an embedding, the moderation samples, the SystemOne sample questions or the OCR sample page. It costs a few tokens | The model's result |
+| **The scheduled check** (the worker's `health.check` job) | For each enabled connection, `GET /models`. For a SystemOne service, only a `GET` of its endpoint to check that it answers; never a question | The connection's result, plus the result it implies for each enabled model on it |
+| **Test server** (an admin) and the scheduled check of each enabled MCP server | Connect and read the tool list; never a tool call | The MCP server's result |
+
+### What a scheduled check proves
+
+A scheduled check **costs nothing**: it never sends a completion, an embedding, a moderation check, a SystemOne question or a tool call. The trade-off is that it proves less than **Test model**:
+
+- **A connection passes** when its gateway lists its models. A SystemOne service passes when its endpoint answers with anything but a server error, a refused key or a 429.
+- **A model passes** when its connection passes and the gateway's model list includes the model's upstream ID. It fails with `not_found` when the gateway lists models but not this one. SystemOne models are never listed, and an empty list proves nothing, so neither counts against a model.
+- **A model fails with its connection** when the connection fails ("Its connection failed its test: …").
+
+So a model that's listed but broken upstream (for example, out of GPU memory) shows healthy until an admin presses **Test model** or real traffic fails. The `GroundedModelConnectionFailing` alert catches that case from real requests.
+
+## Error classes
+
+| Class | Shown as | Meaning |
+|---|---|---|
+| `unavailable` | Unreachable or server error | Network, DNS, TLS or proxy failure, a timeout, or a 5xx |
+| `auth` | API key refused | 401 or 403 |
+| `not_found` | Not found | A wrong base URL (missing `/v1`?), or the gateway no longer lists the model |
+| `rate_limited` | Rate limited | 429 (or 529) |
+| `bad_request` | Request refused | Another 4xx |
+| `bad_response` | Unexpected response | Not what an OpenAI-compatible, SystemOne or MCP server returns; for an MCP server also an oversized answer or a request for input |
+| `config` | Settings problem | The stored API key can't be decrypted with the current `ENCRYPTION_KEY`. Enter the key again |
+
+The stored message is the gateway's error message, at most 300 characters, with anything that looks like a key or bearer token replaced by `[redacted]`. Response bodies are never stored. **Failing since** is when the current run of failures began, and stays correct after older checks are pruned.
+
+## Schedule
+
+| Variable | Default | Allowed |
+|---|---|---|
+| `HEALTH_CHECK_INTERVAL` | `15m` | `5m` to `24h`, or `0` / `off` to stop the scheduled check. The Test buttons still store their results. |
+
+- **Only enabled subjects** are tested. A disabled connection, model or server keeps its last result, and isn't counted on the Overview or in the metrics.
+- **Each connection is tested once per run**, and its models' health comes from that one test. At most 4 connections are tested at once, each bounded by its own timeout and by 2 minutes.
+- **Jitter:** each run starts after a random delay of up to a tenth of the interval (at most 2 minutes), so several installs don't probe a shared gateway in step. The first run comes shortly after a worker starts.
+- **One run per interval** across all worker processes, and a run never outlasts the interval. A failed run isn't retried; the next one re-tests.
+- **Maintenance mode doesn't pause it**: a check writes nothing but its own result.
+
+Scheduled checks and the Test buttons don't count in `grounded_model_requests_total`.
+
+## Retention
+
+The `health_checks` table keeps **7 days** of checks per subject, plus always each subject's latest check however old. The health job prunes older checks, and those of deleted subjects, at the end of each run. With the default interval that's about 700 rows per connection a week. With `HEALTH_CHECK_INTERVAL=off`, nothing is pruned until the schedule is back on.
+
+## Metrics and alert
+
+Read from Postgres at scrape time, with the other install-state metrics:
+
+| Metric | Type | Labels | Notes |
+|---|---|---|---|
+| `grounded_health_failing` | gauge | `kind` (`connection`, `model`, `mcp_server`) | Enabled subjects whose latest check failed |
+| `grounded_health_failing_seconds` | gauge | `kind`, `name` | How long each failing enabled subject has been failing; absent while it's healthy |
+
+Counted by every process that stores a check:
+
+| Metric | Type | Labels |
+|---|---|---|
+| `grounded_health_checks_total` | counter | `kind`, `trigger` (`manual`, `scheduled`), `status` (`healthy`, `failing`) |
+| `grounded_health_check_duration_seconds` | histogram | `kind` |
+
+The alert **`GroundedHealthCheckFailing`** (warning) fires when an enabled subject has failed every check for over 30 minutes: `max by (namespace, kind, name) (grounded_health_failing_seconds) > 1800`. See [Observability](/docs/self-hosting/observability#alerts).
+
+## API
+
+`GET /v1/admin/health-checks` (platform admins and auditors) returns the latest check of each subject that has one: its kind (`connection`, `model` or `mcp_server`), ID, name, whether it's enabled, the status, latency, error class, HTTP status, message, trigger and who ran it, when it was checked and since when it has had this status. `?kind=` narrows it. The Test endpoints return their results as before, and store them. See the [API reference](/docs/api).
