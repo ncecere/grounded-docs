@@ -42,6 +42,8 @@ A **knowledge base** is a named set of data sources, searched together. It can m
 
 An **agent** answers questions from one or more knowledge bases (up to five). It has instructions, a chat model and settings for how it searches, answers and cites. You edit a **draft**; **publishing** creates an immutable, numbered version, and people always chat with the latest published version.
 
+An agent can also call **tools** on outside MCP servers that platform admins approved, such as a service status check; their results are cited like passages.
+
 By default an agent is **strictly grounded**: it answers only from its sources, answers the part of a question its sources cover and says what they don't, and gives the team's refusal message when they have nothing relevant.
 
 ### Audiences

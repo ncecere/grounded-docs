@@ -42,6 +42,8 @@ Named events whose data is JSON, in this order:
 | `error` | Only on failure, for example `model_unavailable`, `model_busy` or `incomplete_answer`. |
 | `done` | Last. |
 
+A citation of a tool's result (an agent's [MCP tool](/docs/administration/mcp-servers)) has `kind: "tool"`, `server`, `tool` and `truncated`, and nil document and source IDs; passages have no `kind`.
+
 A blocked question gets `conversation`, `message_start`, `moderation` and `message_end`. A `: ping` comment is sent every 15 seconds. Closing the connection stops the answer; the partial answer is saved with the stop reason `aborted`.
 
 In `message_end.text`, unknown `[n]` markers are removed, `[1, 2]` is written as `[1][2]`, and markers are removed entirely when the agent's citation mode is "No citations". `noContextReason` is `judged_out` (passage judging left nothing), `small_talk` or `out_of_scope` (the scope check) when those apply.

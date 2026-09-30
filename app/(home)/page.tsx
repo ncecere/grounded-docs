@@ -23,21 +23,21 @@ const sections = [
     href: '/docs/using',
     icon: <MessagesSquare />,
     description:
-      'Chatting with agents, and building data sources, knowledge bases, agents and evaluations for your team.',
+      'Chatting with agents, connecting AI tools over MCP, and building data sources, knowledge bases, agents and evaluations for your team.',
   },
   {
     title: 'Administration',
     href: '/docs/administration',
     icon: <ShieldCheck />,
     description:
-      'The admin portal: people and teams, models, classifications, limits, costs, retention and break-glass.',
+      'The admin portal: people and teams, models and MCP servers, classifications, limits, costs, retention and break-glass.',
   },
   {
     title: 'Self-hosting',
     href: '/docs/self-hosting',
     icon: <Server />,
     description:
-      'Install on Kubernetes, configure it, connect sign-in and models, monitor, back up and upgrade.',
+      'Install on Kubernetes, configure it, connect sign-in and models, monitor and trace, back up and upgrade.',
   },
   {
     title: 'API',
