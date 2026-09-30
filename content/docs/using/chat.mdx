@@ -19,8 +19,9 @@ You can also type an agent's name in the command palette (⌘K or Ctrl+K). An ag
 
 Open an agent and type your question, or pick one of its starter questions. Enter sends; Shift+Enter adds a line.
 
+- Until the first words arrive, the chat says what the agent is doing: "Understanding the question…" (a follow-up is being turned into a search), "Searching *agent*'s knowledge…", "Checking the passages…" and "Writing the answer…". Each step is shown only when it happens, and screen readers announce it once. This works the same on the chat page, in Try it, on public pages and in the widget.
 - The answer streams in as it's written. While the model is thinking you see "Thinking…", never its reasoning.
-- Follow-up questions can refer to earlier turns ("and for a second copy?"). Grounded rewrites them into a question that stands alone before it searches.
+- Follow-up questions can refer to earlier turns ("and for a second copy?"). When a question depends on the conversation, Grounded rewrites it into a question that stands alone before it searches; a question that already stands alone is searched as you wrote it, which is faster.
 - You can stop an answer while it's being written. The part written so far is kept.
 - If you're offline, the question stays in the box with **Retry**. An answer cut off midway says so and offers **Retry**.
 
@@ -39,7 +40,7 @@ An agent that isn't strictly grounded may also answer from the model's general k
 
 ### Moderation
 
-Public agents, and any other agent the platform or its team chooses, check questions and answers against a moderation policy. A blocked question or answer is replaced by a notice. On public agents the answer is checked before it's shown, so you see "Thinking…" until it's ready. If the safety check itself is unavailable, a public agent refuses with "The safety check is unavailable right now. Please try again."
+Public agents, and any other agent the platform or its team chooses, check questions and answers against a moderation policy. A blocked question or answer is replaced by a notice. On public agents the answer is checked before it's shown, so after the search steps you see "Writing and checking the answer…" until it's ready. If the safety check itself is unavailable, a public agent refuses with "The safety check is unavailable right now. Please try again."
 
 ## Citations
 

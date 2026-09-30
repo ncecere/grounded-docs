@@ -44,7 +44,7 @@ The default suits most content. A knowledge base full of codes, names and policy
 
 For each question, Grounded:
 
-1. Rewrites a follow-up into a question that stands alone (agents only, if turned on).
+1. Rewrites a follow-up that depends on the conversation into a question that stands alone (agents only, if turned on). A question that already stands alone is searched as it is.
 2. Embeds the question with the knowledge base's profile.
 3. Runs a vector search and a keyword (Postgres full-text) search at the same time, both limited to the knowledge base's sources and any filters.
 4. Fuses the two rankings with the weights above and returns the top passages.
