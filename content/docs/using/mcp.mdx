@@ -147,7 +147,7 @@ Grounded offers two tools. Each lists, as a fixed choice, exactly the knowledge 
 
 | Argument | | |
 |---|---|---|
-| `knowledge_base` | required | One of the key's knowledge bases, by a name made from its title (`Student handbook` → `student-handbook`) |
+| `knowledge_base` | required | One of the key's knowledge bases, by a name made from its title (`Student handbook` → `student-handbook`). Through [OAuth sign-in](#oauth-sign-in-experimental), the name starts with the team's slug: `registrar/student-handbook` |
 | `query` | required | 1–4,000 characters |
 | `top_k` | optional | 1–50 passages; by default the knowledge base's own setting |
 
@@ -174,7 +174,7 @@ Knowledge bases whose classification level keeps API keys to agents aren't offer
 
 | Argument | | |
 |---|---|---|
-| `agent` | required | One of the published agents the key may chat with, by its address name (`help-desk`) |
+| `agent` | required | One of the published agents the key may chat with, by its address name (`help-desk`). Through OAuth, it starts with the team's slug: `it-support/help-desk` |
 | `question` | required | 1–8,000 characters |
 | `conversation` | optional | The `conversation` value a previous `ask` returned, to ask a follow-up (personal keys only) |
 
@@ -220,7 +220,7 @@ When a platform admin turns on **OAuth sign-in for MCP clients**, a tool can con
 
 <Screenshot slot="oauth-consent" />
 
-A tool connected this way acts **as you, across all your teams**: it can search the knowledge bases of every team you belong to and ask their published agents, following your memberships as they change. It can't reach other teams' agents open to everyone, public agents, anything on the REST API, or your platform role if you have one. It can't change anything. Its conversations are yours, and a follow-up handle only works with the same connection.
+A tool connected this way acts **as you, across all your teams**: it can search the knowledge bases of every team you belong to and ask their published agents, following your memberships as they change. Its knowledge bases and agents are named `<team-slug>/<name>`, such as `registrar/student-handbook` or `it-support/help-desk`, whether you're in one team or several, so joining or leaving a team renames nothing and two teams' "Handbook"s can't be confused. It can't reach other teams' agents open to everyone, public agents, anything on the REST API, or your platform role if you have one. It can't change anything. Its conversations are yours, and a follow-up handle only works with the same connection.
 
 ### Connected apps
 
