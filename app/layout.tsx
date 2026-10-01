@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   description:
     'Documentation for Grounded, the open-source, multi-tenant RAG and agents platform: using it, running it and its API.',
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    icon: [{ url: '/favicon.ico', sizes: '16x16 32x32 48x48' }, { url: '/favicon.svg', type: 'image/svg+xml' }],
+    apple: '/apple-touch-icon.png',
   },
 };
 
