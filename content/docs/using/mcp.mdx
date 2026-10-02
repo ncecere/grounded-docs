@@ -168,7 +168,7 @@ It returns the passages as text for the model to read, and the same as structure
 }
 ```
 
-Knowledge bases whose classification level keeps API keys to agents aren't offered, just as the REST API's search refuses them.
+Knowledge bases whose classification level keeps API keys to agents aren't offered, just as the REST API's search refuses them. With a platform [rerank model](/docs/administration/reranking) (since v0.4.0), `search` reranks its passages like every search; its output is unchanged.
 
 ### `ask`: an agent's answer
 
@@ -196,7 +196,7 @@ It returns the whole answer at once (it isn't streamed): the text with its `[n]`
 - **`refused`** is true when the agent declined, for example a strictly grounded agent with nothing to answer from.
 - **Follow-ups:** pass `conversation` back with the next question. The handle only works with the key (or OAuth connection) that received it; any other gets "That conversation wasn't found". A service key keeps no conversations, so each question stands alone.
 
-With a personal key, `ask` conversations are stored as yours, like chats in the app.
+With a personal key, `ask` conversations are stored as yours, like chats in the app. `ask` answers are checked by moderation whole, never in paragraphs, and a first question may get a [saved answer](/docs/using/editors/saved-answers) when the agent has them on.
 
 ## Limits and errors
 
