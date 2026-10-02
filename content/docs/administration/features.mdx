@@ -3,19 +3,22 @@ title: Features overview
 description: The optional features on the admin Overview's Features card, their defaults, and where each one is set up.
 ---
 
-Several of Grounded's features are optional. Every one of them except evaluations is **off** on a new install, and nothing changes for anyone until an admin sets it up. The admin **Overview** has a **Features** card with each feature's state and a link to where it's configured. Auditors see the states.
+Several of Grounded's features are optional. Every one of them except evaluations and saved answers is **off** on a new install, and nothing changes for anyone until an admin sets it up. The admin **Overview** has a **Features** card with each feature's state and a link to where it's configured. Auditors see the states.
 
 | Feature | Default | Where it's set up | What it needs |
 |---|---|---|---|
 | **Evaluations** | On | The switch on the Features card; limits under [Limits](/docs/administration/limits) | Nothing extra |
 | **MCP server** | Off | The switch on the Features card (**Allow MCP clients**); see [MCP server and OAuth](/docs/self-hosting/mcp-server) | API keys with the MCP scope |
 | **OAuth sign-in for MCP clients** (Experimental) | Off | The switch on the Features card (**Allow OAuth sign-in**) | The MCP server on, and OIDC sign-in |
+| **Saved answers** | On (each agent decides; on by default for public agents) | The switch on the Features card (**Allow saved answers**); each agent's Settings | Nothing extra; near-identical matching needs a SystemOne model |
 | **Cost tracking** | Off | [Costs](/docs/administration/costs): Off, Track only or Enforce | Prices for your models |
 | **OCR** | Off | [Parsing & OCR](/docs/administration/parsing-and-ocr) | A backend: the OCR sidecar, Apache Tika's full image, or a vision model |
 | **SSO groups** | No rules | [SSO groups](/docs/administration/sso-groups) | A groups claim from your identity provider |
 | **SystemOne** | Not configured | [SystemOne](/docs/administration/systemone) | A service that answers `POST /v1/systemone` |
 | **Public access** | Off | [Public access](/docs/administration/moderation-and-public-access#public-access) | A moderation provider for the public audience |
 | **Maintenance** | Off | [Maintenance](/docs/administration/maintenance) | Nothing extra |
+
+[Reranking](/docs/administration/reranking) (since v0.4.0) isn't on the card: it's off until a platform admin chooses a rerank model under **Admin → Models → Reranking settings**.
 
 The card says more than on or off where it matters:
 
@@ -39,3 +42,7 @@ Before v0.2.1 this switch was under Limits → Evaluations, which now keeps only
 **MCP server** lets AI tools search knowledge bases and ask agents at `/mcp`, with API keys that have the MCP scope. **OAuth sign-in for MCP clients** also lets a person connect a tool by signing in and approving it, without a key; it's experimental and only takes effect while the MCP server is on. Turning either off asks for confirmation, since connected tools stop at once; keys and connections are kept. Both are audited (`platform.mcp`, `platform.mcp_oauth`). See [MCP server and OAuth](/docs/self-hosting/mcp-server).
 
 Agents calling tools on *outside* MCP servers has no switch: nothing happens until an admin registers a server and approves a tool under [MCP servers](/docs/administration/mcp-servers).
+
+## The saved answers switch
+
+**Saved answers** (since v0.4.0) lets agents reuse a recent answer to the same first question, at once and at no model cost. It's on, and each agent has its own setting, on by default for public agents. Turning it off stops every agent from reusing or saving answers; answers already saved stay until they expire. Auditors see it read-only. It's audited (`platform.answer_cache`). See [Saved answers](/docs/using/editors/saved-answers).
