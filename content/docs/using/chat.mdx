@@ -20,7 +20,8 @@ You can also type an agent's name in the command palette (⌘K or Ctrl+K). An ag
 Open an agent and type your question, or pick one of its starter questions. Enter sends; Shift+Enter adds a line.
 
 - Until the first words arrive, the chat says what the agent is doing: "Understanding the question…" (a follow-up is being turned into a search), "Searching *agent*'s knowledge…", "Checking the passages…" and "Writing the answer…". Each step is shown only when it happens, and screen readers announce it once. This works the same on the chat page, in Try it, on public pages and in the widget.
-- The answer streams in as it's written. While the model is thinking you see "Thinking…", never its reasoning.
+- The answer streams in as it's written. While a reasoning model is thinking you see "Thinking…" (or "Thinking about your question…" when answers are checked before they're shown), never its reasoning.
+- An answer that was given recently to the same first question may arrive at once, all of it: it's a [saved answer](/docs/using/editors/saved-answers), with the same sources and checks as the original.
 - Follow-up questions can refer to earlier turns ("and for a second copy?"). When a question depends on the conversation, Grounded rewrites it into a question that stands alone before it searches; a question that already stands alone is searched as you wrote it, which is faster.
 - You can stop an answer while it's being written. The part written so far is kept.
 - If you're offline, the question stays in the box with **Retry**. An answer cut off midway says so and offers **Retry**.
@@ -40,14 +41,23 @@ An agent that isn't strictly grounded may also answer from the model's general k
 
 ### Moderation
 
-Public agents, and any other agent the platform or its team chooses, check questions and answers against a moderation policy. A blocked question or answer is replaced by a notice. On public agents the answer is checked before it's shown, so after the search steps you see "Writing and checking the answer…" until it's ready. If the safety check itself is unavailable, a public agent refuses with "The safety check is unavailable right now. Please try again."
+Public agents, and any other agent the platform or its team chooses, check questions and answers against a moderation policy. A blocked question or answer is replaced by a notice. How you see a checked answer depends on the policy ([Moderation modes](/docs/administration/moderation-modes)):
+
+- **Paragraph by paragraph** (the default on public agents since v0.4.0): "Writing and checking the answer…", then the answer one paragraph at a time, each shown once it passed. If a later paragraph fails, the notice replaces the whole answer.
+- **The whole answer**: "Writing and checking the answer…" until it's ready, then all of it at once, shown from its start.
+- **As it's written**: the answer streams, and is replaced by the notice if it fails when it ends.
+
+If the safety check itself is unavailable, a public agent refuses with "The safety check is unavailable right now. Please try again."
+
+<Screenshot slot="public-agent-page-thinking" />
 
 ## Citations
 
 Each factual sentence should end with a numbered citation chip such as **[1]**. Sources are numbered 1, 2, 3… in the order the answer uses them.
 
 - Hover, click, or press Enter or Space on a chip to open its card: the cited passage, with its heading path and pages. Focus moves into the card; Escape returns you to the chip.
-- **Show source *n* below** opens the answer's sources, which start collapsed, and moves to that source.
+- **Show source *n*** opens the cited passage in the **source viewer**, highlighted in its document beside the answer, with the claims that cite it ([Checking a source](/docs/using/source-viewer)). Where there's no viewer, such as a deleted agent's transcript, it reads **Show source *n* below** and opens the answer's sources, which start collapsed.
+- The source cards under an answer open the viewer too.
 - A web page is linked to its original URL when the agent's citation mode includes links. Uploaded files are cited by title only; you can't download them from a chat.
 - Some agents can also call **tools** while they answer, such as a service status check. A tool's result is cited like a document and reads **From *Service status* · check_outage** among the sources: the service, then the tool. Claim checks treat it like any other source. A tool gets only the details the agent puts in a call, not your conversation. See [Tools from MCP servers](/docs/administration/mcp-servers#results-are-sources).
 
@@ -68,7 +78,7 @@ Headings, questions, greetings and sentences such as "the sources don't mention 
 
 The answer has a one-line summary above its sources, such as "9 of 10 claims supported · 1 uncited". It counts supported claims over supported, not supported and uncited ones; unchecked claims are left out.
 
-A chip's card states its claim's verdict first, then what this source says about it, for example "Claim not supported. This source contradicts it (92% confidence)". A supporting verdict under 50% reads "with low confidence". Under the answer, each source card says how many of the claims citing it it supports ("Supports 2 of 3 claims that cite it").
+A chip's card states its claim's verdict first, then what this source says about it, for example "Claim not supported. This source contradicts it (92% confidence)". A supporting verdict under 50% reads "with low confidence". Under the answer, each source card breaks down the claims citing it in the verdict colours: "Supports 3 claims · 1 not supported", or "Supports 2 claims · 1 contradicted" (before v0.4.0, "Supports 2 of 3 claims that cite it").
 
 <Screenshot slot="chat-citation-card" />
 
@@ -83,6 +93,10 @@ A chip's card states its claim's verdict first, then what this source says about
 ## Feedback
 
 Each answer has thumbs up and thumbs down buttons; the one you chose stays highlighted. A thumbs down asks for a reason from a fixed list: incorrect, not helpful, missing sources, wrong sources, outdated, harmful or unsafe, or other. The team sees counts of ratings and reasons in its analytics, never your question or the answer.
+
+The thumbs-down menu also has **Share this question with the team**, off by default. Tick it before you choose a reason, and the team's editors can read your question (never who asked) in their [gap report](/docs/using/editors/gaps), to see what the agent is missing. Unticking it, or rating the answer up instead, takes the question back. Without the tick, a question the agent couldn't answer still counts towards the gap report's topics, but its text is never shown. A thumbs down also retires a [saved answer](/docs/using/editors/saved-answers), so the next person gets a fresh one.
+
+<Screenshot slot="chat-feedback-share" />
 
 If you're an editor on the agent's team, an answer you rated down, or one without sources, has **Add to evaluations**. It copies the question, and the documents the answer cited as the expected ones, into an evaluation set; nothing else from the conversation is copied. See [Evaluations](/docs/using/editors/evaluations).
 
@@ -106,4 +120,9 @@ A public agent has a page of its own, and may be embedded on a website as a chat
 - **New chat** starts a new conversation within the session.
 - Anonymous conversations are deleted after a short period, 24 hours by default.
 - If you're signed in, a public agent's page keeps your conversations like any other agent's.
+- Since v0.4.0 you can rate answers with the same thumbs, reasons and **Share this question with the team** tick as in the app, and open a citation's source in the [source viewer](/docs/using/source-viewer) (a full-screen sheet in the widget and on phones). Both work only for answers in your own session.
+- The page's footer says that questions the assistant can't answer may be grouped, without your details, to improve it ([Gaps](/docs/using/editors/gaps#privacy)).
+- The widget keeps a session of its own, separate from the public page's, even on the same site.
 - In the widget, Escape closes the panel and returns focus to the launcher button.
+
+<Screenshot slot="public-agent-page-feedback" />
