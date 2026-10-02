@@ -134,6 +134,7 @@ With `"stream": true` the reply is `chat.completion.chunk` events:
 - `delta.content` carries the answer, and `delta.reasoning_content` a reasoning model's thinking when the model streams it.
 - A final chunk has `finish_reason` and `citations`, and `claims` when checks are on. It's held until the citation check ends; streamed answers are annotated, never rewritten.
 - With `stream_options.include_usage`, a usage chunk follows.
+- When the agent's audience streams **checked paragraphs** (the public default since v0.4.0), each content chunk is a paragraph that passed moderation, and there's no `reasoning_content`. A failing paragraph adds the notice and ends with `finish_reason: content_filter`; an unavailable provider sends the `moderation_unavailable` error. Without streaming, the answer is checked once, whole.
 - Then `data: [DONE]`.
 
 ```sh

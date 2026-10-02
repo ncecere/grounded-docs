@@ -33,12 +33,12 @@ Named events whose data is JSON, in this order:
 | Event | When |
 |---|---|
 | `conversation` | First: the conversation's ID. |
-| `status` | What the agent is doing before the answer's first words, once per step: `{"step": "rewriting"}` (turning a follow-up that depends on the conversation into a search query), `searching` ("search before every answer"), `checking` (SystemOne passage judging), `answering` (the model is writing, until its first token). Since v0.3.0. Ignore steps you don't know. |
+| `status` | What the agent is doing before the answer's first words, once per step: `{"step": "rewriting"}` (turning a follow-up that depends on the conversation into a search query), `searching` ("search before every answer"), `checking` (SystemOne passage judging), `thinking` (since v0.4.0: the model is reasoning and its thinking isn't streamed, in checked-paragraph and buffered modes; sent once per stretch of reasoning, with no content), `answering` (the model is writing, until its first token). Since v0.3.0. Ignore steps you don't know. |
 | `retrieval` | With "search before every answer": the passages found (numbered, with title, URL and snippet), and with passage judging the counts judged, kept and dropped. |
-| `message_start` | The answer begins. |
+| `message_start` | The answer begins. Since v0.4.0 `mode` says how the answer is moderated: `stream_retract`, `stream_checked` (each `text_delta` is a checked paragraph) or `buffer`; absent without output moderation. `buffered: true` means the text arrives whole (buffer mode, or a [saved answer](/docs/using/editors/saved-answers), which has no `mode`): show it from its start. |
 | `thinking_delta`, `text_delta`, `tool_call`, `retrieval`, `tool_result` | As they happen. `text_delta` carries raw model text. |
-| `moderation` | Only when moderation replaced the question's answer or the answer with a notice. |
-| `message_end` | The final text (which replaces the deltas), `citations`, `usage`, `stopReason`, `refused`, `noContext` and `noContextReason`. For answers checked before release (buffered public answers and JSON answers), also `claims` and `uncited`. |
+| `moderation` | Only when moderation replaced the question's answer or the answer with a notice. In `stream_checked` mode it's sent as soon as a paragraph fails: `retracted` when paragraphs were shown, `withheld` when none were; later text is dropped. |
+| `message_end` | The final text (which replaces the deltas), `citations`, `usage`, `stopReason`, `refused`, `noContext` and `noContextReason`. For answers checked before release (buffered answers and JSON answers), also `claims` and `uncited`. Since v0.4.0 citations of passages carry `chunkId`. |
 | `citations_checked` | Only with SystemOne citation checks on and citations in the answer: follows `message_end` and replaces the citations, with `claims`, `uncited` and counts; in enforce mode, also the text. |
 | `error` | Only on failure, for example `model_unavailable`, `model_busy` or `incomplete_answer`. |
 | `done` | Last. |
@@ -59,10 +59,20 @@ Errors before the stream starts (`agent_disabled`, `agent_policy_violation`, `ra
 | `GET /v1/conversations/{id}` | One, with its messages, citations and claims. |
 | `GET /v1/conversations/{id}/export` | Markdown or JSON, with citations. |
 | `DELETE /v1/conversations/{id}` | Delete it (retention rules may keep the stored copy longer). |
-| `POST /v1/messages/{id}/feedback` | Thumbs up or down, with a reason for down: `incorrect`, `not_helpful`, `missing_sources`, `wrong_sources`, `outdated`, `harmful_or_unsafe` or `other`. |
+| `POST /v1/messages/{id}/feedback` | Thumbs up or down, with a reason for down: `incorrect`, `not_helpful`, `missing_sources`, `wrong_sources`, `outdated`, `harmful_or_unsafe` or `other`. Since v0.4.0, `share: true` with a thumbs down shares the question with the team's [gap report](/docs/using/editors/gaps) (`shared` in the result; `feedbackShared` on conversation messages). |
+| `GET /v1/messages/{id}/sources/{n}` | Since v0.4.0: source `n` of an answer, in context (below). |
 
 A personal key reaches only conversations with its own team's agents, within its restrictions.
+
+### Cited passages
+
+`GET /v1/messages/{messageId}/sources/{n}` returns what the [source viewer](/docs/using/source-viewer) shows: a `CitedPassage` with `status` (`available`, `document_deleted` or `passage_changed`), the title, heading path and link, the passages around the cited one (about a page, the cited one marked), the claims of the answer that cite it with this source's verdict, and `documentTeam` when the caller may open the whole document. Only the person who asked can read it (a personal key needs the `query` scope); anyone else, team and platform admins included, gets 404. A tool's result isn't a passage (404).
+
+- An anonymous visitor reads the same for their own session's answers with `GET /v1/public/agents/{agentId}/messages/{messageId}/sources/{n}`, and rates them with `POST /v1/public/agents/{agentId}/messages/{messageId}/feedback` (the same body as above; limited like public questions, on counters of its own).
+- The team's editors, admins and owners, and keys with the `ingest` or `manage` scope, read a whole document with `GET /v1/teams/{team}/sources/{sourceId}/documents/{documentId}/text`: `?from=&limit=` (up to 200 passages) or `?around={chunkId}` for a passage in context. Members get 403.
 
 ## Searching without an answer
 
 `POST /v1/teams/{team}/kbs/{kbId}/retrieve` returns the passages a knowledge base's hybrid search finds, with citations, and no chat model call. It counts against the team's query limits. See the [reference](/docs/api/reference/kbs/retrieve).
+
+With a platform [rerank model](/docs/administration/reranking) (since v0.4.0), the search is reranked: each hit has `rerankScore`, and the result's `rerank` says how (`status`: `ok`, `timeout`, `error` or `skipped`; `candidates`; `latencyMs`). Send `rerank: false` to compare with the usual order.
