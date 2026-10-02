@@ -1,0 +1,70 @@
+---
+title: Moderation modes and reasoning
+description: The three ways answers are checked before people rely on them, including Stream checked paragraphs, and how much reasoning models think, per audience and per agent, down to Off.
+---
+
+When an audience's [moderation policy](/docs/administration/moderation-and-public-access#policies) checks answers, its **output mode** decides what people see while the answer is checked. Since v0.4.0 there are three modes, and each audience's policy also sets how long reasoning models think before answering.
+
+## The three output modes
+
+| Mode | What people see | When an answer fails |
+|---|---|---|
+| **Stream, then retract** | The answer as it's written. The whole answer is checked when it ends. | The notice replaces the answer they already read. |
+| **Stream checked paragraphs** | "Writing and checking the answer…", then the answer a paragraph at a time, each shown once it passed. | The notice replaces the whole answer, including paragraphs already shown. Nothing after the failing paragraph is sent. |
+| **Buffer** | What the agent is doing, then the whole answer at once, shown from its start. | The answer is never shown; the notice is. |
+
+Set the mode under **Admin → Safety → Moderation**, on the audience's tab, in **Answers**.
+
+<Screenshot slot="admin-moderation" />
+
+An agent can only make it stricter, in the order stream then retract, checked paragraphs, buffer. Its **Build → Safety → Check answers before showing them** offers *As the platform's policy says*, *Paragraph by paragraph* and *The whole answer*. A stricter platform mode wins over the agent's choice.
+
+### Stream checked paragraphs
+
+Buffering is safe but slow: visitors wait for the whole answer, often 5 to 10 seconds or more. **Stream checked paragraphs** releases the answer as the model writes it, without ever showing unchecked text:
+
+- The model's text is held until a paragraph ends: a blank line or, for a long paragraph, the last sentence end once it reaches about 800 characters.
+- Each check reads **the answer so far**, not just the new paragraph, so context counts: a paragraph that's only harmful next to the one before it fails.
+- Checks run one at a time, in order, while the model keeps writing. A typical answer takes 3 to 6 checks, and its first paragraph appears a few seconds after the model starts writing.
+- **A failing paragraph** replaces the whole answer with the policy's notice at once, and the answer is stored as withheld, without its text.
+- **An unavailable provider** fails closed when the policy does (always for public): the answer is replaced by "The safety check is unavailable right now. Please try again."
+- Citations and claims are checked after the last paragraph, as for streamed answers.
+- Answers that don't stream (the JSON chat API, the OpenAI-compatible endpoint without streaming, MCP `ask`) are checked once, whole. [Saved answers](/docs/using/editors/saved-answers) passed their checks when they were saved and are sent whole.
+
+**It's the default for the public audience since v0.4.0.** A public policy that was never saved now streams checked paragraphs. A public policy an admin saved keeps its mode, so an install that saved **Buffer** still buffers until you choose the new mode.
+
+**Costs.** Each paragraph is one check of the answer so far, so an answer costs a moderation request per paragraph instead of one, and the checks read more text. After a failing paragraph the model isn't stopped: its text is dropped, and its tokens are counted as usual.
+
+## Reasoning effort
+
+Reasoning models think before they write, sometimes for a long time: thinking can delay a checked answer's first words by 20 seconds or more on a slow gateway. People see **"Thinking about your question…"** while the model thinks (never its thinking, in checked and buffered modes), then "Writing and checking the answer…".
+
+Each audience's policy has a **Reasoning effort** for agents that don't set their own: **Admin → Safety → Moderation → Reasoning**, shown whether or not the audience has a moderation provider.
+
+<Screenshot slot="admin-moderation-reasoning" />
+
+| Choice | Effect |
+|---|---|
+| **Model default** | Nothing is sent; the model decides. The default for the team and signed-in audiences. |
+| **Off** | Thinking off, the way the model's **How to turn thinking off** says. |
+| **Low**, **Medium**, **High** | Sent as `reasoning_effort` to models that **Accept reasoning effort**. **Public uses Low** until you choose, also in a public policy saved before v0.4.0. |
+
+An agent's own **Reasoning effort** (Build → Advanced) wins over the audience's; its first choice, **Default**, follows the audience's setting. Query rewrites ask for low effort, or off when the answer's effort is off and the model can turn thinking off. When a model can't do what's asked (Off without a way to turn thinking off, Low to High without **Accepts reasoning effort**), nothing is sent and the model's default applies. Changing an audience's effort starts that audience's saved answers afresh.
+
+### Turning thinking off
+
+Whether a chat model can turn thinking off is set on the model, under **Admin → Models → (the model) → Edit → Compatibility → How to turn thinking off**:
+
+| Choice | Sends | For |
+|---|---|---|
+| **Not supported** (default) | Nothing. Off can't be chosen for agents using the model. | Models that don't reason, or can't stop |
+| `reasoning_effort: "none"` | `"reasoning_effort": "none"` | Servers that accept `none` |
+| `chat_template_kwargs: {"enable_thinking": false}` | That field, merged into the model's other `chat_template_kwargs` | Qwen3 and similar models on vLLM or SGLang |
+
+<Screenshot slot="admin-model-compat-thinking-off" />
+
+Measured on a Qwen3 27B model, an answer's first words came after about 7.2 s by default, 4.9 s at low effort, 2.5 s with `reasoning_effort: "none"` and 1.6 s with `enable_thinking: false`. `minimal` returned nothing on that server, so it isn't offered. See [Connections and models](/docs/administration/models#compatibility).
+
+## Monitoring
+
+Operators can see checked paragraphs in `grounded_moderation_first_release_seconds{channel}` (from the question to the first paragraph shown) and `grounded_moderation_paragraph_checks_total{decision}`, both on the Models & moderation dashboard, and in a `moderation.paragraph` span per check. Decisions are recorded without any text. See [Observability](/docs/self-hosting/observability).

@@ -177,7 +177,7 @@
     "files": [
       "admin-models"
     ],
-    "alt": "Admin, Models: a chat model, an embedding model and a SystemOne model with their connection, maximum classification, what uses them, their status and health, above filters by kind, connection and health."
+    "alt": "Admin, Models: the Reranking notice (\"Searches rerank their best 40 passages with Reranker, waiting at most 2 s. 5 published agents rerank.\") with Reranking settings, and a chat model, an embedding model, a rerank model and a SystemOne model with their connection, maximum classification, what uses them, their status and health, below filters by kind, connection and health."
   },
   "admin-embedding-migrations": {
     "files": [
@@ -195,7 +195,7 @@
     "files": [
       "admin-moderation"
     ],
-    "alt": "Admin, Moderation: the policy for the public audience with a threshold and action for each category."
+    "alt": "Admin, Moderation, Public tab: the SystemOne provider and the three Answers modes, Stream, then retract; Stream checked paragraphs; and Buffer (selected), each with what people see, above Fail closed, the block threshold for uncalibrated providers and the notice."
   },
   "admin-costs": {
     "files": [
@@ -311,5 +311,113 @@
       "tracing-answer-trace"
     ],
     "alt": "One chat answer as a trace in Jaeger: the HTTP request, agent.answer, retrieval (the query embedding, vector, lexical and fusion), two agent turns with their model calls, an MCP tool call (execute_tool and tools/call check_outage) with its HTTP exchanges, and SystemOne citation checks."
+  },
+  "chat-source-viewer": {
+    "files": [
+      "chat-source-viewer"
+    ],
+    "alt": "The source viewer beside a Help Desk Assistant answer about connecting to the VPN: \"Source 1 of 2\", VPN (remote access) › Connect, buttons for sources 1 and 2, four claims citing this source each marked Supported, and the document's text with the cited passage, Connect, highlighted as \"Cited passage\". Under the answer, the source cards read \"Supports 4 claims\" and \"Supports 3 claims\"."
+  },
+  "phone-source-viewer": {
+    "files": [
+      "phone-source-viewer"
+    ],
+    "alt": "On a phone, the same source as a full-screen sheet: a back arrow to close it, the title and \"Source 1 of 2\", the claims marked Supported, and the cited passage highlighted in the document's text."
+  },
+  "chat-source-cards": {
+    "files": [
+      "chat-source-cards"
+    ],
+    "alt": "An answer with five source cards under it, \"6 of 10 claims supported · 3 uncited\": one card reads \"Supports 2 claims · 1 contradicted\" in green and red, the others \"Supports 2 claims\" or \"Supports 1 claim\"; in the answer, the contradicted claim's chip has a red warning."
+  },
+  "gaps-topics": {
+    "files": [
+      "gaps-topics"
+    ],
+    "alt": "A team's Gaps page, Open tab: one topic, \"Campus parking permits\" for Help Desk Assistant, failed as Refused · 3 and Thumbs-down · 1, with its 8-week trend, 3 questions from 3 people, last asked 2 minutes ago."
+  },
+  "gaps-topic": {
+    "files": [
+      "gaps-topic"
+    ],
+    "alt": "The \"Campus parking permits\" topic's page, Open, with Dismiss, Mark fixed and Add a source: its agent, 3 questions from 3 people, 1 shared, first and last asked, the trend; why they failed, with the thumbs-down reason Missing sources; and the shared question \"How do I get a parking permit for my car on campus?\" with Add to evaluations."
+  },
+  "gaps-dismiss": {
+    "files": [
+      "gaps-dismiss"
+    ],
+    "alt": "The Dismiss dialog for a topic: How long, Dismiss for now (it reopens when new questions about it fail) or Not for this agent (it stays closed; new questions are still counted), and an optional reason, \"Kept in the topic's history. Only your team's editors, admins and owners see it.\""
+  },
+  "chat-feedback-share": {
+    "files": [
+      "chat-feedback-share"
+    ],
+    "alt": "A refused answer about parking permits with its thumbs-down menu open: \"Share this question with the team\", ticked, above \"What was wrong?\" and the reasons Incorrect, Not helpful, Missing sources, Wrong sources, Outdated, Harmful or unsafe and Something else."
+  },
+  "agent-settings-saved-answers": {
+    "files": [
+      "agent-settings-saved-answers"
+    ],
+    "alt": "A public agent's Settings, Saved answers: Reuse answers on (\"On by default for public agents. Answers that used a tool, failed or were refused are never saved.\"), Also reuse answers to near-identical questions off, Reuse an answer for 24 hours, \"1 saved answer now, reused once so far\", and Clear saved answers."
+  },
+  "admin-features-saved-answers": {
+    "files": [
+      "admin-features-saved-answers"
+    ],
+    "alt": "Admin Overview, Features: Saved answers, On, \"Agents reuse a recent answer to the same question: at once, at no model cost. On by default for public agents; each agent has its own setting.\", with the Allow saved answers switch, among the MCP server, OAuth sign-in, cost tracking, OCR, SSO groups, SystemOne, public access and maintenance rows."
+  },
+  "admin-reranking-settings": {
+    "files": [
+      "admin-reranking-settings"
+    ],
+    "alt": "The Reranking settings dialog on Admin, Models: Rerank model \"Reranker\", Candidates 40 (5 to 50), Time limit 2,000 ms (200 to 10,000; a slower or failed call keeps the usual order), with Save settings off until something changes."
+  },
+  "agent-build-advanced-rerank": {
+    "files": [
+      "agent-build-advanced-rerank"
+    ],
+    "alt": "An agent's Build, Advanced section: Reasoning effort (Default, disabled, with the Admin → Models settings Off and Low to High need), Source token budget, Minimum similarity, Rewrite follow-up questions on, Rerank passages on and Passages kept after reranking 6."
+  },
+  "kb-try-it-rerank": {
+    "files": [
+      "kb-try-it-rerank"
+    ],
+    "alt": "A knowledge base's Try it with Rerank on, for \"How do I connect to the VPN from home?\": \"Reranked the best 40 passages in 452 ms\", and results each with their rerank score, fusion score and vector and keyword ranks, the first being the second-ranked passage by vector search."
+  },
+  "admin-moderation-reasoning": {
+    "files": [
+      "admin-moderation-reasoning"
+    ],
+    "alt": "Admin, Moderation, Public tab: the three Answers modes with Buffer selected, Fail closed, the block threshold and the notice, and below them the Reasoning card with Reasoning effort Low and its explanation."
+  },
+  "admin-model-compat-thinking-off": {
+    "files": [
+      "admin-model-compat-thinking-off"
+    ],
+    "alt": "Editing a chat model, Compatibility: Output limit parameter, System prompt role, Honours tool_choice, Accepts reasoning effort, and How to turn thinking off set to Not supported (default), with its hint about Qwen3 on vLLM or SGLang, above Extra request fields (JSON)."
+  },
+  "admin-analytics-failed-questions": {
+    "files": [
+      "admin-analytics-failed-questions"
+    ],
+    "alt": "Admin, Analytics, Top agents & teams: Top agents and Top teams, and the Failed questions card, counts only: IT Help Desk, 4 failed questions, main reasons Refused (3), Thumbs-down (1), Unsupported claims (1)."
+  },
+  "admin-costs-rerank": {
+    "files": [
+      "admin-costs-rerank"
+    ],
+    "alt": "Admin, Costs, Overview for the last 30 days: spend, tokens (chat, embedding, SystemOne, rerank and OCR), requests, unpriced usage Yes, and spend per day by kind with Rerank in the legend."
+  },
+  "public-agent-page-thinking": {
+    "files": [
+      "public-agent-page-thinking"
+    ],
+    "alt": "A public agent's page while the model reasons: the question, \"Searched the knowledge base… Completed, 6 results\", then \"Thinking about your question…\", with Stop; the footer says questions the assistant can't answer may be grouped, without the visitor's details."
+  },
+  "public-agent-page-feedback": {
+    "files": [
+      "public-agent-page-feedback"
+    ],
+    "alt": "The same public page with the answer: renewals online and how many times by borrower type, two citation chips, Used 2 sources, and the thumbs up pressed."
   }
 }

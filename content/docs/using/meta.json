@@ -2,5 +2,5 @@
   "title": "Using Grounded",
   "description": "Chatting, building and running a team",
   "root": true,
-  "pages": ["index", "chat", "mcp", "editors", "owners"]
+  "pages": ["index", "chat", "source-viewer", "mcp", "editors", "owners"]
 }

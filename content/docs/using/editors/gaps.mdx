@@ -1,0 +1,84 @@
+---
+title: Gaps
+description: The questions your agents couldn't answer, grouped into topics, so you know what to add. Who sees what, the actions on a topic, and how people's privacy is kept.
+---
+
+"Fourteen people asked about parking permits and got no answer this month" means the parking page belongs in a knowledge base. Since v0.4.0 the **Gaps** page shows a team what its agents fail to answer, grouped into **topics**, without showing who asked.
+
+**Gaps** is in the team's sidebar, after Evaluations, for the team's **editors, admins and owners**. Members don't see it. Each agent's **Analytics → Gaps** shows the same topics for that agent.
+
+<Screenshot slot="gaps-topics" />
+
+## What counts as a failed question
+
+An answer fails when:
+
+| Shown as | Meaning |
+|---|---|
+| **Nothing found** | The search found no passage. |
+| **Refused** | A strictly grounded agent gave its refusal message. |
+| **No relevant passage** | SystemOne passage judging dropped every passage. |
+| **Out of scope** | The SystemOne scope check found the question outside the agent's subject. |
+| **Unsupported claims** | Citation checks found a claim that its source doesn't support, or contradicts. |
+| **Thumbs-down** | The person rated the answer down, with a reason. |
+
+These aren't failures: errors (an unavailable model, a stopped answer), moderation notices, small talk, and **uncited sentences**. Models often leave a lead-in or a list item without a citation in an answer that is fine, so an answer whose only issue is uncited sentences counts as answered well. The chat's Uncited marks and the Checks view in agent analytics still show them.
+
+Only conversations people keep count: the web chat, public pages, the widget and personal API keys' conversations. Try it, evaluation runs, service keys, the OpenAI-compatible endpoint and MCP keep nothing, because their questions have no conversation to belong to.
+
+## Topics
+
+A failed question is kept apart from the conversation and grouped with questions that mean much the same thing. A background job does the grouping **every hour**, so a new topic can take up to an hour to appear.
+
+- A topic shows **only once 3 different people** asked about it, so its label can't point at one person. Each anonymous session on a public page or in the widget counts as one person.
+- The agent's chat model writes each topic's **label** in 2 to 5 words, from that topic's questions only, and writes it again once the topic has doubled. The label is the only text you see for a topic, unless people shared their questions.
+- Similar topics merge as more questions arrive. The older topic keeps its name, state and history.
+- Each topic shows its agent, the two main reasons its answers failed (and "+N more"), an 8-week trend, how many questions and people, and when it was last asked.
+
+The note under the list says how many failed questions are still hidden: those in topics below 3 people, and those not grouped yet.
+
+Labelling and grouping use the team's models, so they count towards the team's usage and spend (usage source **Gaps**), and they wait while the team's budget is used up.
+
+### Confirming similar questions with SystemOne
+
+By default a question joins a topic when its meaning is close to a question already in it. Questions that are close but not clearly alike can end up in separate topics. **Gaps → Settings → Confirm similar questions with SystemOne** (off by default) asks a SystemOne model whether such borderline pairs are about the same subject, so more of them end up in one topic. It needs a SystemOne model on the platform, runs in the hourly job (at most 200 checks a run), and counts towards the team's spend.
+
+## A topic's page
+
+<Screenshot slot="gaps-topic" />
+
+A topic's page shows its details, why its answers failed (with the thumbs-down reasons), its **shared questions**, and its **history**. Open topics have these actions:
+
+- **Add a source**, the main one: opens Data sources with the topic as a note. The new-source form shows the topic as a hint, which isn't saved: every team member can read a source's description.
+- **Mark fixed**: closes the topic until new questions about it fail.
+- **Dismiss**, with an optional reason:
+  - **Dismiss for now**: it reopens when new questions about it fail.
+  - **Not for this agent**: it stays closed. New questions still join it and are counted ("3 more since dismissed"), but it never shows as open again.
+- **Add to evaluations**, on a shared question: adds it to one of the agent's [evaluation sets](/docs/using/editors/evaluations), with the documents a good answer should come from.
+
+A closed topic has **Reopen**, which undoes either kind of dismissal or a fix.
+
+<Screenshot slot="gaps-dismiss" />
+
+A topic also **closes itself** ("Answered now") when its questions start being answered well, for example after you added the missing source: two good answers close to the topic since its last failure are enough. This works for agents that search before every answer. A topic dismissed for now, fixed or answered reopens when a newer question about it fails.
+
+The **History** lists each dismissal with its kind, reason, who and when, and each fix, reopening, resolution and merge. It's never erased when a topic reopens, and only the team's editors, admins and owners see it.
+
+## Shared questions
+
+When people rate an answer down, the menu has **Share this question with the team**, off by default. They tick it, then choose what was wrong.
+
+<Screenshot slot="chat-feedback-share" />
+
+A shared question shows in full on its topic's page, with when it was asked and the thumbs-down reason, never who asked. Unticking the box on an answer already rated down takes the question back at once, and so does rating the answer up. Visitors on public pages and in the widget have the same thumbs, reasons and tick.
+
+## Privacy
+
+The gap report is the one place where a team learns anything about what people asked, so it follows strict rules (the amendment to Grounded's conversation privacy decision, ADR-0010):
+
+- A team never sees a question's text, unless the person who asked chose to share it, and never sees who asked.
+- A topic stays hidden until **at least 3 different people** asked about it, even when one of its questions was shared.
+- Failed questions are kept with their conversation's retention: they're deleted when the conversation is, including when its user deletes it, and legal holds keep them as they keep the conversation. Counts leave out deleted conversations at once.
+- Public pages and the widget tell visitors that questions the assistant can't answer may be grouped, without their details, to improve it.
+- **Platform admins and auditors** see only counts: failed questions per team and reason, under **Admin → Analytics → Top agents & teams → Failed questions** ([Analytics and logs](/docs/administration/analytics-and-logs#failed-questions)). They never see a team's topics, questions or dismissal reasons.
+- The audit log records every action on a topic (`gap_topic.add_source`, `gap_topic.fix`, `gap_topic.dismiss`, `gap_topic.reopen`, `gap_topic.add_to_evaluations`, and `gap_settings.update`) with IDs and states, never a label, a question or a reason, because platform staff can read team audit logs. For the same reason, no evaluation question's audit entry carries its text.

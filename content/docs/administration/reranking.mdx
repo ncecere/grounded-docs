@@ -1,0 +1,110 @@
+---
+title: Reranking
+description: Put the passages that best answer a question first with a cross-encoder rerank model. Deploying one, choosing it for the platform, the agent setting, comparing with evaluations, costs and monitoring.
+---
+
+A **rerank model** (a cross-encoder such as bge-reranker or Qwen3-Reranker) reads the question together with each passage a search found and scores how well the passage answers it. That's more precise than the usual vector and keyword fusion, and it scores all the passages in one call. Since v0.4.0, once a platform admin chooses a rerank model, every search reranks: agents, a knowledge base's **Try it**, the retrieval API and the MCP server's `search` tool. Without one, retrieval works as before.
+
+## How a search uses it
+
+<Steps>
+<Step>
+
+The search fetches the platform's **candidate count** of passages (40 by default) and fuses them as usual.
+
+</Step>
+<Step>
+
+The rerank model scores them all in one call, within the platform's **time limit** (2 seconds by default).
+
+</Step>
+<Step>
+
+The best passages are kept:
+
+- **Agents** keep their **passages kept after reranking** (6 by default) for each search. With SystemOne passage judging on, SystemOne then judges only those few instead of 10 to 20, so answers start sooner. Without judging, they go to the chat model.
+- **Try it, the retrieval API and MCP `search`** keep the number of results asked for, each with its rerank score.
+
+</Step>
+</Steps>
+
+**It fails open.** If the rerank call fails or takes longer than the time limit, the search keeps the usual order and goes on: an answer is never worse, or much later, than without reranking.
+
+**Classification applies.** Like every model, a rerank model only reads data up to its maximum classification. A search over a knowledge base above it isn't reranked; for an agent, that's when any of its knowledge bases is above it.
+
+## Deploying a reranker
+
+This part is for operators. Grounded calls `POST {base URL}/rerank` on a connection, with the request shape that LiteLLM, vLLM and SGLang accept (the Cohere and Jina rerank API):
+
+```json
+{"model": "bge-reranker-v2-m3", "query": "When does the library open?", "documents": ["…", "…"], "top_n": 6, "return_documents": false}
+```
+
+It reads `{"results": [{"index": 1, "relevance_score": 0.98}, …]}`; a `data` list, a `score` field and a bare list work too. With a base URL ending in `/v1`, the call goes to `/v1/rerank`.
+
+| Server | Notes |
+|---|---|
+| **vLLM** | Serves cross-encoders at `/rerank` and `/v1/rerank`, for example `vllm serve BAAI/bge-reranker-v2-m3`. Qwen3-Reranker needs vLLM's documented `--hf-overrides` for that model. |
+| **SGLang** | Serves `/v1/rerank` for reranker models; see its documentation for the launch flags of your model. |
+| **LiteLLM** | Proxies `/rerank` to a provider that supports it, such as a vLLM server; add the model to its `model_list` as its rerank documentation describes. |
+| **Text embeddings inference** | Serves `/rerank` with `texts` instead of `documents`: set the model's **Passages field** to `texts`. |
+
+A reranker is small: a model like bge-reranker-v2-m3 scores 40 passages in a few hundred milliseconds on one GPU. See also [Model gateways](/docs/self-hosting/model-gateways).
+
+## Choosing the rerank model
+
+<Steps>
+<Step>
+
+**Admin → Models → Add model**, kind **Rerank**, on the connection that serves it. Set its **maximum classification** like any model's, and optionally **Max input tokens**: longer passages are shortened to fit with the question.
+
+</Step>
+<Step>
+
+If your server differs, open **Compatibility**: **Passages field** (`documents`, the default, or `texts`) and **Accepts top_n** (on by default; turn it off for a server that rejects it).
+
+</Step>
+<Step>
+
+**Test model** scores a passage that answers a fixed question and one that doesn't. It passes when the first scores higher, and the result is stored as the model's [health](/docs/self-hosting/health). The scheduled health check only looks for the model in its connection's model list, so it sends nothing to the reranker.
+
+</Step>
+<Step>
+
+**Admin → Models → Reranking settings** (the button above the list, shown once a rerank model exists): choose the **Rerank model**, the **Candidates** (5 to 50) and the **Time limit** (200 to 10,000 ms). **Save settings** stays off until something changes.
+
+</Step>
+</Steps>
+
+<Screenshot slot="admin-reranking-settings" />
+
+The notice above the list then says what reranking does: "Searches rerank their best 40 passages with Reranker, waiting at most 2 s. 5 published agents rerank."
+
+<Screenshot slot="admin-models" />
+
+- Saving is recorded in the audit log ("Changed reranking settings", with the model by name and each value). Saving changes the settings' revision, which starts every agent's [saved answers](/docs/using/editors/saved-answers) afresh.
+- Auditors see **Reranking settings** disabled: only platform admins can change reranking.
+- A rerank model in use can't be deleted: choose **None** in Reranking settings first. A disabled rerank model, or one on a disabled connection, turns reranking off until it's enabled again.
+
+## For editors: the agent's setting
+
+Once the platform has a rerank model, an agent's **Build → Advanced** shows:
+
+- **Rerank passages** (on by default): turn it off for an agent whose knowledge base is small or already precise, or to compare.
+- **Passages kept after reranking** (1 to 20, default 6): the best passages of each search given to SystemOne judging or to the model.
+
+<Screenshot slot="agent-build-advanced-rerank" />
+
+These are part of the draft, like the rest of Build. In a knowledge base's **Try it**, each passage shows its **Rerank** score beside the usual score, the result says how the search was reranked ("Reranked the best 40 passages in 452 ms"), and the **Rerank** switch compares with the usual order (switching it searches again).
+
+<Screenshot slot="kb-try-it-rerank" />
+
+## Comparing with evaluations
+
+[Evaluation runs](/docs/using/editors/evaluations) rerank like searches do. To measure what reranking changes, start a run with **Rerank** turned off and compare it with a run with it on. The run's configuration says **Reranking: On** or **Off**, and the score chart marks the change. For an agent's set, both runs use the agent's passages kept after reranking as k (the run without reranking takes that many from the usual order), so they compare like with like; **Compare** says when two runs used different k.
+
+## Costs and monitoring
+
+- Each rerank call records rerank requests and tokens for the team (and agent). Tokens are the server's count, or an estimate when it reports none. Price rerank models per million tokens and per request under [Costs → Prices](/docs/administration/costs); spend reports show them as **Rerank**.
+- Metrics: `grounded_rerank_requests_total{caller, status}` and `grounded_rerank_duration_seconds{caller}`, plus `grounded_model_requests_total{kind="rerank"}` per connection. The Chat and retrieval dashboard has a Reranking row ([Observability](/docs/self-hosting/observability)).
+- Traces have a `rerank` span with a `rerank <model>` span under it ([Tracing](/docs/self-hosting/tracing)). Neither records the question or the passages.

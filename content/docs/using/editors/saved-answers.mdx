@@ -1,0 +1,63 @@
+---
+title: Saved answers
+description: Reuse a recent answer when someone asks an agent the same question again, at once and at no model cost. When answers are reused, the agent's settings, and the platform switch.
+---
+
+When someone asks an agent a question it answered recently, under the same conditions, Grounded can send the **saved answer** again instead of searching and writing a new one. It arrives at once, costs no model tokens, and has the same citations and claim verdicts as the original. People chatting can't tell the difference: there's no "saved answer" note.
+
+Saved answers are new in v0.4.0. They're **on by default for public agents**, where the same questions come up again and again, and off by default for the others.
+
+## The agent's setting
+
+**Agent → Settings → Saved answers**, for the team's editors, admins and owners:
+
+<Screenshot slot="agent-settings-saved-answers" />
+
+- **Reuse answers**: on or off for this agent. On by default for agents published to the public.
+- **Also reuse answers to near-identical questions** (off by default): see below. Needs a SystemOne model on the platform.
+- **Reuse an answer for**: from 1 hour to 30 days, 24 hours by default. A shorter time applies to answers already saved.
+- **Clear saved answers**: deletes all of this agent's saved answers, so the next questions are answered afresh.
+
+The section says how many saved answers the agent has now and how often they were reused. Like the rest of Settings, these aren't part of versions: a change applies to the next question. Changes and clearing are recorded in the team's audit log.
+
+## When an answer is reused
+
+All of these must hold:
+
+- **The same published version.** Publishing starts afresh. Try it and evaluation runs never read or save answers.
+- **The same knowledge.** Adding, changing, re-crawling or deleting a document in any of the agent's knowledge bases, attaching or detaching a source, or moving to another embedding profile starts afresh.
+- **The same answering settings**: the moderation policy of the agent's audience, and the platform's SystemOne and reranking settings.
+- **The first question of a conversation.** Follow-ups are always answered live and never saved, whatever their wording: their answers were written with one person's earlier turns.
+- **The same question.** By default, the same words: case, extra spaces and the final punctuation don't matter. With **near-identical** questions on, a question that means almost the same as a saved one is reused only when SystemOne confirms that both ask for the same thing, so "opening hours on Saturday" never gets the answer about Sunday.
+- **The same day**, for questions about relative dates. A question with words such as *today*, *tomorrow*, *this week*, *open*, *hours* or *deadline* is only reused on the same day (UTC).
+- **Not expired.**
+
+Agents that let the model decide when to search answer every question live.
+
+## Which answers are saved
+
+Only clean answers: the answer passed moderation, found sources, has no error, isn't a refusal or "nothing found", called **no tool** (tools return live data), and has nothing the [gap report](/docs/using/editors/gaps) counts as a failure, such as an unsupported claim. A failed question is never hidden behind a saved answer: the next person gets a live attempt, and the gap report keeps counting it.
+
+Nothing in a saved answer depends on who asked: agents' instructions name the agent, its team and the date, never the person, and searches use the agent's knowledge bases, not the person's access.
+
+## When a saved answer goes away
+
+- Its time is up, or you shortened the agent's time below its age.
+- Something above changed: a new version, a knowledge change or a settings change.
+- **Someone rates it down.** The next person gets a fresh answer.
+- An editor clears the agent's saved answers.
+- [Retention](/docs/administration/retention) deletes expired saved answers every 10 minutes, and those older than the conversation retention of the agent's classification level. A legal hold on the team or agent keeps them, but an expired answer is never reused.
+
+## What a saved answer still goes through
+
+A saved answer counts as a question in every way except model use: the rate limits, query limits, budgets and concurrent chats apply, the conversation and the answer are stored as usual, the access log of Sensitive and Restricted agents records it, and usage records one query with no model tokens. It streams the same events as a live answer, so the chat, public pages, the widget, the APIs and MCP need nothing new. With near-identical questions on, the question's embedding and the SystemOne check are counted as usual.
+
+The agent's **Analytics → Usage** shows the share of answers given from saved answers and the tokens their originals spent (tokens saved).
+
+## For platform admins
+
+**Admin → Overview → Features → Saved answers** turns saved answers off for every agent (auditors see it read-only). While it's off, nothing is reused or saved, including answers being written when it was turned off; answers already saved stay until they expire. The switch is recorded in the audit log as `platform.answer_cache`.
+
+<Screenshot slot="admin-features-saved-answers" />
+
+Operators can watch saved answers with the `grounded_answer_cache_*` metrics and the Answer cache row of the Chat and retrieval dashboard ([Observability](/docs/self-hosting/observability)).

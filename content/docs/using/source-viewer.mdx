@@ -1,0 +1,64 @@
+---
+title: Checking a source
+description: Open the passage a citation points to, highlighted in its document beside the answer, with the claims that cite it and their verdicts.
+---
+
+Since v0.4.0 a citation opens the passage it points to, highlighted among the text around it, right beside the answer. It's the quickest way to check that an answer says what its sources say.
+
+<Screenshot slot="chat-source-viewer" />
+
+## Opening a source
+
+- **From a citation chip:** hover over, click, or press Enter on a chip such as **[2]**, then choose **Show source 2** in its card.
+- **From a source card:** the cards under an answer ("Used 3 sources") are buttons. Click one to open its source. A web page's card also has a separate link that opens the page itself.
+
+Where the source opens depends on the room you have:
+
+| Where you are | The source opens |
+|---|---|
+| The chat page and a public agent's page | Beside the conversation, in a split view. Drag the handle between them to resize it, or focus the handle and use the arrow keys, Home and End. |
+| Try it in the agent editor, and other narrow chats | Under the conversation. |
+| A phone, and the chat widget on a website | As a full-screen sheet. **Close the source** (the arrow at the start of its header) takes you back. |
+
+The conversation stays where it was. **Escape** or **Close the source** closes the viewer, and focus goes back to what opened it. The cited passage scrolls into view when the source opens; on a phone the sheet's title gets focus, and a long sheet can be scrolled with the keyboard.
+
+<Screenshot slot="phone-source-viewer" />
+
+## What it shows
+
+- **The document's title**, "Source 2 of 3", and the passage's heading path (and pages, for a PDF).
+- **The answer's other sources** as numbered buttons, so each one is a click away.
+- **The claims that cite this source**, each with this source's verdict on it: **Supported**, **Not supported**, **Contradicted** or **Not checked**. They appear when the agent checks citations ([Claims and verdicts](/docs/using/chat#claims-and-verdicts)).
+- **The cited passage, highlighted** with a coloured bar and the words "Cited passage", among its neighbours: about a page of the document. Text the document repeats at the start of the next passage is left out, so it reads like the document.
+- **Open the page**, for web pages when the agent links its sources: the live page, with a [text fragment](https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments) built from the passage's first and last words, so browsers that support them scroll to and highlight the passage.
+- **Open full document**, for the team's editors, admins and owners only: the whole document, starting a little before the cited passage, with **Show earlier passages** and **Show later passages**.
+
+### When the passage is gone
+
+Documents change after an answer is written. The viewer says so rather than showing the wrong text, and shows what the answer quoted:
+
+- "This document was deleted after the answer was written."
+- "This passage is no longer in the document. The document changed after the answer was written." For example, a web page whose text changed when it was fetched again.
+
+A passage that's still there word for word, such as a web page fetched again without changes, is found again.
+
+## Source cards
+
+With claim checks on, each source card under an answer says how that source fared with each claim that cites it, in the verdict colours: **"Supports 3 claims · 1 not supported"**, "Supports 2 claims · 1 contradicted", "· 1 not checked". When it supports none, it names the claims instead ("1 claim not supported"). The words carry the meaning; the colour only repeats it.
+
+<Screenshot slot="chat-source-cards" />
+
+Before v0.4.0 a card said "Supports 2 of 3 claims that cite it". Answers checked before v0.2.1, which have no claims, still show the source's own verdict.
+
+## Who can open what
+
+| Who | What they can open |
+|---|---|
+| You, in your own conversations | The passages your answers cited, in context. |
+| A visitor on a public page or in the widget | The passages cited in their own anonymous session's conversations. |
+| The source's team editors, admins and owners | Also the whole document, as they can in Data sources. |
+| Anyone else | Nothing. Team admins and platform admins can't open passages from other people's conversations. |
+
+Only passages an answer cited can be opened, by their number in that answer, so nobody can page through a knowledge base by asking questions. Team members never get a whole document from a chat, only the passages their answers cited.
+
+The source viewer has its own API for client developers: see [Native chat API](/docs/api/chat-api#cited-passages).
