@@ -69,14 +69,14 @@ See [Tools from MCP servers](/docs/administration/mcp-servers) for how tools are
 
 ### Safety
 
-- **Check answers before showing them**: people see "Writing and checking the answer…" until the answer passes moderation, instead of a streamed answer that may be withdrawn. Public agents always work this way.
+- **Check answers before showing them**: *As the platform's policy says* (default), *Paragraph by paragraph* (each paragraph is shown once it passed moderation) or *The whole answer* (people see "Writing and checking the answer…" until the whole answer passed). An agent can only make the audience's mode stricter, never weaker; public agents are checked paragraph by paragraph by default. See [Moderation modes](/docs/administration/moderation-modes).
 - **Stricter category rules**: tighten the platform's moderation policy for this agent, per category, for questions and answers. An agent can make moderation stricter than the platform's policy, never weaker. The section says when the rules have no effect yet (for example when the audience has no moderation).
 
 ### SystemOne checks
 
 Shown when the platform has a [SystemOne model](/docs/administration/systemone). Each check uses the platform default unless you turn it on or off for this agent:
 
-- **Passage judging**: before the answer, a SystemOne model judges each candidate passage (**Passages to check**, 10 by default): it re-ranks them, drops prompt injections and passages that don't help, and keeps passages that contradict the question's premise apart. If nothing usable is left, a strictly grounded agent refuses without calling the chat model.
+- **Passage judging**: before the answer, a SystemOne model judges each candidate passage (**Passages to check**, 10 by default; with [reranking](/docs/administration/reranking), only the passages kept after reranking): it re-ranks them, drops prompt injections and passages that don't help, and keeps passages that contradict the question's premise apart. If nothing usable is left, a strictly grounded agent refuses without calling the chat model.
 - **Citation checks**, with **Citation mode**: **annotate** marks each claim's verdict; **enforce** also removes confidently unsupported citations, and a strictly grounded agent with nothing supported refuses. See [Claims and verdicts](/docs/using/chat#claims-and-verdicts).
 - **Scope check**: before searching, spots small talk (answered briefly without a search) and questions outside the agent's subject (a strictly grounded agent refuses without a search).
 
@@ -88,15 +88,19 @@ Each check adds latency: passage judging roughly one SystemOne request per passa
 |---|---|
 | **Temperature** | The model's sampling temperature. Blank uses the model's default. |
 | **Maximum answer length (tokens)** | Blank uses the model's limit. |
-| **Reasoning effort** | How long a reasoning model thinks before answering: **Model default**, **Low**, **Medium** or **High**. Lower starts answering sooner. Available once a platform admin turns on **Accepts reasoning effort** for the chat model ([Models](/docs/administration/models#compatibility)); until then the field is disabled and says why. |
+| **Reasoning effort** | How long a reasoning model thinks before answering: **Default**, **Off**, **Low**, **Medium** or **High**. Lower starts answering sooner. **Default** follows the audience's setting (Low for public agents, unless a platform admin changed it; see [Moderation modes and reasoning](/docs/administration/moderation-modes#reasoning-effort)), else the model's. **Off** needs the chat model's **How to turn thinking off**, and Low to High its **Accepts reasoning effort** ([Models](/docs/administration/models#compatibility)); until a platform admin sets them, those choices are disabled and say why. |
 | **Source token budget** | Passages are trimmed to about this many tokens (500–32,000; default 6,000). |
 | **Maximum searches** | With "let the model decide", how many model turns may search (1–8; default 4). The last turn must answer. |
 | **Minimum similarity** | Drop passages less similar than this (0–1). 0 turns it off. |
-| **Rewrite follow-up questions** | With "search before every answer", rewrite a follow-up that depends on the conversation ("what about summer?", "can I pay for it by card?") into a question that stands alone before searching (on by default). It adds a short model call, asked for low reasoning effort when the model accepts one. A question that stands alone isn't rewritten. |
+| **Rewrite follow-up questions** | With "search before every answer", rewrite a follow-up that depends on the conversation ("what about summer?", "can I pay for it by card?") into a question that stands alone before searching (on by default). It adds a short model call, asked for low reasoning effort when the model accepts one (off when the answer's effort is Off). A question that stands alone isn't rewritten. |
+| **Rerank passages** | Shown once the platform has a [rerank model](/docs/administration/reranking). A rerank model reads the question with each passage found and keeps the best: more precise, and SystemOne judges fewer passages. On by default. |
+| **Passages kept after reranking** | The best passages of each search given to SystemOne judging or the model (1–20; default 6). |
+
+<Screenshot slot="agent-build-advanced-rerank" />
 
 ### Try it
 
-The panel beside Build chats with the **draft**, so you can test a change before publishing it. It works like the chat, with two differences: you can open the model's reasoning, and every answer has **Add to evaluations**. Test conversations aren't kept in your conversation history.
+The panel beside Build chats with the **draft**, so you can test a change before publishing it. It works like the chat, with two differences: you can open the model's reasoning, and every answer has **Add to evaluations**. A citation's source opens in the [source viewer](/docs/using/source-viewer) under the conversation. Test conversations aren't kept in your conversation history, never use or create [saved answers](/docs/using/editors/saved-answers), and don't count towards [Gaps](/docs/using/editors/gaps).
 
 ## Appearance
 
@@ -110,7 +114,7 @@ A live preview shows the result. There's no custom CSS, so every agent stays acc
 
 ## Settings
 
-**Name**, **Address** and **Description**, and a danger zone to **Disable**, **Enable** or **Delete** the agent.
+**Name**, **Address** and **Description**; **Saved answers**: whether the agent reuses a recent answer to the same first question, for how long (24 hours by default), and **Clear saved answers** ([Saved answers](/docs/using/editors/saved-answers); on by default for public agents); and a danger zone to **Disable**, **Enable** or **Delete** the agent.
 
 These settings aren't part of versions: saved changes reach people at once. Disabling an agent stops all chat with it until you enable it again. Deleting it stops chat for good; people keep read-only access to their own conversations with it.
 
@@ -118,4 +122,4 @@ A platform admin can also disable an agent. It then shows "Disabled by platform"
 
 ## Evaluations and Analytics
 
-The **Evaluations** tab holds the agent's evaluation sets ([Evaluations](/docs/using/editors/evaluations)). **Analytics** shows its usage and quality ([Agent analytics](/docs/using/editors/agent-analytics)). **Share** is covered in [Sharing an agent](/docs/using/editors/sharing).
+The **Evaluations** tab holds the agent's evaluation sets ([Evaluations](/docs/using/editors/evaluations)). **Analytics** shows its usage and quality ([Agent analytics](/docs/using/editors/agent-analytics)), and under **Gaps** the topics of questions it couldn't answer ([Gaps](/docs/using/editors/gaps)). **Share** is covered in [Sharing an agent](/docs/using/editors/sharing).
