@@ -24,8 +24,10 @@ Grounded deletes data only when a retention period says so, and never what a leg
 | Expired or revoked invites | **Keep** | Periods |
 | Evaluation runs and their results | **180 days** | Periods |
 | Anonymous and browser sessions | Removed when they expire | Not configurable |
+| Failed questions of the [gap report](/docs/using/editors/gaps) (since v0.4.0) | As their conversation | Follows the conversation: deleted with it (by retention, or after a user's delete and its grace period), so legal holds on the conversation, its user, agent or team keep them |
+| [Saved answers](/docs/using/editors/saved-answers) (since v0.4.0) | Removed at expiry (the agent's setting, 24 hours by default) | Not configurable (kind **Saved answers**, `answer_cache`). Also removed once past the conversation retention of the agent's level (the anonymous retention for public agents). Legal holds on the team or agent keep them, never reused once expired. |
 
-Everything is kept until a period is set, except anonymous conversations, evaluation runs, and expired sessions.
+Everything is kept until a period is set, except anonymous conversations, evaluation runs, saved answers, and expired sessions.
 
 <Screenshot slot="admin-retention" />
 
