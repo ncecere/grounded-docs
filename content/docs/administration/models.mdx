@@ -1,6 +1,6 @@
 ---
 title: Connections and models
-description: Connect Grounded to OpenAI-compatible gateways, add chat, embedding, moderation, SystemOne and vision models, and set their classification ceilings.
+description: Connect Grounded to OpenAI-compatible gateways, add chat, embedding, rerank, moderation, SystemOne and vision models, and set their classification ceilings.
 ---
 
 Grounded has no built-in model provider. Platform admins connect it to one or more **OpenAI-compatible gateways** (LiteLLM, vLLM, SGLang, a hosted API, or anything that speaks the OpenAI API) and add the models teams may use. Nothing is added automatically.
@@ -26,21 +26,23 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 
 Since v0.3.0 every **Test connection** and **Test model** stores its result, and the worker re-tests enabled connections every 15 minutes at no cost. **Connections** and **Models** have a **Health** column ("Healthy · 3 minutes ago", "Failing · since 2 hours ago" or "Not tested yet") with a Health filter; a record page shows the last test's time, who ran it, and the error class and message when it failed. Failures appear under **Needs attention** on the admin Overview. See [Stored health](/docs/self-hosting/health).
 
-Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/completions`, and `/moderations` for moderation endpoints) plus `POST /v1/systemone` for SystemOne models. It has no vendor-specific code.
+Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/completions`, and `/moderations` for moderation endpoints) plus `POST /v1/systemone` for SystemOne models and, since v0.4.0, `POST /rerank` (the Cohere and Jina shape that LiteLLM, vLLM and SGLang serve) for rerank models. It has no vendor-specific code.
 
 ## Models
 
 **Models → Models → Add model** adds one model from a connection:
 
 - **Upstream model ID**: what the gateway calls it. **Display name**: what people see.
-- **Kind**: **Chat**, **Embedding**, **Moderation**, **SystemOne** or **Vision (OCR)**. (`rerank` is reserved for a future reranker and isn't used yet.)
+- **Kind**: **Chat**, **Embedding**, **Rerank**, **Moderation**, **SystemOne** or **Vision (OCR)**. A rerank model is used once it's chosen under **Reranking settings** ([Reranking](/docs/administration/reranking)).
 - **Maximum classification**: the most sensitive level this model may process. Which models may take Restricted data is your organisation's policy, commonly self-hosted models or services under a data agreement. Tag each model as you add it.
-- Kind-specific capabilities: for chat, the context window, maximum output tokens, tool calling and vision; for embeddings, the dimensions and maximum input tokens.
+- Kind-specific capabilities: for chat, the context window, maximum output tokens, tool calling and vision; for embeddings, the dimensions and maximum input tokens; for rerank, an optional maximum input length (longer passages are shortened to fit with the question).
 - **Enabled**: a disabled model stops being offered and used.
 
 <Screenshot slot="admin-models" />
 
-**Test model** sends a tiny real request: a one-word chat completion, an embedding of a short string (it reports the dimensions the gateway actually returns), a benign and a harmful sample for moderation, or the built-in sample page for a vision model.
+Once a rerank model exists, a notice above the list says whether reranking is on, with which model, how many candidates and time limit, and how many published agents rerank; **Reranking settings** changes it ([Reranking](/docs/administration/reranking)). A model in use can't be deleted, and its record page says why beside the disabled **Delete**.
+
+**Test model** sends a tiny real request: a one-word chat completion, an embedding of a short string (it reports the dimensions the gateway actually returns), a benign and a harmful sample for moderation, two passages for a rerank model (one that answers a fixed question must score above one that doesn't), or the built-in sample page for a vision model.
 
 ### Compatibility
 
@@ -49,12 +51,15 @@ Gateways differ in small ways. A model's **Compatibility** section adjusts what 
 | Flag | Kind | Default | Effect |
 |---|---|---|---|
 | System prompt role | chat | `system` | `developer` sends the system prompt with that role instead of `system`. SGLang rejects `developer`. |
-| Accepts reasoning effort | chat | not sent | For a reasoning model: send `reasoning_effort` (low, medium or high). Agents using the model can then choose a **Reasoning effort** under Build → Advanced (until it's on, that field is disabled and says why), and query rewrites ask for low effort. Leave it off for models that don't reason: unknown fields break some gateways. |
+| Accepts reasoning effort | chat | not sent | For a reasoning model: send `reasoning_effort` (low, medium or high). Agents using the model, and each audience's moderation policy, can then choose a **Reasoning effort** under Build → Advanced (until it's on, that field is disabled and says why), and query rewrites ask for low effort. Leave it off for models that don't reason: unknown fields break some gateways. |
+| How to turn thinking off (API: `compat.thinkingOff`) | chat | not supported | Since v0.4.0. `reasoning_effort: "none"` or `chat_template_kwargs: {"enable_thinking": false}` (Qwen3 on vLLM or SGLang; merged into other `chat_template_kwargs`). Agents and audiences can then choose reasoning effort **Off**, so answers start sooner; without it, Off can't be chosen. See [Moderation modes and reasoning](/docs/administration/moderation-modes#turning-thinking-off). |
 | Stream usage (API only: `compat.supportsStreamUsage`) | chat | on | Ask for usage in the last streamed chunk. |
 | Output limit parameter | chat | `max_tokens` | `max_tokens` or `max_completion_tokens`. |
 | Honours tool_choice | chat | not sent | Send `tool_choice`, only for servers that honour it. |
 | Thinking field (API only: `compat.thinkingField`) | chat | either | The streamed reasoning field: `reasoning_content` or `reasoning`; empty reads whichever is present. |
 | Extra request fields (JSON) | chat, moderation | none | A JSON object (at most 4,096 bytes) merged into every request, for server extensions, for example `{"chat_template_kwargs": {"enable_thinking": false}}`. It can't override the fields Grounded controls. |
+| Passages field (API: `compat.rerankDocumentsField`) | rerank | `documents` | `texts` for servers such as Hugging Face text embeddings inference. |
+| Accepts top_n (API: `compat.supportsRerankTopN`) | rerank | on | Send `top_n`; turn it off for a server that rejects it. |
 | Server accepts the dimensions parameter | embedding | off | For profiles with output dimensions: send the OpenAI `dimensions` parameter. When off, Grounded shortens and renormalises the vectors itself. |
 
 [Model gateways](/docs/self-hosting/model-gateways) has recipes for self-hosted servers.
@@ -71,6 +76,7 @@ The maximum classification is enforced everywhere, when anything changes and aga
 - An agent's chat model must be approved for its most sensitive knowledge base.
 - A moderation or SystemOne model sees the question, and for citation checks the passages; its ceiling applies too.
 - A vision model only reads scans from sources at or below its ceiling.
+- A rerank model reads the question and the passages found: a search over a knowledge base above its ceiling isn't reranked.
 
 Every question checks the published agent's model and data against the current ceilings. If you lower a model's ceiling below data it already serves, the agents affected are refused at their next question rather than quietly degraded, so check what uses a model before you lower it. An embedding model that a profile uses can't change its upstream model or dimensions: add a new model and profile instead.
 
