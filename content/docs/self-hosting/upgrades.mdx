@@ -41,16 +41,16 @@ Stopping pods drain: they fail readiness, wait `SHUTDOWN_DELAY` for load balance
 
 ## Pinning digests
 
-Images are published for linux/amd64 and linux/arm64. Release tags are `vX.Y.Z`, `vX.Y` and `latest-release`; release candidates get only their own tag, such as `v0.3.0-rc.1`. There's no `latest` tag. **Tags can move, so deploy by digest**:
+Images are published for linux/amd64 and linux/arm64. Release tags are `vX.Y.Z`, `vX.Y` and `latest-release`; release candidates get only their own tag, such as `v0.4.0-rc.1`. There's no `latest` tag. **Tags can move, so deploy by digest**:
 
 ```sh
-docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.3.0   # prints the index digest
+docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.4.0   # prints the index digest
 ```
 
 ```yaml
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.3.0             # informational
+    newTag: v0.4.0             # informational
     digest: sha256:<digest>    # what is deployed
 ```
 
@@ -64,11 +64,11 @@ cosign verify ghcr.io/ncecere/grounded@sha256:<digest> \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-For a stricter check, use `--certificate-identity https://github.com/ncecere/grounded/.github/workflows/image.yml@refs/tags/v0.3.0`. The same works for `grounded-ocr`. Then:
+For a stricter check, use `--certificate-identity https://github.com/ncecere/grounded/.github/workflows/image.yml@refs/tags/v0.4.0`. The same works for `grounded-ocr`. Then:
 
 ```sh
 docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version
-# grounded v0.3.0 (<commit>)
+# grounded v0.4.0 (<commit>)
 ```
 
 Each image carries an SPDX SBOM and SLSA provenance as attestations, covered by the signature:
@@ -85,6 +85,8 @@ Since v0.2.0, each GitHub release also attaches the SBOMs per platform, the dige
 
 | From → to | Migrations | What to do |
 |---|---|---|
+| v0.3.1 → [v0.4.0](/docs/releases/v0-4-0) | `00040` to `00044`, all expand-only (schema 39 → 44) | Bump `?ref=` and the digests, and refresh the dashboards from `deploy/observability` (new Reranking, Answer cache and checked-paragraph panels). No new environment variables. Public answers now stream checked paragraphs (a public moderation policy an admin saved keeps its mode) and use low reasoning effort; saved answers are on for public agents; the widget starts a new session once. Reranking stays off until an admin chooses a rerank model. |
+| v0.3.0 → v0.3.1 | None | The logo, and answers that arrive whole shown from their start ([changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md)). Bump `?ref=` and the digests. |
 | v0.2.1 or v0.2.2 → [v0.3.0](/docs/releases/v0-3-0) | `00035` to `00039`, all expand-only (schema 34 → 39) | Bump `?ref=` and the digests. Nothing new is on until an admin turns it on. Optional new settings: `HEALTH_CHECK_INTERVAL` (the scheduled health check runs by default, every 15 minutes, at no cost) and `OTEL_*` for [tracing](/docs/self-hosting/tracing), with the new `tracing` component. |
 | v0.2.1 → v0.2.2 | None | Small fixes ([changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md)). Bump `?ref=` and the digests. |
 | v0.2.0 → [v0.2.1](/docs/releases/v0-2-1) | None (schema stays at 34) | Bump `?ref=` and the digests. Some pages moved; old links redirect. |
