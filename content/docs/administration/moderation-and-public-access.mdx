@@ -28,11 +28,12 @@ Each audience (team, everyone who signs in, public) has a policy:
 
 - **Provider**.
 - Per category, for questions and for answers: a **threshold** (0–1) and an **action**: block, flag or off.
-- **Output mode**: **Stream, then retract** (answers appear as they're written; a failing answer is replaced by the notice) or **Buffer** (answers are checked before anyone sees them; after the search steps people see "Writing and checking the answer…" meanwhile).
+- **Output mode** (**Answers**): **Stream, then retract** (answers appear as they're written; a failing answer is replaced by the notice), **Stream checked paragraphs** (since v0.4.0: each paragraph is shown once the answer so far passed; a failing paragraph replaces the whole answer; see [Moderation modes and reasoning](/docs/administration/moderation-modes)) or **Buffer** (answers are checked before anyone sees them; after the search steps people see "Writing and checking the answer…" meanwhile).
+- **Reasoning effort** (the **Reasoning** card, since v0.4.0): how long reasoning models think, for agents that don't set their own. It applies whether or not the audience has a provider.
 - **Fail closed** or open: what happens when the provider is unavailable.
 - A **notice** shown in place of a blocked question or answer.
 
-The public policy blocks every category at 0.5 on questions and answers, buffers answers and fails closed by default; the other audiences are off by default. Agents can make their policy stricter (a lower threshold, block instead of flag, buffer instead of stream), never weaker.
+The public policy blocks every category at 0.5 on questions and answers, streams checked paragraphs, uses low reasoning effort and fails closed by default; the other audiences are off by default. (Before v0.4.0 the public default was to buffer answers; a public policy an admin saved keeps its mode.) Agents can make their policy stricter (a lower threshold, block instead of flag, checked paragraphs or buffer instead of stream), never weaker.
 
 <Screenshot slot="admin-moderation" />
 
@@ -52,7 +53,8 @@ The public policy blocks every category at 0.5 on questions and answers, buffers
 - The **public audience** can't be chosen until it has a moderation provider. Grounded warns (`public_agents_without_moderation`) if public agents are on without one.
 - The page lists the published public agents and the **visitor safeguards**: per-IP and per-session question limits, daily question and token caps per agent, concurrent chats per agent and the longest question. Set their defaults under [Limits](/docs/administration/limits#public-agents).
 - **CAPTCHA** runs when a visitor starts a session, if configured. The only provider is Cloudflare Turnstile, set in the server configuration (`CAPTCHA_PROVIDER`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
-- Anonymous sessions end `ANON_SESSION_TTL` (24 hours) after their last use, and anonymous conversations are deleted after their level's anonymous retention.
+- Anonymous sessions end `ANON_SESSION_TTL` (24 hours) after their last use, and anonymous conversations are deleted after their level's anonymous retention. The public page and each widget key have sessions of their own (since v0.4.0), so a widget always runs under its key's limits, switch and allowed origins.
+- Visitors can rate answers in their own session (since v0.4.0). Ratings are limited by the same per-address and per-session limits as questions, counted apart so a rating never costs a visitor's next question, and are refused for a killed agent and while public access is off. A visitor's failed questions count towards the team's [gap report](/docs/using/editors/gaps), each session as one person, never linked to the visitor.
 
 The per-agent kill switch under [Content → Agents](/docs/administration/content#agents) also stops an agent's public page and widget.
 
