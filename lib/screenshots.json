@@ -4,6 +4,11 @@
     "width": 1440,
     "height": 900
   },
+  "admin-analytics-failed-questions": {
+    "src": "/images/admin-analytics-failed-questions.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-break-glass": {
     "src": "/images/admin-break-glass.webp",
     "width": 1440,
@@ -34,6 +39,11 @@
     "width": 1440,
     "height": 900
   },
+  "admin-costs-rerank": {
+    "src": "/images/admin-costs-rerank.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-embedding-migrations": {
     "src": "/images/admin-embedding-migrations.webp",
     "width": 1440,
@@ -41,6 +51,11 @@
   },
   "admin-features-mcp": {
     "src": "/images/admin-features-mcp.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-features-saved-answers": {
+    "src": "/images/admin-features-saved-answers.webp",
     "width": 1440,
     "height": 900
   },
@@ -54,6 +69,11 @@
     "width": 1440,
     "height": 900
   },
+  "admin-model-compat-thinking-off": {
+    "src": "/images/admin-model-compat-thinking-off.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-models": {
     "src": "/images/admin-models.webp",
     "width": 1440,
@@ -61,6 +81,11 @@
   },
   "admin-moderation": {
     "src": "/images/admin-moderation.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-moderation-reasoning": {
+    "src": "/images/admin-moderation-reasoning.webp",
     "width": 1440,
     "height": 900
   },
@@ -76,6 +101,11 @@
   },
   "admin-parsing-ocr": {
     "src": "/images/admin-parsing-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-reranking-settings": {
+    "src": "/images/admin-reranking-settings.webp",
     "width": 1440,
     "height": 900
   },
@@ -114,8 +144,18 @@
     "width": 1440,
     "height": 900
   },
+  "agent-build-advanced-rerank": {
+    "src": "/images/agent-build-advanced-rerank.webp",
+    "width": 1440,
+    "height": 900
+  },
   "agent-build-tools": {
     "src": "/images/agent-build-tools.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "agent-settings-saved-answers": {
+    "src": "/images/agent-settings-saved-answers.webp",
     "width": 1440,
     "height": 900
   },
@@ -141,6 +181,21 @@
   },
   "chat-citation-card": {
     "src": "/images/chat-citation-card.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "chat-feedback-share": {
+    "src": "/images/chat-feedback-share.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "chat-source-cards": {
+    "src": "/images/chat-source-cards.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "chat-source-viewer": {
+    "src": "/images/chat-source-viewer.webp",
     "width": 1440,
     "height": 900
   },
@@ -184,6 +239,21 @@
     "width": 1440,
     "height": 900
   },
+  "gaps-dismiss": {
+    "src": "/images/gaps-dismiss.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "gaps-topic": {
+    "src": "/images/gaps-topic.webp",
+    "width": 1440,
+    "height": 960
+  },
+  "gaps-topics": {
+    "src": "/images/gaps-topics.webp",
+    "width": 1440,
+    "height": 900
+  },
   "home-agents": {
     "src": "/images/home-agents.webp",
     "width": 1440,
@@ -191,6 +261,11 @@
   },
   "kb-try-it": {
     "src": "/images/kb-try-it.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "kb-try-it-rerank": {
+    "src": "/images/kb-try-it-rerank.webp",
     "width": 1440,
     "height": 900
   },
@@ -204,8 +279,23 @@
     "width": 1440,
     "height": 900
   },
+  "phone-source-viewer": {
+    "src": "/images/phone-source-viewer.webp",
+    "width": 390,
+    "height": 844
+  },
   "public-agent-page": {
     "src": "/images/public-agent-page.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "public-agent-page-feedback": {
+    "src": "/images/public-agent-page-feedback.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "public-agent-page-thinking": {
+    "src": "/images/public-agent-page-thinking.webp",
     "width": 1440,
     "height": 900
   },
