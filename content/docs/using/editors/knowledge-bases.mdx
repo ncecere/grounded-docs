@@ -28,6 +28,9 @@ Under **Filters and options** you can narrow a search, the same filters agents c
 - **Updated on or after** and **Updated before**.
 - **Results per query (top-k)**: how many passages to return.
 - **Judge with SystemOne** (when the platform has a SystemOne model): shows each passage's relevance scores and whether passage judging would keep it.
+- **Rerank** (when the platform has a [rerank model](/docs/administration/reranking), on by default): the passages that best answer the question come first, as agents get them. Each passage shows its **Rerank** score beside the usual score, and the result says how the search was reranked ("Reranked the best 40 passages in 452 ms"). Turn it off to compare with the usual order; switching it searches again.
+
+<Screenshot slot="kb-try-it-rerank" />
 
 Use **Try it** to check a knowledge base before you point an agent at it, and whenever answers cite the wrong things. An evaluation result's **Try this search** opens this tab with the question filled in.
 
