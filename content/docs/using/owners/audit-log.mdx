@@ -12,7 +12,9 @@ description: Every change made in the team, who made it and what changed.
 - Data sources, uploads and deletions, classification changes with their reasons, and domain requests.
 - Knowledge bases, including profile migrations started by platform admins.
 - Agents: versions published, audience changes, disabling, and a platform admin's kill switch.
-- Evaluation sets, questions, imports and runs.
+- Evaluation sets, questions, imports and runs. Since v0.4.0 a question's entry never carries its text, only its expected documents and what changed.
+- [Gap topics](/docs/using/editors/gaps): Add a source, Mark fixed, Dismiss (with its kind, and whether a reason was given), Reopen and Add to evaluations, and the Gaps settings. Never a topic's label, a question or a reason: platform staff can read team audit logs.
+- An agent's [saved answers](/docs/using/editors/saved-answers) settings, and clearing them (with how many were cleared).
 - Searches and questions from AI tools over the [MCP server](/docs/using/mcp) ("Searched over MCP", "Asked an agent over MCP"), and each call an agent makes to a [tool on an MCP server](/docs/administration/mcp-servers) ("An agent called an MCP tool"). They name the key or person, the knowledge base, agent or tool and the outcome, never the query, question, answer, arguments or result. The team Overview's recent changes leave them out.
 - Limits and budgets set for the team by platform admins (owners and admins only).
 - Break-glass sessions on the team, and every read made under them: the kind of thing and which one, never its content.
