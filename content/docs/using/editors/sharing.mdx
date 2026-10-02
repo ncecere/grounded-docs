@@ -40,6 +40,13 @@ A public agent's page is a minimal, branded chat that works without the app: the
 
 Public traffic is bounded: questions per minute per IP address and per visitor session, daily questions and tokens per agent, concurrent chats per agent, and a maximum question length. Platform admins set the defaults; a widget key can override the per-minute limits within them.
 
+What changes when you publish to the public, since v0.4.0:
+
+- Answers are checked by moderation **paragraph by paragraph** by default, so visitors see the first paragraph in seconds ([Moderation modes](/docs/administration/moderation-modes)), and reasoning models are asked for **low** reasoning effort.
+- **Saved answers** are on by default: a first question asked again gets the recent answer at once ([Saved answers](/docs/using/editors/saved-answers)).
+- Visitors can **rate answers** and **share a question** they couldn't get answered. Their failed questions count towards your [Gaps](/docs/using/editors/gaps), each anonymous session as one person, and the page's footer tells them so.
+- Visitors can open a citation's passage in the [source viewer](/docs/using/source-viewer), for answers in their own session.
+
 ## Widget
 
 The widget puts the agent on another website as a launcher button that opens a chat panel. It's an iframe of a page Grounded serves, so the host site's styles and scripts can't reach it.
@@ -82,7 +89,9 @@ The Share tab shows a live preview, and **Open in new tab** opens it on its own.
 </Step>
 </Steps>
 
-The launcher uses the agent's accent colour and is named "Chat with *agent*" for screen readers. Escape closes the panel and returns focus to the launcher. Revoke a key to stop every site that uses it; the platform's kill switch and public access switch also stop embeds.
+The launcher uses the agent's accent colour and is named "Chat with *agent*" for screen readers. Escape closes the panel and returns focus to the launcher. On a phone the panel fills the screen and the launcher hides while it's open; sources open as a full-screen sheet.
+
+Since v0.4.0 the widget always starts **its own session** with its publishable key, separate from the public page's even when the widget is on the same site as Grounded, so the key's limits, its switch and its allowed origins always apply. Widget visitors start one new conversation after the upgrade. Revoke a key to stop every site that uses it; the platform's kill switch and public access switch also stop embeds.
 
 ## OpenAI-compatible API
 
