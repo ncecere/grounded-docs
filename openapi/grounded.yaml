@@ -43,6 +43,12 @@ tags:
       full-answer checks, and their runs (docs/evaluations.md). For the
       team's editors, admins and owners; 404 for everyone else and while the
       platform switch is off.
+  - name: gaps
+    description: >-
+      The unanswered-questions and gap report (docs/gaps.md): failed
+      questions grouped into labelled topics, shown once at least 3
+      different people asked, and questions their askers shared. For the
+      team's editors, admins and owners; platform staff see counts only.
   - name: openai
     description: The OpenAI-compatible API for agents
   - name: oauth
@@ -2695,6 +2701,56 @@ paths:
                     items: { type: string }
         "403": { $ref: "#/components/responses/ErrorReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/sources/{sourceId}/documents/{documentId}/text:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - name: sourceId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - name: documentId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      tags: [sources]
+      operationId: getDocumentText
+      summary: A document's text as passages, for the team's editors, admins and owners
+      description: >-
+        The whole document for the source viewer (docs/v0.4.0.md §5): its
+        passages in order from the passage at ordinal from (limit at a
+        time), with the text a passage repeats from the one before it
+        (chunk overlap) left out. With around (a passage ID), the passage
+        with its neighbours (about a page) instead, marked cited; 404
+        passage_not_found when the document no longer has that passage.
+        Members get 403: they see cited passages in context from their
+        answers.
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema: { type: integer, minimum: 0, default: 0 }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: around
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Passages of the document
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/DocumentText" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
   /v1/teams/{team}/sources/{sourceId}/documents/{documentId}/retry:
     parameters:
       - $ref: "#/components/parameters/TeamParam"
@@ -4121,6 +4177,78 @@ paths:
         "400": { $ref: "#/components/responses/ErrorReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/agents/{agentId}/answer-cache:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/AgentIdParam"
+    get:
+      tags: [agents]
+      operationId: getAgentAnswerCache
+      summary: "The agent's answer cache settings, whether it is on and its stored answers (editors, admins and owners; docs/answer-cache.md)"
+      responses:
+        "200":
+          description: Settings
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AgentAnswerCache" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+    put:
+      tags: [agents]
+      operationId: updateAgentAnswerCache
+      summary: "Change the agent's answer cache settings (editors, admins and owners; audited). Not versioned: applies to the next question."
+      parameters:
+        - $ref: "#/components/parameters/IfMatchHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentAnswerCacheUpdate" }
+      responses:
+        "200":
+          description: Saved
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AgentAnswerCache" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+        "412": { $ref: "#/components/responses/ErrorReply" }
+        "428": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/agents/{agentId}/answer-cache/clear:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/AgentIdParam"
+    post:
+      tags: [agents]
+      operationId: clearAgentAnswerCache
+      summary: "Delete every stored answer of the agent, so the next questions get fresh ones (editors, admins and owners; audited)"
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AnswerCacheCleared" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
   /v1/teams/{team}/agents/{agentId}/sharing:
     parameters:
       - $ref: "#/components/parameters/TeamParam"
@@ -4360,8 +4488,9 @@ paths:
       operationId: createPublicSession
       summary: Start an anonymous session with a public agent (sets the session cookie)
       description: >-
-        The cookie (grounded_anon_{agentId without dashes}, HttpOnly, path
-        /v1/public) holds a random secret stored only as a digest, with the
+        The cookie (grounded_anon_{agentId without dashes} for the public
+        page, grounded_widget_{agentId without dashes} for a session started
+        with a publishable key; HttpOnly, path /v1/public) holds a random secret stored only as a digest, with the
         agent, the caller's /24 (IPv4) or /48 (IPv6) prefix and a user-agent
         hash. It is SameSite=None; Secure; Partitioned for the widget (on
         HTTPS) and SameSite=Lax for the public page, and lasts ANON_SESSION_TTL
@@ -4401,6 +4530,15 @@ paths:
           in: query
           required: true
           schema: { type: string, format: uuid }
+        - name: key
+          in: query
+          required: false
+          description: >-
+            The widget's publishable key: only a session started with this key
+            is returned (401 session_required otherwise), so the embed page
+            starts its own. Implies the widget channel.
+          schema: { type: string }
+        - $ref: "#/components/parameters/PublicChannelHeader"
       responses:
         "200":
           description: Session
@@ -4418,6 +4556,7 @@ paths:
   /v1/public/agents/{agentId}/chat:
     parameters:
       - $ref: "#/components/parameters/AgentIdParam"
+      - $ref: "#/components/parameters/PublicChannelHeader"
     post:
       tags: [public]
       operationId: publicChat
@@ -4586,6 +4725,83 @@ paths:
         "409": { $ref: "#/components/responses/ErrorReply" }
         "429": { $ref: "#/components/responses/RateLimitedReply" }
         "503": { $ref: "#/components/responses/ErrorReply" }
+  /v1/public/agents/{agentId}/messages/{messageId}/sources/{n}:
+    parameters:
+      - $ref: "#/components/parameters/AgentIdParam"
+      - name: messageId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/CitationNumberParam"
+      - $ref: "#/components/parameters/PublicChannelHeader"
+    get:
+      tags: [public]
+      operationId: getPublicCitedPassage
+      summary: A passage an answer cited, in context, for the anonymous session that asked (needs the session cookie)
+      description: >-
+        As GET /v1/messages/{messageId}/sources/{n}, for an answer in a
+        conversation of the caller's anonymous session with the agent: 404
+        for any other conversation, 401 without a live session. documentTeam
+        is never set.
+      responses:
+        "200":
+          description: The cited passage
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/CitedPassage" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "401": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "503": { $ref: "#/components/responses/ErrorReply" }
+  /v1/public/agents/{agentId}/messages/{messageId}/feedback:
+    parameters:
+      - $ref: "#/components/parameters/AgentIdParam"
+      - name: messageId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/PublicChannelHeader"
+    post:
+      tags: [public]
+      operationId: setPublicMessageFeedback
+      summary: Rate an answer in the anonymous session's own conversation (replaces earlier feedback; needs the session cookie)
+      description: >-
+        As POST /v1/messages/{messageId}/feedback, for an answer in a
+        conversation of the caller's anonymous session with the agent: 404
+        for any other message, 401 without a live session. A thumbs-down
+        removes a saved answer it came from and keeps the question for the
+        gap report (each anonymous session counts as one person); with
+        share, the team's editors see the question (never who asked).
+        Rate-limited like public questions (per address and session per
+        minute, with a publishable key's overrides, counted apart from
+        questions): 429 rate_limited, 503 limits_unavailable. Errors: 503
+        public_disabled, 404 for agents that are not public, 403
+        agent_disabled (kill switch), 403 invalid_publishable_key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Feedback" }
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/FeedbackResult" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "401": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "429": { $ref: "#/components/responses/RateLimitedReply" }
+        "503": { $ref: "#/components/responses/ErrorReply" }
   /v1/conversations:
     get:
       tags: [chat]
@@ -4728,6 +4944,41 @@ paths:
                 required: [data]
                 properties:
                   data: { $ref: "#/components/schemas/FeedbackResult" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+  /v1/messages/{messageId}/sources/{n}:
+    parameters:
+      - name: messageId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+      - $ref: "#/components/parameters/CitationNumberParam"
+    get:
+      tags: [chat]
+      operationId: getCitedPassage
+      summary: A passage an answer cited, in its document's context (the answer's own conversation only)
+      description: >-
+        The passage cited as [n] by an answer in one of the caller's
+        conversations, with its neighbours (about a page), the document's
+        title, heading path and link, and the claims of the answer that cite
+        it (docs/v0.4.0.md §5). Only passages the answer cited are served,
+        so nobody can page through a knowledge base by its answers. 404 for
+        anyone but the conversation's user (ADR-0010), for a number the
+        answer didn't cite and for an MCP tool's result. A document deleted
+        since the answer, or a passage no longer in it, is status
+        document_deleted or passage_changed with no passages. documentTeam
+        is set when the caller may open the whole document (the source's
+        team editors, admins and owners; GET .../documents/{documentId}/text).
+      responses:
+        "200":
+          description: The cited passage
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/CitedPassage" }
         "400": { $ref: "#/components/responses/ErrorReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
   /v1/models:
@@ -5501,6 +5752,27 @@ paths:
                   data: { $ref: "#/components/schemas/PlatformAnalytics" }
         "400": { $ref: "#/components/responses/ErrorReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
+  /v1/admin/analytics/gaps:
+    get:
+      tags: [admin, gaps]
+      operationId: adminGetGapCounts
+      summary: Failed questions per team and signal (platform admins and auditors; counts only, never topics or questions)
+      parameters:
+        - $ref: "#/components/parameters/AnalyticsFromParam"
+        - $ref: "#/components/parameters/AnalyticsToParam"
+        - $ref: "#/components/parameters/AnalyticsAudienceParam"
+      responses:
+        "200":
+          description: Counts per team, most failed questions first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AdminGapCounts" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
   /v1/admin/analytics/daily.csv:
     get:
       tags: [admin]
@@ -5616,6 +5888,60 @@ paths:
                 required: [data]
                 properties:
                   data: { $ref: "#/components/schemas/SystemOneSettings" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "412": { $ref: "#/components/responses/ErrorReply" }
+        "428": { $ref: "#/components/responses/ErrorReply" }
+  /v1/admin/rerank:
+    get:
+      tags: [admin]
+      operationId: adminGetRerank
+      summary: The platform rerank settings (platform admins and auditors)
+      description: >-
+        The rerank model every search uses (docs/v0.4.0.md §3), how many
+        candidates a search reranks and the time limit of the call. With no
+        rerank model, retrieval is as without reranking.
+      responses:
+        "200":
+          description: The settings (the defaults with revision 1 until saved)
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/RerankSettings" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+    put:
+      tags: [admin]
+      operationId: adminPutRerank
+      summary: Replace the platform rerank settings (platform admins; audited)
+      description: >-
+        modelId null turns reranking off. 400 invalid_settings
+        (details.problems lists every {field, problem}) for values out of range; 400
+        invalid_model when modelId is not a rerank model. Saving the settings
+        already saved changes nothing (no new revision, no audit entry).
+      parameters:
+        - $ref: "#/components/parameters/IfMatchHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RerankSettingsInput" }
+      responses:
+        "200":
+          description: Saved
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/RerankSettings" }
         "400": { $ref: "#/components/responses/ErrorReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
         "412": { $ref: "#/components/responses/ErrorReply" }
@@ -5802,6 +6128,26 @@ paths:
                 required: [data]
                 properties:
                   data: { $ref: "#/components/schemas/SystemOneStatus" }
+        "401": { $ref: "#/components/responses/ErrorReply" }
+  /v1/rerank/status:
+    get:
+      tags: [agents]
+      operationId: getRerankStatus
+      summary: Whether the platform reranks searches (any signed-in user)
+      description: >-
+        Editors use it to show the agent's reranking settings (Build,
+        Advanced) and the Try it comparison. available is false when no rerank
+        model is set or it (or its connection) is disabled.
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/RerankStatus" }
         "401": { $ref: "#/components/responses/ErrorReply" }
   /v1/admin/moderation/policies/{audience}:
     parameters:
@@ -6072,8 +6418,8 @@ paths:
             text/csv:
               schema: { type: string }
               example: |
-                team,name,team,currency,spend,chat,embedding,systemone,moderation,tokens,requests,unpriced
-                5b1d2c3e-6f7a-4b8c-9d0e-1f2a3b4c5d6e,Registrar,registrar,USD,12.500000,12.000000,0.500000,0.000000,0.000000,4100000,0,false
+                team_id,team_slug,team_name,currency,spend,chat,embedding,systemone,moderation,ocr,mcp,rerank,tokens,requests,unpriced
+                5b1d2c3e-6f7a-4b8c-9d0e-1f2a3b4c5d6e,registrar,Registrar,USD,12.500000,12.000000,0.500000,0.000000,0.000000,0.000000,0.000000,0.000000,4100000,0,false
         "400": { $ref: "#/components/responses/ErrorReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
   /v1/admin/costs/budgets:
@@ -6725,6 +7071,219 @@ paths:
                   data: { $ref: "#/components/schemas/EvaluationRun" }
         "404": { $ref: "#/components/responses/ErrorReply" }
         "409": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+    get:
+      tags: [gaps]
+      operationId: listGapTopics
+      summary: The team's gap topics, groups of failed questions (editors, admins and owners)
+      description: >-
+        Only topics with at least minAskers different askers are listed (3:
+        a label can't point at one person). A topic shows its label, counts,
+        signals and trend, never a question's text or who asked. Members,
+        API keys and platform staff get 404.
+      parameters:
+        - name: agentId
+          in: query
+          required: false
+          schema: { type: string, format: uuid }
+        - name: state
+          in: query
+          required: false
+          description: "open (the default), closed (dismissed, fixed or resolved) or all"
+          schema: { type: string, enum: [open, closed, all] }
+      responses:
+        "200":
+          description: Topics, open first, then by recent activity
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapTopicList" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics/{topicId}:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/GapTopicIdParam"
+    get:
+      tags: [gaps]
+      operationId: getGapTopic
+      summary: A gap topic with the questions its askers shared (editors, admins and owners)
+      responses:
+        "200":
+          description: The topic
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapTopicDetail" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics/{topicId}/dismiss:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/GapTopicIdParam"
+    post:
+      tags: [gaps]
+      operationId: dismissGapTopic
+      summary: Dismiss a topic for now (it reopens on new failures) or as not for this agent (it stays closed), with an optional reason (audited)
+      description: >-
+        The reason is kept in the topic's history, which only the team's editors, admins and owners
+        see; the audit entry carries the kind and whether there was a reason, never its text.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GapTopicDismiss" }
+      responses:
+        "200":
+          description: Dismissed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapTopic" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics/{topicId}/reopen:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/GapTopicIdParam"
+    post:
+      tags: [gaps]
+      operationId: reopenGapTopic
+      summary: Reopen a closed topic, undoing a dismissal or a fix (audited)
+      responses:
+        "200":
+          description: Reopened
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapTopic" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-settings:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+    get:
+      tags: [gaps]
+      operationId: getGapSettings
+      summary: The team's gap report settings (editors, admins and owners)
+      responses:
+        "200":
+          description: The settings (the defaults when never saved); the ETag is the revision
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapSettings" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+    put:
+      tags: [gaps]
+      operationId: updateGapSettings
+      summary: Change the team's gap report settings (editors, admins and owners; If-Match; audited)
+      parameters:
+        - $ref: "#/components/parameters/IfMatchHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GapSettingsUpdate" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapSettings" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+        "412": { $ref: "#/components/responses/ErrorReply" }
+        "428": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics/{topicId}/fix:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/GapTopicIdParam"
+    post:
+      tags: [gaps]
+      operationId: fixGapTopic
+      summary: Mark a topic fixed; it reopens on new failures (audited)
+      responses:
+        "200":
+          description: Marked fixed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapTopic" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics/{topicId}/add-source:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/GapTopicIdParam"
+    post:
+      tags: [gaps]
+      operationId: addGapTopicSource
+      summary: Record that an editor went to add a source for the topic (audited); the app then opens Data sources with the topic as a note
+      responses:
+        "200":
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapTopic" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/gap-topics/{topicId}/evaluations:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/GapTopicIdParam"
+    post:
+      tags: [gaps]
+      operationId: addGapQuestionToEvaluations
+      summary: Add one of the topic's shared questions to an evaluation set of the team (audited; evaluations must be on)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/GapEvaluationAdd" }
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/GapEvaluationAdded" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+        "422": { $ref: "#/components/responses/ErrorReply" }
   /v1/admin/settings/evaluations:
     get:
       tags: [admin, evaluations]
@@ -6766,6 +7325,51 @@ paths:
                 required: [data]
                 properties:
                   data: { $ref: "#/components/schemas/EvaluationSettings" }
+        "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "412": { $ref: "#/components/responses/ErrorReply" }
+        "428": { $ref: "#/components/responses/ErrorReply" }
+  /v1/admin/settings/answer-cache:
+    get:
+      tags: [admin]
+      operationId: adminGetAnswerCacheSettings
+      summary: Whether the answer cache is on for the platform (platform admins and auditors)
+      responses:
+        "200":
+          description: Settings
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AnswerCacheSettings" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+    put:
+      tags: [admin]
+      operationId: adminPutAnswerCacheSettings
+      summary: "Turn the answer cache on or off for every agent (platform admins; audited). Off reuses nothing; stored answers expire as usual."
+      parameters:
+        - $ref: "#/components/parameters/IfMatchHeader"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnswerCacheSettingsUpdate" }
+      responses:
+        "200":
+          description: Saved
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AnswerCacheSettings" }
         "400": { $ref: "#/components/responses/ErrorReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
         "412": { $ref: "#/components/responses/ErrorReply" }
@@ -6821,6 +7425,20 @@ components:
       description: Quoted revision, for If-Match on the next update
       schema: { type: string }
   parameters:
+    PublicChannelHeader:
+      name: Grounded-Channel
+      in: header
+      required: false
+      description: >-
+        Which of the visitor's sessions with the agent the request uses:
+        public (the default, the public page's session cookie) or widget (the
+        embed page's: grounded_widget_{agentId without dashes}). Each channel
+        has its own cookie, so the widget never continues a public page
+        session (which has no publishable key, so the key's limits and
+        switch wouldn't apply), and the public page never continues a
+        widget's. A session of another channel behind the cookie is refused
+        (401 session_required).
+      schema: { type: string, enum: [public, widget] }
     CostFromParam:
       name: from
       in: query
@@ -6890,6 +7508,11 @@ components:
       schema: { type: string }
     EvaluationSetIdParam:
       name: setId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    GapTopicIdParam:
+      name: topicId
       in: path
       required: true
       schema: { type: string, format: uuid }
@@ -7036,6 +7659,12 @@ components:
       in: path
       required: true
       schema: { type: string, format: uuid }
+    CitationNumberParam:
+      name: n
+      in: path
+      required: true
+      description: The source's number in the answer ([n])
+      schema: { type: integer, minimum: 1, maximum: 999 }
     ConversationIdParam:
       name: conversationId
       in: path
@@ -7215,7 +7844,7 @@ components:
         or notifies anyone; a Track-only budget shows the same states as progress and nothing else.
     PriceUnit:
       type: string
-      enum: [chat_tokens_in, chat_tokens_out, embed_tokens, systemone_tokens, systemone_requests, moderation_requests, vision_tokens_in, vision_tokens_out, mcp_calls]
+      enum: [chat_tokens_in, chat_tokens_out, embed_tokens, systemone_tokens, systemone_requests, moderation_requests, vision_tokens_in, vision_tokens_out, mcp_calls, rerank_tokens, rerank_requests]
       description: "The usage ledger kind priced; tokens per million, requests per request, mcp_calls per MCP tool call (an MCP server's price, set on the server)"
     CostSettings:
       type: object
@@ -7313,7 +7942,7 @@ components:
           items: { $ref: "#/components/schemas/CostPriceItem" }
     CostByKind:
       type: object
-      required: [chat, embedding, systemone, moderation, ocr, mcp]
+      required: [chat, embedding, systemone, moderation, ocr, mcp, rerank]
       properties:
         chat: { $ref: "#/components/schemas/Money" }
         embedding: { $ref: "#/components/schemas/Money" }
@@ -7321,14 +7950,15 @@ components:
         moderation: { $ref: "#/components/schemas/Money" }
         ocr: { $ref: "#/components/schemas/Money" }
         mcp: { $ref: "#/components/schemas/Money" }
+        rerank: { $ref: "#/components/schemas/Money" }
     CostTotals:
       type: object
       required: [spend, byKind, tokens, requests, unpriced]
       properties:
         spend: { $ref: "#/components/schemas/Money" }
         byKind: { $ref: "#/components/schemas/CostByKind" }
-        tokens: { type: integer, format: int64, description: "Chat, embedding, SystemOne and OCR (vision) tokens" }
-        requests: { type: integer, format: int64, description: "SystemOne and moderation requests" }
+        tokens: { type: integer, format: int64, description: "Chat, embedding, SystemOne, rerank and OCR (vision) tokens" }
+        requests: { type: integer, format: int64, description: "SystemOne, moderation, rerank and MCP tool requests" }
         unpriced: { type: boolean, description: "Some usage had no price and counts as zero" }
     CostReportRow:
       type: object
@@ -7552,7 +8182,7 @@ components:
           items: { $ref: "#/components/schemas/ProfileUsage" }
     ModelUsage:
       type: object
-      required: [modelId, publishedAgents, draftAgents, profiles, moderationAudiences, systemOne]
+      required: [modelId, publishedAgents, draftAgents, profiles, moderationAudiences, systemOne, rerank]
       properties:
         modelId: { type: string, format: uuid }
         publishedAgents: { type: integer, format: int64, description: Agents whose published version answers with this model }
@@ -7563,6 +8193,7 @@ components:
           description: Audiences whose moderation policy uses this model
           items: { $ref: "#/components/schemas/Audience" }
         systemOne: { type: boolean, description: SystemOne's settings use this model }
+        rerank: { type: boolean, description: The rerank settings use this model }
     ProfileUsage:
       type: object
       required: [profileId, sources, knowledgeBases]
@@ -7599,7 +8230,7 @@ components:
     RetentionKind:
       type: string
       description: A kind of data with its own retention (docs/operations/retention.md)
-      enum: [conversations, deleted_conversations, access_log, analytics_events, usage_events, audit_log, deleted_files, expired_invites, anonymous_sessions, evaluation_runs]
+      enum: [conversations, deleted_conversations, access_log, analytics_events, usage_events, audit_log, deleted_files, expired_invites, anonymous_sessions, evaluation_runs, answer_cache]
     RetentionPeriod:
       type: object
       required: [kind, days, source, platformSet, platformDays, environmentDays, minDays, maxDays]
@@ -8646,12 +9277,26 @@ components:
         maxTokensField: { type: string, enum: [max_tokens, max_completion_tokens] }
         supportsToolChoice: { type: boolean, description: "Chat: the server honours tool_choice (e.g. required). Default false." }
         thinkingField: { type: string, enum: [reasoning_content, reasoning], description: "Chat: the streamed reasoning field. Default: whichever is present." }
+        thinkingOff:
+          type: string
+          enum: [reasoning_effort_none, enable_thinking_false]
+          description: >-
+            Chat: how to turn thinking off when an answer's reasoning effort is
+            off. reasoning_effort_none sends reasoning_effort "none";
+            enable_thinking_false sends chat_template_kwargs {"enable_thinking":
+            false} (Qwen3 on vLLM or SGLang). Default: not supported (off sends
+            nothing, so the model thinks as by default).
         supportsDimensionsParam:
           type: boolean
           description: >-
             Embedding: send the dimensions parameter when a profile stores fewer
             dimensions than the model's. Default false: Grounded truncates the vectors
             and L2-renormalises them itself (Matryoshka models only).
+        rerankDocumentsField:
+          type: string
+          enum: [documents, texts]
+          description: "Rerank: the request field carrying the passages. Default documents (Cohere and Jina shape: LiteLLM, vLLM, SGLang); texts for Hugging Face text embeddings inference."
+        supportsRerankTopN: { type: boolean, description: "Rerank: send top_n. Default true." }
         extraBody:
           type: object
           additionalProperties: true
@@ -8773,8 +9418,19 @@ components:
         usage: { $ref: "#/components/schemas/TokenUsage" }
         moderation: { $ref: "#/components/schemas/ModerationModelTest" }
         systemOne: { $ref: "#/components/schemas/SystemOneModelTest" }
+        rerank: { $ref: "#/components/schemas/RerankModelTest" }
         error: { $ref: "#/components/schemas/ProxyError" }
         timings: { $ref: "#/components/schemas/RequestTimings" }
+    RerankModelTest:
+      type: object
+      description: Rerank models - the scores of a passage that answers a fixed question and one that doesn't (the first should be higher)
+      required: [query, relevantText, irrelevantText, relevant, irrelevant]
+      properties:
+        query: { type: string }
+        relevantText: { type: string }
+        irrelevantText: { type: string }
+        relevant: { type: number, format: double }
+        irrelevant: { type: number, format: double }
     SystemOneModelTest:
       type: object
       description: SystemOne models - one fixed noul (yes/no) and one fixed score question
@@ -8849,12 +9505,17 @@ components:
         output: { $ref: "#/components/schemas/ModerationRule" }
     ModerationOutputMode:
       type: string
-      description: "stream_retract: answers stream and a failing answer is replaced; buffer: answers are sent only after they pass"
-      enum: [stream_retract, buffer]
+      description: >-
+        stream_retract: answers stream and a failing answer is replaced;
+        stream_checked (the Public default): answers are released paragraph
+        by paragraph, each checked with all the text before it, and a
+        failing paragraph replaces the whole answer with the notice; buffer:
+        answers are sent only after they pass
+      enum: [stream_retract, stream_checked, buffer]
     ModerationPolicy:
       type: object
       description: An audience's platform moderation policy (defaults until saved, with revision 1)
-      required: [audience, modelId, categories, outputMode, failClosed, notice, severityBlock, supportMessage, uncalibratedBlockThreshold, revision, updatedAt]
+      required: [audience, modelId, categories, outputMode, failClosed, notice, severityBlock, supportMessage, uncalibratedBlockThreshold, reasoningEffort, revision, updatedAt]
       properties:
         audience: { $ref: "#/components/schemas/Audience" }
         modelId: { type: string, format: uuid, nullable: true, description: The provider (a moderation or SystemOne model) }
@@ -8885,8 +9546,19 @@ components:
             threshold but below this one flags instead (default 0.95; 0 treats
             uncalibrated scores like calibrated ones). Support actions are not
             affected.
+        reasoningEffort: { $ref: "#/components/schemas/AudienceReasoningEffort" }
         revision: { $ref: "#/components/schemas/Revision" }
         updatedAt: { type: string, format: date-time, nullable: true }
+    AudienceReasoningEffort:
+      type: string
+      enum: [default, off, low, medium, high]
+      description: >-
+        The reasoning effort of this audience's answers when the agent doesn't
+        set its own (default: the model's). Public's is low until an admin
+        chooses another (also in a policy saved before v0.4.0). off and low,
+        medium and high apply as the agent setting does (ReasoningEffort).
+        Query rewrites ask for low, or off when this is off and the model can
+        turn thinking off.
     ModerationPolicyInput:
       type: object
       required: [modelId, categories, outputMode, failClosed]
@@ -8902,19 +9574,24 @@ components:
         severityBlock: { type: number, format: double, nullable: true, minimum: 0, maximum: 3 }
         supportMessage: { type: string, maxLength: 1000 }
         uncalibratedBlockThreshold: { type: number, format: double, minimum: 0, maximum: 1, description: "Default 0.95 when absent" }
+        reasoningEffort:
+          description: "Absent: the audience's default (low for public, the model's for the others)"
+          allOf: [{ $ref: "#/components/schemas/AudienceReasoningEffort" }]
     AgentModeration:
       type: object
       description: >-
         An agent's moderation override. It can only make the audience's
         platform policy stricter: a rule's action and threshold combine with
         the platform's (the stronger action, the lower threshold), off keeps
-        the platform's rule, and outputMode buffer buffers where the platform
-        streams. The Phase 3 value "off" is still accepted as no override.
+        the platform's rule, and outputMode stream_checked or buffer applies
+        where the platform's mode is less strict (stream_retract, then
+        stream_checked, then buffer). The Phase 3 value "off" is still
+        accepted as no override.
       properties:
         categories:
           type: object
           additionalProperties: { $ref: "#/components/schemas/ModerationCategoryRules" }
-        outputMode: { type: string, enum: ["", buffer] }
+        outputMode: { type: string, enum: ["", stream_checked, buffer] }
         severityBlock: { type: number, format: double, minimum: 0, maximum: 3, description: "Block at this severity or the platform's, whichever is lower" }
     ModelRef:
       type: object
@@ -9192,7 +9869,7 @@ components:
         revision: { $ref: "#/components/schemas/Revision" }
     ChatModelOption:
       type: object
-      required: [id, key, displayName, description, maxClassification, supportsTools, supportsReasoningEffort]
+      required: [id, key, displayName, description, maxClassification, supportsTools, supportsReasoningEffort, supportsThinkingOff]
       properties:
         id: { type: string, format: uuid }
         key: { type: string }
@@ -9202,7 +9879,8 @@ components:
         contextWindow: { type: integer, format: int32, nullable: true }
         maxOutputTokens: { type: integer, format: int32, nullable: true }
         supportsTools: { type: boolean, description: "Required for retrieval mode tool" }
-        supportsReasoningEffort: { type: boolean }
+        supportsReasoningEffort: { type: boolean, description: "Reasoning effort low, medium and high can be chosen" }
+        supportsThinkingOff: { type: boolean, description: "Reasoning effort off can be chosen (the model's compatibility says how to turn thinking off)" }
     EmbeddingProfileOption:
       type: object
       required: [id, key, name, description, dimensions, chunkSize, maxClassification, isDefault]
@@ -9498,6 +10176,67 @@ components:
         pageStart: { type: integer, format: int32, description: "First page (0 when the format has no pages)" }
         pageEnd: { type: integer, format: int32 }
         tokenCount: { type: integer, format: int32 }
+    ContextPassage:
+      type: object
+      description: >-
+        A passage of a document shown in the source viewer. content is
+        Markdown without the text it repeats from the passage before it
+        (chunk overlap); the cited passage is always whole.
+      required: [ordinal, content, headingPath, pageStart, pageEnd, cited]
+      properties:
+        ordinal: { type: integer, format: int32, description: "Position in the document, from 0" }
+        content: { type: string }
+        headingPath:
+          type: array
+          items: { type: string }
+        pageStart: { type: integer, format: int32, description: "First page (0 when the format has no pages)" }
+        pageEnd: { type: integer, format: int32 }
+        cited: { type: boolean, description: The passage the answer cited (or around named) }
+    CitedPassage:
+      type: object
+      description: >-
+        A passage an answer cited, in context (docs/v0.4.0.md §5). status
+        available has the passage with its neighbours; document_deleted
+        (the document was deleted since the answer) and passage_changed
+        (the document no longer has that text, e.g. it was re-fetched and
+        changed) have none.
+      required: [n, status, documentId, sourceId, title, headingPath, passages, claims]
+      properties:
+        n: { type: integer }
+        status: { type: string, enum: [available, document_deleted, passage_changed] }
+        documentId: { type: string, format: uuid }
+        sourceId: { type: string, format: uuid }
+        title: { type: string }
+        headingPath:
+          type: array
+          items: { type: string }
+        url: { type: string, description: "The web page, when the answer's citation links it (snippet_link mode)" }
+        filename: { type: string }
+        passages:
+          type: array
+          items: { $ref: "#/components/schemas/ContextPassage" }
+        claims:
+          type: array
+          description: The answer's claims that cite this source, with their verdicts (empty without SystemOne citation checks)
+          items: { $ref: "#/components/schemas/Claim" }
+        documentTeam:
+          type: string
+          description: "The source's team (slug), when the caller may open the whole document (its editors, admins and owners)"
+    DocumentText:
+      type: object
+      required: [documentId, sourceId, title, kind, items, total, from]
+      properties:
+        documentId: { type: string, format: uuid }
+        sourceId: { type: string, format: uuid }
+        title: { type: string }
+        kind: { type: string }
+        url: { type: string, description: The web page (web sources) }
+        filename: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ContextPassage" }
+        total: { type: integer, format: int32, description: All passages of the document }
+        from: { type: integer, format: int32, description: The first passage's ordinal }
     DocumentPassagePage:
       type: object
       required: [items, total]
@@ -9612,6 +10351,12 @@ components:
             route: evidence, then conflicting, then dropped (team editors
             signed in; 409 systemone_unavailable without a SystemOne model).
             topK is ignored.
+        rerank:
+          type: boolean
+          description: >-
+            Rerank with the platform's rerank model when one is set
+            (docs/v0.4.0.md §3; the default); false searches without it, to
+            compare.
     RetrieveHit:
       type: object
       required: [chunkId, documentId, sourceId, content, headingPath, title, filename, url, score]
@@ -9632,6 +10377,7 @@ components:
         vectorRank: { type: integer, nullable: true }
         lexicalRank: { type: integer, nullable: true }
         judgment: { $ref: "#/components/schemas/PassageJudgment" }
+        rerankScore: { type: number, format: double, nullable: true, description: "The rerank model's relevance score (reranked searches only); hits are ordered by it" }
     PassageJudgment:
       type: object
       description: >-
@@ -9656,6 +10402,19 @@ components:
           items: { $ref: "#/components/schemas/RetrieveHit" }
         latencyMs: { type: integer, format: int64 }
         judging: { $ref: "#/components/schemas/RetrieveJudging" }
+        rerank: { $ref: "#/components/schemas/RetrieveRerank" }
+    RetrieveRerank:
+      type: object
+      description: >-
+        How the search was reranked (present when the platform has a rerank
+        model and the request didn't turn it off). timeout and error kept the
+        fusion order; skipped: the rerank model may not read this knowledge
+        base's classification.
+      required: [status, candidates, latencyMs]
+      properties:
+        status: { type: string, enum: [ok, timeout, error, skipped] }
+        candidates: { type: integer, description: Fused hits sent to the rerank model }
+        latencyMs: { type: integer, format: int64 }
     RetrieveJudging:
       type: object
       required: [mode, judged, kept, dropped, skipped, requests, latencyMs]
@@ -10209,7 +10968,14 @@ components:
       enum: [none, snippet, snippet_link]
     ReasoningEffort:
       type: string
-      enum: [low, medium, high]
+      description: >-
+        How long the model thinks before answering. off turns thinking off in
+        the way the model's compatibility setting thinkingOff says (nothing is
+        sent when it has none); low, medium and high are sent as
+        reasoning_effort when the model accepts it (supportsReasoningEffort).
+        Absent: the audience's reasoning effort (the moderation policy's), else
+        the model's default.
+      enum: [off, low, medium, high]
     AgentKB:
       type: object
       required: [kbId]
@@ -10257,6 +11023,8 @@ components:
           maxItems: 10
           description: "Approved MCP server tools the agent may call (docs/mcp-client.md), by ID; absent in configurations saved before v0.3"
           items: { type: string, format: uuid }
+        rerank: { type: boolean, description: "Rerank searches with the platform's rerank model (when one is set); absent in configurations saved before v0.4 (on)" }
+        rerankTopN: { type: integer, minimum: 1, maximum: 20, description: "Passages each reranked search keeps, for judging or the model" }
     AgentConfigInput:
       type: object
       description: >-
@@ -10269,7 +11037,7 @@ components:
         chatModelId: { type: string, format: uuid, nullable: true }
         temperature: { type: number, format: double, minimum: 0, maximum: 2, nullable: true }
         maxOutputTokens: { type: integer, minimum: 1, nullable: true }
-        reasoningEffort: { type: string, enum: [low, medium, high, ""] }
+        reasoningEffort: { type: string, enum: [off, low, medium, high, ""] }
         kbs:
           type: array
           maxItems: 5
@@ -10296,6 +11064,8 @@ components:
           maxItems: 10
           description: "Approved MCP server tools the agent may call, by ID (listUsableMCPTools). Publishing checks each is approved and its server enabled and approved for the agent's data"
           items: { type: string, format: uuid }
+        rerank: { type: boolean, default: true, description: "Rerank searches with the platform's rerank model (docs/v0.4.0.md §3); it only applies once a platform admin sets one" }
+        rerankTopN: { type: integer, minimum: 1, maximum: 20, default: 6, description: "Passages each reranked search keeps, for judging or the model" }
     AgentSystemOne:
       type: object
       description: >-
@@ -10420,6 +11190,29 @@ components:
           required: [enabled]
           properties:
             enabled: { type: boolean, description: The platform default }
+    RerankStatus:
+      type: object
+      required: [available, defaultTopN]
+      properties:
+        available: { type: boolean, description: A usable rerank model is set }
+        defaultTopN: { type: integer, description: Passages an agent keeps after reranking unless it sets rerankTopN }
+    RerankSettings:
+      type: object
+      required: [modelId, candidates, timeLimitMs, agents, revision]
+      properties:
+        modelId: { type: string, format: uuid, nullable: true, description: "The rerank model; null: searches aren't reranked" }
+        candidates: { type: integer, minimum: 5, maximum: 50, description: "Fused hits a search reranks (more when a search asks for more results)" }
+        timeLimitMs: { type: integer, minimum: 200, maximum: 10000, description: "The longest a search waits for the rerank call; then it keeps the fusion order" }
+        agents: { type: integer, description: "Published agents that rerank (they don't turn it off)" }
+        revision: { $ref: "#/components/schemas/Revision" }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    RerankSettingsInput:
+      type: object
+      required: [modelId, candidates, timeLimitMs]
+      properties:
+        modelId: { type: string, format: uuid, nullable: true }
+        candidates: { type: integer, minimum: 5, maximum: 50 }
+        timeLimitMs: { type: integer, minimum: 200, maximum: 10000 }
     AgentProblem:
       type: object
       required: [field, problem]
@@ -11067,6 +11860,13 @@ components:
         pageStart: { type: integer, format: int32 }
         pageEnd: { type: integer, format: int32 }
         url: { type: string }
+        chunkId:
+          type: string
+          format: uuid
+          description: >-
+            The cited passage (absent for MCP tools' results and answers from
+            before v0.4.0). It may be gone since: a re-fetched or re-embedded
+            document gets new passages.
         verification:
           type: string
           enum: [verified, unsupported, contradicted, unchecked]
@@ -11267,24 +12067,39 @@ components:
         follow-up that depends on the conversation into a search query;
         searching: searching the knowledge bases; checking: SystemOne passage
         judging; answering: the model is writing (until the first token).
+        When the answer's thinking isn't streamed (buffered and checked
+        answers), thinking says the model is reasoning, and answering follows
+        once it starts writing (v0.4.0).
         Clients should ignore steps they don't know.
       required: [step]
       properties:
-        step: { type: string, enum: [rewriting, searching, checking, answering] }
+        step: { type: string, enum: [rewriting, searching, checking, thinking, answering] }
     ChatEventMessageStart:
       type: object
       description: "SSE event message_start"
       required: [messageId]
       properties:
         messageId: { type: string, format: uuid }
-        buffered: { type: boolean, description: "Output moderation buffers the answer: no text or thinking deltas; the text arrives in one text_delta after it passes (show a waiting state)" }
+        buffered: { type: boolean, description: "The text arrives whole: no text or thinking deltas before one text_delta (show a waiting state, then the answer from its start). Set when output moderation buffers the answer and for a saved answer's replay" }
+        mode:
+          type: string
+          enum: [stream_retract, stream_checked, buffer]
+          description: >-
+            The output moderation mode, when answers are moderated (absent
+            otherwise). stream_checked: no thinking deltas, and text_delta
+            events carry checked paragraphs (show a waiting state until the
+            first one, then follow the answer as it grows); a failing
+            paragraph sends a moderation event (retracted, or withheld when
+            nothing was shown yet) and no more text.
     ChatEventModeration:
       type: object
       description: >-
         SSE event moderation: moderation replaced a message with the notice.
         blocked - the question was blocked (nothing was retrieved or generated);
-        retracted - the streamed answer failed the output check (discard it);
-        withheld - the buffered answer failed and was never sent; unavailable -
+        retracted - the streamed answer failed the output check (discard it;
+        with stream_checked, a later paragraph failed and the whole answer
+        is replaced); withheld - the buffered answer failed and was never
+        sent (or, with stream_checked, its first paragraph failed); unavailable -
         the safety check could not run (the provider failed or timed out,
         after one retry) and the policy fails closed: the notice asks the
         user to try again, and the OpenAI-compatible endpoint answers 503
@@ -11467,6 +12282,7 @@ components:
         latencyMs: { type: integer, format: int32 }
         feedback: { $ref: "#/components/schemas/FeedbackRating" }
         feedbackReason: { $ref: "#/components/schemas/FeedbackReason" }
+        feedbackShared: { type: boolean, description: "The asker shared the question with the team with a thumbs-down (the gap report, docs/gaps.md)" }
         uncited:
           type: array
           description: >-
@@ -11502,16 +12318,23 @@ components:
       properties:
         rating: { $ref: "#/components/schemas/FeedbackRating" }
         reason: { $ref: "#/components/schemas/FeedbackReason" }
+        share:
+          type: boolean
+          description: >-
+            With a thumbs-down: show the question in full to the team's
+            editors, admins and owners in the gap report (off by default;
+            ignored with a thumbs-up). Docs: docs/gaps.md.
     FeedbackResult:
       type: object
-      required: [messageId, rating]
+      required: [messageId, rating, shared]
       properties:
         messageId: { type: string, format: uuid }
         rating: { $ref: "#/components/schemas/FeedbackRating" }
         reason: { $ref: "#/components/schemas/FeedbackReason" }
+        shared: { type: boolean }
     AgentAnalyticsTotals:
       type: object
-      required: [conversations, answers, uniqueUsers, up, down, satisfaction, noContextRate, refusalRate, errorRate, latencyP50Ms, latencyP95Ms, firstTokenP50Ms, moderation, judging, citations, scope]
+      required: [conversations, answers, uniqueUsers, up, down, satisfaction, noContextRate, refusalRate, errorRate, latencyP50Ms, latencyP95Ms, firstTokenP50Ms, moderation, judging, citations, scope, cache]
       properties:
         conversations: { type: integer, format: int64, description: Stored conversations started }
         answers: { type: integer, format: int64 }
@@ -11529,6 +12352,7 @@ components:
         judging: { $ref: "#/components/schemas/JudgingTotals" }
         citations: { $ref: "#/components/schemas/CitationTotals" }
         scope: { $ref: "#/components/schemas/ScopeTotals" }
+        cache: { $ref: "#/components/schemas/AnswerCacheTotals" }
     AgentAnalyticsDay:
       type: object
       required: [date, conversations, answers]
@@ -12089,6 +12913,146 @@ components:
         filename: { type: string }
         url: { type: string }
         sourceName: { type: string }
+    GapSignalCounts:
+      type: object
+      description: "Questions per signal: no_context, refused, judged_out, out_of_scope, unsupported (unsupported or contradicted claims), thumbs_down"
+      additionalProperties: { type: integer, format: int32 }
+    GapTopic:
+      type: object
+      required: [id, agentId, agentName, label, state, stateReason, stateChangedAt, questions, askers, shared, last30Days, sinceClosed, firstSeen, lastSeen, signals, reasons, trend]
+      properties:
+        id: { type: string, format: uuid }
+        agentId: { type: string, format: uuid }
+        agentName: { type: string }
+        label: { type: string, description: "2-5 words written by the agent's chat model from the topic's questions; empty until the topics job labels it", example: "Parking permits" }
+        state:
+          type: string
+          description: "open; dismissed or fixed by an editor; resolved when its questions started being answered well. A closed topic reopens on new failures, except one dismissed as not for this agent."
+          enum: [open, dismissed, fixed, resolved]
+        dismissKind: { $ref: "#/components/schemas/GapDismissKind" }
+        stateReason: { type: string, description: "The optional reason of the current dismissal (earlier ones are in the topic's history)" }
+        stateChangedAt: { type: string, format: date-time }
+        questions: { type: integer, format: int32 }
+        askers: { type: integer, format: int32, description: Different askers (pseudonymous; an anonymous session counts as one) }
+        shared: { type: integer, format: int32, description: Questions their askers shared }
+        last30Days: { type: integer, format: int32 }
+        sinceClosed: { type: integer, format: int32, description: "Questions that joined a closed topic since it closed (0 while open)" }
+        firstSeen: { type: string, format: date-time }
+        lastSeen: { type: string, format: date-time }
+        signals: { $ref: "#/components/schemas/GapSignalCounts" }
+        reasons:
+          type: object
+          description: Thumbs-down reasons and their counts
+          additionalProperties: { type: integer, format: int32 }
+        trend:
+          type: array
+          description: Questions per week over the last 8 weeks, oldest first
+          items: { type: integer, format: int32 }
+    GapTopicList:
+      type: object
+      required: [topics, pending, ungrouped, minAskers]
+      properties:
+        topics:
+          type: array
+          items: { $ref: "#/components/schemas/GapTopic" }
+        pending: { type: integer, format: int32, description: "Failed questions of the last 30 days not in a topic shown yet (not grouped yet, or fewer than minAskers askers)" }
+        ungrouped: { type: integer, format: int32, description: "Of pending, the questions the hourly topics job hasn't grouped yet" }
+        minAskers: { type: integer, format: int32 }
+    GapSharedQuestion:
+      type: object
+      required: [id, question, addedToEvaluations, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        question: { type: string }
+        feedbackReason: { $ref: "#/components/schemas/FeedbackReason" }
+        addedToEvaluations: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    GapTopicDetail:
+      type: object
+      required: [topic, sharedQuestions, history]
+      properties:
+        topic: { $ref: "#/components/schemas/GapTopic" }
+        sharedQuestions:
+          type: array
+          items: { $ref: "#/components/schemas/GapSharedQuestion" }
+        history:
+          type: array
+          description: The topic's dismissals, fixes, reopenings, resolutions and merges, newest first (at most 50)
+          items: { $ref: "#/components/schemas/GapTopicEvent" }
+    GapDismissKind:
+      type: string
+      description: "for_now: the topic reopens when newer questions about it fail; not_for_agent: it stays closed, and new questions are still counted"
+      enum: [for_now, not_for_agent]
+    GapTopicEvent:
+      type: object
+      required: [id, kind, reason, at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string, enum: [dismissed, fixed, reopened, resolved, merged] }
+        dismissKind: { $ref: "#/components/schemas/GapDismissKind" }
+        reason: { type: string, description: "A dismissal's reason (empty: none)" }
+        by: { type: string, description: "Who acted; absent when the hourly topics job did" }
+        at: { type: string, format: date-time }
+    GapTopicDismiss:
+      type: object
+      properties:
+        reason: { type: string, maxLength: 500 }
+        kind: { $ref: "#/components/schemas/GapDismissKind" }
+    GapSettings:
+      type: object
+      required: [confirmSimilar, revision]
+      properties:
+        confirmSimilar:
+          type: boolean
+          description: >-
+            The hourly topics job asks SystemOne whether borderline questions and topics are about the same subject
+            (metered to the team; needs a SystemOne model). Off by default.
+        revision: { type: integer, format: int64 }
+        updatedAt: { type: string, format: date-time }
+    GapSettingsUpdate:
+      type: object
+      required: [confirmSimilar]
+      properties:
+        confirmSimilar: { type: boolean }
+    GapEvaluationAdd:
+      type: object
+      required: [setId, sharedQuestionId, expected]
+      properties:
+        setId: { type: string, format: uuid }
+        sharedQuestionId: { type: string, format: uuid }
+        question: { type: string, maxLength: 4000, description: "The question as added (editors may tidy it); the shared text when absent" }
+        expected: { $ref: "#/components/schemas/EvaluationExpected" }
+        mustMention:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 200 }
+        note: { type: string, maxLength: 2000 }
+    GapEvaluationAdded:
+      type: object
+      required: [sharedQuestion, evaluationQuestionId, setId]
+      properties:
+        sharedQuestion: { $ref: "#/components/schemas/GapSharedQuestion" }
+        evaluationQuestionId: { type: string, format: uuid }
+        setId: { type: string, format: uuid }
+    AdminGapTeam:
+      type: object
+      required: [teamId, slug, name, questions, signals]
+      properties:
+        teamId: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        questions: { type: integer, format: int32 }
+        signals: { $ref: "#/components/schemas/GapSignalCounts" }
+    AdminGapCounts:
+      type: object
+      required: [from, to, questions, teams]
+      properties:
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        questions: { type: integer, format: int32 }
+        teams:
+          type: array
+          items: { $ref: "#/components/schemas/AdminGapTeam" }
     EvaluationQuestion:
       type: object
       required: [id, question, expected, expectedDocuments, mustMention, note, revision, createdAt, updatedAt]
@@ -12235,6 +13199,12 @@ components:
           type: string
           enum: [draft, published]
           description: The agent version to test (agent sets; default draft)
+        rerank:
+          type: boolean
+          description: >-
+            Rerank as searches do when the platform has a rerank model (the
+            default); false runs without reranking, to compare
+            (docs/v0.4.0.md §3).
     EvaluationRunKB:
       type: object
       required: [id, name, profileId, profile, topK]
@@ -12257,6 +13227,10 @@ components:
           type: array
           items: { $ref: "#/components/schemas/EvaluationRunKB" }
         resultsPerSearch: { type: integer }
+        rerank:
+          type: string
+          enum: ["on", "off"]
+          description: "on: searches were reranked; off: the run or the agent turned reranking off; absent without a rerank model"
     EvaluationRun:
       type: object
       required: [id, setId, kind, trigger, status, startedBy, config, summary, total, done, error, createdAt, startedAt, finishedAt]
@@ -12411,6 +13385,53 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/EvaluationComparisonItem" }
+    AnswerCacheSettings:
+      type: object
+      required: [enabled, revision, updatedAt]
+      properties:
+        enabled: { type: boolean, description: "On by default; off, no agent reuses answers (each agent also has its own setting)" }
+        revision: { $ref: "#/components/schemas/Revision" }
+        updatedAt: { type: string, format: date-time }
+    AnswerCacheSettingsUpdate:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+    AgentAnswerCache:
+      type: object
+      required: [enabled, on, audience, nearIdentical, nearIdenticalAvailable, expiryHours, platformEnabled, entries, hits, revision]
+      properties:
+        enabled: { type: boolean, nullable: true, description: "The agent's setting; null follows the default (on for agents published to the public)" }
+        on: { type: boolean, description: "Whether the agent reuses answers: its setting, else the default for its audience (the platform switch aside)" }
+        audience: { $ref: "#/components/schemas/Audience" }
+        nearIdentical: { type: boolean, description: "Also reuse the answer of a near-identical question that SystemOne confirms asks the same thing" }
+        nearIdenticalAvailable: { type: boolean, description: A SystemOne model is set and usable (near-identical matching needs one) }
+        expiryHours: { type: integer, minimum: 1, maximum: 720, description: "How long a stored answer is reused (24 by default)" }
+        platformEnabled: { type: boolean, description: "The platform switch: while off, no agent reuses answers" }
+        entries: { type: integer, format: int64, description: Stored answers that haven't expired }
+        hits: { type: integer, format: int64, description: Times those answers were reused }
+        revision: { $ref: "#/components/schemas/Revision" }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    AgentAnswerCacheUpdate:
+      type: object
+      required: [enabled, nearIdentical, expiryHours]
+      additionalProperties: false
+      properties:
+        enabled: { type: boolean, nullable: true, description: "null returns to the default" }
+        nearIdentical: { type: boolean }
+        expiryHours: { type: integer, minimum: 1, maximum: 720 }
+    AnswerCacheCleared:
+      type: object
+      required: [cleared]
+      properties:
+        cleared: { type: integer, format: int64, description: Stored answers deleted }
+    AnswerCacheTotals:
+      type: object
+      required: [hits, hitRate, tokensSaved]
+      properties:
+        hits: { type: integer, format: int64, description: Answers served from the answer cache }
+        hitRate: { type: number, format: double, nullable: true, description: Of answers }
+        tokensSaved: { type: integer, format: int64, description: "Model tokens the original answers spent, not spent again" }
     EvaluationSettings:
       type: object
       required: [enabled, revision, updatedAt]

@@ -42,6 +42,7 @@ export const tagLabels: Record<string, string> = {
   chat: 'Chat and conversations',
   search: 'Search',
   evaluations: 'Evaluations',
+  gaps: 'Gap report',
   openai: 'OpenAI-compatible',
   oauth: 'OAuth sign-in (MCP)',
   breakglass: 'Break-glass',
