@@ -1,0 +1,82 @@
+---
+title: v0.4.0
+description: Answers people trust and teams can improve — cross-encoder reranking, the source viewer, the gap report of unanswered questions, saved answers, and public answers streamed in checked paragraphs.
+---
+
+Released 2026-10-02. v0.4.0 is about answers people can trust and teams can improve. Retrieval gets sharper with a cross-encoder reranker; a citation opens its passage in context; teams see the questions their agents couldn't answer, grouped into topics; repeated questions get a saved answer at once; and public answers stream paragraph by paragraph while every paragraph is checked.
+
+A walkthrough by role (platform admin, auditor and accessibility, team owner and editors, public visitor and member) came before this release. Its findings were fixed before the tag, including two privacy issues: evaluation questions' text in the audit log, and saved answers reused across conversations.
+
+## Highlights
+
+- **Cross-encoder reranking.** A platform admin chooses a rerank model (kind **Rerank**, served at `POST /rerank` by LiteLLM, vLLM or SGLang) under **Admin → Models → Reranking settings**. Every search then reranks its fused candidates (40 by default) in one call and keeps the best few (6 by default, per agent in **Build → Advanced**), so SystemOne judges only those. It fails open: a slow or failed call keeps the usual order. A knowledge base's **Try it** shows rerank scores and can switch it off; evaluation runs can too, to compare. See [Reranking](/docs/administration/reranking).
+- **The gap report.** When an answer fails (nothing found, a strict refusal, every passage judged out, out of scope, an unsupported or contradicted claim, or a thumbs-down), its question is kept apart from the transcript and grouped with similar ones into **topics**, each labelled in a few words by the agent's chat model. **Gaps** (team sidebar; editors, admins and owners) lists them with counts and trends, and each topic offers **Add a source**, **Add to evaluations**, **Mark fixed**, **Dismiss for now** and **Not for this agent**. A topic shows only once **3 different people** asked, and never shows a question's text or who asked, unless the asker ticked **Share this question with the team** on a thumbs-down (off by default). Platform staff see counts per team only. See [Gaps](/docs/using/editors/gaps) and [Conversation privacy](/docs/self-hosting/security#conversation-privacy).
+- **The source viewer.** A citation's **Show source**, or a source card, opens the cited passage highlighted among its neighbours, beside the conversation (a full-screen sheet on phones and in the widget), with the claims that cite it and their verdicts, **Open the page** for web pages and **Open full document** for the team's editors. Source cards break down their claims: "Supports 3 claims · 1 not supported". See [Checking a source](/docs/using/source-viewer).
+- **Saved answers.** The first question of a conversation, asked again under the same conditions (agent version, knowledge, settings), gets the saved answer at once and at no model cost, with the same citations. Exact by default, near-identical questions optionally (confirmed by SystemOne). On by default for public agents, per agent in **Agent → Settings → Saved answers** (24 hours by default), with a platform switch in **Admin → Overview → Features**. Invisible to people; analytics show the share of saved answers and the tokens saved. See [Saved answers](/docs/using/editors/saved-answers).
+- **Answers streamed in checked paragraphs.** A third moderation output mode: the answer is released paragraph by paragraph, each checked with everything before it, and a failing paragraph replaces the whole answer with the notice. It's the new default for the public audience (a policy an admin saved keeps its mode). See [Moderation modes and reasoning](/docs/administration/moderation-modes).
+- **Reasoning you can turn down, or off.** A chat model's **How to turn thinking off** (Admin → Models → Compatibility: `reasoning_effort: "none"` or `enable_thinking: false`) lets agents choose **Off**, and each audience's moderation policy has a reasoning effort, **Low** by default for public. While a reasoning model thinks, people see "Thinking about your question…".
+- **Feedback on the public page and in the widget.** Visitors rate answers like signed-in people, with the reasons and the share tick; a thumbs-down feeds the gap report and retires a saved answer.
+
+<Screenshot slot="chat-source-viewer" />
+
+## Requirements
+
+Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements). Reranking needs a rerank model on your gateway only if you turn it on.
+
+## Upgrading from v0.3.1
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade, then change every `?ref=v0.3.1` in your overlay to `?ref=v0.4.0` and pin the new digests of `ghcr.io/ncecere/grounded` and, if you run OCR, `ghcr.io/ncecere/grounded-ocr`. Refresh the dashboards and alert rules from `deploy/observability`. See [Upgrades](/docs/self-hosting/upgrades).
+
+**Migrations `00040` to `00044`** run on start (schema version 39 → 44). They're all expand-only, so v0.3.1 pods keep working on the new schema during the rollout and a rollback to the previous digest works:
+
+| Migration | Adds |
+|---|---|
+| `00040_rerank` | The platform's rerank settings, and the priced units of rerank requests |
+| `00041_gap_report` | Failed questions and gap topics (new tables), and whether a thumbs-down shared its question |
+| `00042_answer_cache` | Saved answers and their settings (new tables), and a content revision on knowledge bases kept by triggers |
+| `00043_gap_uncited` | Removes the `uncited` signal from questions captured by pre-release builds (an uncited sentence alone isn't a failure) |
+| `00044_gap_topic_history` | The two kinds of dismissal, a topic's history, and the per-team gap settings |
+
+**No new environment variables.**
+
+Things people will notice:
+
+- **Public answers** stream in checked paragraphs, unless an admin had saved the public moderation policy: it keeps **Buffer** or **Stream, then retract** until you choose the new mode in **Admin → Safety → Moderation**. Public answers use **Low** reasoning effort for models that accept it, also when the policy was saved before.
+- **Saved answers are on for public agents.** Repeated first questions are answered at once. A thumbs-down, a change to the agent or its knowledge, the expiry or **Clear saved answers** retires them.
+- **The widget starts its own session**, tied to its publishable key, so the key's limits, switch and allowed origins always apply. Visitors who used the widget on the same site as the public page start one new conversation after the upgrade.
+- **Gaps** appears in the team sidebar after Evaluations, for editors, admins and owners. Topics take up to an hour to form (an hourly job).
+- **Admin → Models** has **Reranking settings**; nothing is reranked until a rerank model is chosen. **Build → Advanced** shows **Rerank passages** and **Passages kept after reranking** once one is.
+- **Admin → Overview → Features** has **Saved answers**; **Admin → Safety → Moderation** has a third **Answers** mode and a **Reasoning** card; **Admin → Analytics → Top agents & teams** has **Failed questions**.
+- **Costs** has a **Rerank** category, and cost CSVs a `rerank` column after `mcp`.
+- **Source cards** say "Supports 3 claims · 1 not supported" instead of "Supports 2 of 3 claims that cite it", and open the source viewer.
+- **The audit log**: `gap_topic.*`, `gap_settings.update`, `agent.answer_cache_update`, `agent.answer_cache_clear`, `platform.answer_cache` and "Changed reranking settings". Evaluation questions' audit entries no longer carry their text.
+- **Retention** has a new kind, **Saved answers** (not configurable; they expire), and failed questions go with their conversations.
+
+## API changes
+
+All additive; see the [API reference](/docs/api):
+
+- `GET`/`PUT /v1/admin/rerank` and `GET /v1/rerank/status`; `rerank` and `rerankTopN` in agent configurations; `rerank` on `RetrieveRequest` and on evaluation run starts and configurations; `rerankScore` on retrieved hits and `rerank` on retrieval results; `rerank` in spend by kind and the `rerank_tokens` and `rerank_requests` price units; `rerankDocumentsField` and `supportsRerankTopN` in model compatibility.
+- `GET /v1/teams/{team}/gap-topics`, `GET …/gap-topics/{topicId}`, `POST …/dismiss` (with `kind`), `/fix`, `/reopen`, `/add-source`, `/evaluations`; `GET`/`PUT /v1/teams/{team}/gap-settings`; `GET /v1/admin/analytics/gaps`; `share` on feedback (`shared` in the result) and `feedbackShared` on conversation messages.
+- `GET /v1/messages/{messageId}/sources/{n}`, `GET /v1/public/agents/{agentId}/messages/{messageId}/sources/{n}`, `GET /v1/teams/{team}/sources/{sourceId}/documents/{documentId}/text`, and `chunkId` on citations.
+- `POST /v1/public/agents/{agentId}/messages/{messageId}/feedback`; the `Grounded-Channel` header and `key` on `GET /v1/public/sessions/current`.
+- `GET`/`PUT /v1/teams/{team}/agents/{agentId}/answer-cache`, `POST …/answer-cache/clear`, `GET`/`PUT /v1/admin/settings/answer-cache`; `cache` in agent analytics totals; the retention kind `answer_cache`.
+- The output mode `stream_checked` (policies and agent overrides) and `mode` on `message_start`; the `thinking` status step; `off` in reasoning effort, `thinkingOff` in model compatibility, `supportsThinkingOff` on chat model options, and `reasoningEffort` on moderation policies.
+
+See [Native chat API](/docs/api/chat-api#the-event-stream) for the new events and fields.
+
+New metrics: `grounded_rerank_requests_total`, `grounded_rerank_duration_seconds`, `grounded_gap_questions_total`, `grounded_gap_topic_changes_total`, `grounded_answer_cache_lookups_total`, `grounded_answer_cache_tokens_saved_total`, `grounded_answer_cache_entries`, `grounded_moderation_first_release_seconds` and `grounded_moderation_paragraph_checks_total`; Reranking and Answer cache rows on the Chat and retrieval dashboard, and checked-paragraph panels on Models and moderation. New spans: `rerank`, `rerank <model>`, `answer_cache.lookup` and `moderation.paragraph`. See [Observability](/docs/self-hosting/observability) and [Tracing](/docs/self-hosting/tracing).
+
+## Known limitations
+
+The [v0.3.0 limitations](/docs/releases/v0-3-0#known-limitations) still apply, and:
+
+- **Saved answers** cover only the first question of a conversation, and not agents that let the model decide when to search.
+- **Gap topics** are formed by an hourly job. A topic closes itself when it's answered well again only for agents that search before every answer.
+- **Stream checked paragraphs:** after a failing paragraph the model finishes in the background (so its usage is metered). JSON answers, the non-streamed OpenAI-compatible endpoint and MCP `ask` are checked whole.
+- **The source viewer** serves only passages an answer cited; whole documents are for the team's editors, admins and owners.
+- MCP `search` reranks, but its output has no rerank scores yet.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.4.0`: `docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.4.0 (<commit>)`. The release has SPDX SBOMs, digest files and a `checksums.txt`.
