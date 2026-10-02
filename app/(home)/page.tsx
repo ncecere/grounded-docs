@@ -23,14 +23,14 @@ const sections = [
     href: '/docs/using',
     icon: <MessagesSquare />,
     description:
-      'Chatting with agents, connecting AI tools over MCP, and building data sources, knowledge bases, agents and evaluations for your team.',
+      'Chatting with agents and checking their sources, connecting AI tools over MCP, and building data sources, knowledge bases, agents and evaluations, and closing the gaps your agents report.',
   },
   {
     title: 'Administration',
     href: '/docs/administration',
     icon: <ShieldCheck />,
     description:
-      'The admin portal: people and teams, models and MCP servers, classifications, limits, costs, retention and break-glass.',
+      'The admin portal: people and teams, models, reranking and MCP servers, classifications, moderation, limits, costs, retention and break-glass.',
   },
   {
     title: 'Self-hosting',
