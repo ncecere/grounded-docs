@@ -199,10 +199,11 @@
   },
   "admin-costs": {
     "files": [
+      "admin-costs-rerank",
       "admin-costs",
       "admin-costs-overview"
     ],
-    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens, requests and unpriced usage, and spend per day by kind, including MCP tools."
+    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens (chat, embedding, SystemOne, rerank and OCR), requests, unpriced usage Yes, and spend per day by kind, with Rerank and MCP tools in the legend."
   },
   "admin-costs-budgets": {
     "files": [
@@ -401,12 +402,6 @@
       "admin-analytics-failed-questions"
     ],
     "alt": "Admin, Analytics, Top agents & teams: Top agents and Top teams, and the Failed questions card, counts only: IT Help Desk, 4 failed questions, main reasons Refused (3), Thumbs-down (1), Unsupported claims (1)."
-  },
-  "admin-costs-rerank": {
-    "files": [
-      "admin-costs-rerank"
-    ],
-    "alt": "Admin, Costs, Overview for the last 30 days: spend, tokens (chat, embedding, SystemOne, rerank and OCR), requests, unpriced usage Yes, and spend per day by kind with Rerank in the legend."
   },
   "public-agent-page-thinking": {
     "files": [

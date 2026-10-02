@@ -9,7 +9,7 @@ Grounded meters every model call in its usage ledger. With prices entered, it re
 
 Prices can be entered while the mode is still Off, so tracking starts with correct figures.
 
-1. **Costs → Prices** lists every chat, embedding, SystemOne and moderation model with its price today. A missing price shows **Unpriced**.
+1. **Costs → Prices** lists every chat, embedding, SystemOne, moderation, vision and rerank model with its price today. A missing price shows **Unpriced**.
 2. Open a model, then **Change prices** in its **Pricing** section.
 3. Choose **Effective from** (a day in the platform time zone) and fill in the units you're changing. Units left empty keep their price.
 
@@ -20,6 +20,7 @@ Prices can be entered while the mode is still Off, so tracking starts with corre
 | SystemOne | Input tokens per 1M, and per request |
 | Moderation | Per request |
 | Vision (OCR) | Input and output tokens, per 1M |
+| Rerank | Tokens per 1M (the server's count, or an estimate when it reports none), and per request. Since v0.4.0; see [Reranking](/docs/administration/reranking). |
 
 - **Prices are dated, never edited.** A change adds rows. Each day's usage is priced at the row in effect that day, so past spend doesn't change when a price does.
 - **Pricing past usage**: choose a date in the past. Usage already recorded from that day is priced at once.
@@ -52,7 +53,9 @@ A team's own mode overrides the platform's: **Inherit**, **Off**, **Track only**
 
 <Screenshot slot="admin-costs" />
 
-- **Overview**: total spend over a date range, a daily chart by kind (chat, embedding, SystemOne, moderation, OCR, and **MCP tools** for calls to MCP servers) with the day table behind **Show data**, and **Top spenders** by Teams, Agents or Models. One CSV button downloads the grouping shown, every row.
+- **Overview**: total spend over a date range, a daily chart by kind (chat, embedding, SystemOne, moderation, OCR, **MCP tools** for calls to MCP servers, and, since v0.4.0, **Rerank**; Rerank shares Embedding's colour, as both are retrieval, and the legend and table name them apart) with the day table behind **Show data**, and **Top spenders** by Teams, Agents or Models. One CSV button downloads the grouping shown, every row (since v0.4.0 the CSV has a `rerank` column after `mcp`, before `tokens`).
+
+- The [gap report](/docs/using/editors/gaps)'s labels, grouping and optional SystemOne checks, and [saved answers](/docs/using/editors/saved-answers)' near-identical checks, are metered to the team like its other model use.
 - **Budgets**: every active team's mode, budget (plus this month's extensions), month-to-date spend, share and projected month-end.
 
 <Screenshot slot="admin-costs-budgets" />
