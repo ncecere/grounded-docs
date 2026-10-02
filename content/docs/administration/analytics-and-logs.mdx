@@ -12,7 +12,7 @@ description: Platform analytics without message content, the audit log of every 
 | **Overview** | The daily chart first, then answers, conversations, unique users, public share, satisfaction, refusals and no-context answers, latency and time to first token, errors, and moderation (questions blocked, answers withheld, flagged, support messages). |
 | **Breakdown** | Answers by audience and by channel (app, API, OpenAI-compatible API, public page, widget, test chats, and **MCP server** for AI tools). |
 | **Models & tokens** | Tokens by model, from the usage ledger (chat and embedding, ingestion included). |
-| **Top agents & teams** | The most used agents and teams. |
+| **Top agents & teams** | The most used agents and teams, and since v0.4.0 **Failed questions** per team (below). |
 | **Checks** | Shown while a SystemOne model is configured: passage judging, citation checks (claims supported, and "Cited sources that support their claim" per source), and the scope check. |
 
 <Screenshot slot="admin-analytics" />
@@ -23,6 +23,14 @@ description: Platform analytics without message content, the audit log of every 
 - Days are UTC days; the page says so. Cost figures use the platform's time zone instead (see [Costs](/docs/administration/costs)).
 
 Teams see the same kind of aggregates for their own agents in each agent's [Analytics tab](/docs/using/editors/agent-analytics).
+
+### Failed questions
+
+The last card of **Top agents & teams** counts the questions agents couldn't answer well, per team, with the main reasons (refused, nothing found, out of scope, unsupported claims, thumbs-down and so on). It follows the page's date range and its Team and Audience filters.
+
+<Screenshot slot="admin-analytics-failed-questions" />
+
+It's counts only, by design. A team's editors, admins and owners see these questions grouped into topics on their [Gaps](/docs/using/editors/gaps) page; platform admins and auditors never see a team's topics, questions or dismissal reasons, here or in the audit log ([privacy](/docs/using/editors/gaps#privacy)).
 
 ## Logs
 
@@ -38,7 +46,8 @@ Every change on the platform, newest first, append-only:
 - uploads and deletions of documents;
 - break-glass sessions and every read under them (kind and target, never content);
 - legal holds, and retention runs (as the system, with counts only);
-- evaluation sets, questions and runs;
+- evaluation sets, questions and runs (since v0.4.0 a question's entry never carries its text);
+- since v0.4.0, actions on [gap topics](/docs/using/editors/gaps) (`gap_topic.*`, `gap_settings.update`: IDs, states and a dismissal's kind, never a label, a question or a reason), an agent's [saved answers](/docs/using/editors/saved-answers) settings and clearing (`agent.answer_cache_update`, `agent.answer_cache_clear`), the saved answers switch (`platform.answer_cache`) and [reranking settings](/docs/administration/reranking) ("Changed reranking settings");
 - the MCP switches (`platform.mcp`, `platform.mcp_oauth`), and every search or question from an AI tool over the [MCP server](/docs/self-hosting/mcp-server) (`mcp.search`, `mcp.ask`: the knowledge base or agent and the outcome, never the text);
 - OAuth sign-in: apps registering themselves, people connecting and disconnecting apps, and tokens issued (never a token);
 - [MCP servers](/docs/administration/mcp-servers) added, changed, refreshed and deleted, tools approved and withdrawn, and every call an agent makes to a tool (`mcp.tool_call`: the server, tool, outcome and result size, never the arguments or result).
