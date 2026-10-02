@@ -11,11 +11,12 @@ An agent's **Analytics** tab shows how it's used and how well it answers, over a
 
 | View | Shows |
 |---|---|
-| **Usage** | Answers per day, conversations started, answers by channel (app, API, OpenAI-compatible API, public page, widget, test chats) and by audience, tokens by model (input, output, reasoning; query rewriting included), speed (latency and time to first token), and errors. For owners and admins while cost tracking is on, **Spend this month** and the agent's share of the team's spend. |
+| **Usage** | Answers per day, conversations started, answers by channel (app, API, OpenAI-compatible API, public page, widget, test chats) and by audience, tokens by model (input, output, reasoning; query rewriting included), speed (latency and time to first token), and errors. For owners and admins while cost tracking is on, **Spend this month** and the agent's share of the team's spend. Since v0.4.0, the share of answers given from [saved answers](/docs/using/editors/saved-answers) and the model tokens they saved. |
 | **Quality** | Satisfaction from thumbs up and down, feedback reasons, refusals, and how often no sources were found. |
 | **Moderation** | Questions blocked, answers withheld, flagged answers and support messages, by category. |
 | **Content** | The documents the agent cites most. |
 | **Checks** | Shown while the platform has a SystemOne model: passages judged and kept, citation checks and the scope check. |
+| **Gaps** | The agent's open topics of questions it couldn't answer, as on the team's [Gaps](/docs/using/editors/gaps) page. Topics aren't by period, so the date range doesn't apply. |
 
 Test chats from the **Try it** panel are left out of everything except token usage.
 
@@ -28,4 +29,4 @@ With citation checks on, the Checks view leads with claims, counted the way the 
 
 ## Privacy
 
-Analytics never contain message text, and never identify people. Unique-user counts use pseudonymous IDs, which change if the platform rotates its API key pepper. Platform admins see the same kind of aggregates across the platform, also without content.
+Analytics never contain message text, and never identify people. The one exception to "no text" is the [gap report](/docs/using/editors/gaps#privacy): a topic's short label, written by the chat model once at least 3 different people asked, and the questions people chose to share. Unique-user counts use pseudonymous IDs, which change if the platform rotates its API key pepper. Platform admins see the same kind of aggregates across the platform, also without content.
