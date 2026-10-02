@@ -31,8 +31,11 @@ The main families (histograms have the usual `_bucket`, `_sum` and `_count` seri
 |---|---|
 | HTTP | `grounded_http_requests_total`, `grounded_http_request_duration_seconds` by route group, method, route and status; `grounded_http_requests_in_flight` |
 | Chat and retrieval | `grounded_chat_answers_total` by channel and outcome (`ok`, `no_answer`, `moderated`, `model_busy`, `aborted`, `error`), `grounded_chat_first_token_seconds`, `grounded_chat_duration_seconds`, `grounded_retrieval_duration_seconds` |
-| Checks | `grounded_systemone_requests_total` and its duration by feature; `grounded_moderation_decisions_total` by stage and decision |
-| Model connections | `grounded_model_requests_total` by connection, kind and outcome (`ok`, `rate_limited`, `throttled`, `unavailable`, `auth`, …); `grounded_model_request_duration_seconds` |
+| Reranking (v0.4.0) | `grounded_rerank_requests_total` by caller (`agent`, `retrieve`, `evaluation`) and status (`ok`, `timeout`, `error`, `skipped`); `grounded_rerank_duration_seconds` by caller ([Reranking](/docs/administration/reranking)) |
+| Saved answers (v0.4.0) | `grounded_answer_cache_lookups_total` by result (`hit`, `miss`) and reason (`exact`, `near`; `no_entry`, `near_rejected`, `follow_up`, `error`); `grounded_answer_cache_tokens_saved_total`; `grounded_answer_cache_entries` ([Saved answers](/docs/using/editors/saved-answers)) |
+| Gap report (v0.4.0) | `grounded_gap_questions_total` by signal; `grounded_gap_topic_changes_total` by kind (`embedded`, `assigned`, `new_topic`, `merged`, `confirmed`, `reopened`, `resolved`, `labelled`, `pruned`); the hourly job is `gaps.topics` in the job metrics ([Gaps](/docs/using/editors/gaps)) |
+| Checks | `grounded_systemone_requests_total` and its duration by feature; `grounded_moderation_decisions_total` by stage and decision; since v0.4.0, for answers streamed in checked paragraphs, `grounded_moderation_first_release_seconds` by channel and `grounded_moderation_paragraph_checks_total` by decision ([Moderation modes](/docs/administration/moderation-modes)) |
+| Model connections | `grounded_model_requests_total` by connection, kind (`chat`, `embedding`, `rerank`, `moderation`, `systemone`, `vision`) and outcome (`ok`, `rate_limited`, `throttled`, `unavailable`, `auth`, …); `grounded_model_request_duration_seconds` |
 | Ingestion and jobs | `grounded_ingest_documents_total` by outcome, `grounded_crawl_pages_total`, `grounded_jobs_worked_total` and `grounded_job_duration_seconds` by job kind |
 | Install state (workers) | `grounded_jobs` by kind and state, the oldest waiting and running job's age, `grounded_maintenance_mode`, open break-glass sessions, `grounded_health_failing` and `grounded_health_failing_seconds` ([stored health](/docs/self-hosting/health)) |
 | Health checks | `grounded_health_checks_total` by kind, trigger and status; `grounded_health_check_duration_seconds` |
@@ -48,9 +51,9 @@ Metric names may change between minor releases before 1.0; the changelog lists c
 |---|---|
 | **Grounded / Overview** | The objectives and 30-day error budgets, burn rates, instances up, maintenance mode, the queue, break-glass sessions, firing alerts, chat outcomes, failing model requests and job failures. |
 | **Grounded / API** | Traffic, errors and latency by route group, the slowest and most failing routes, the Postgres pool, Valkey errors, CPU and memory. |
-| **Grounded / Chat & retrieval** | Answers by channel and outcome, time to first token, answer time, retrieval latency, SystemOne latency. |
+| **Grounded / Chat & retrieval** | Answers by channel and outcome, time to first token, answer time, retrieval latency, SystemOne latency; since v0.4.0 a **Reranking** row and an **Answer cache** row. |
 | **Grounded / Ingest & jobs** | The job queue, documents by outcome, embedding batch sizes, crawled pages, maintenance mode, retention. |
-| **Grounded / Models & moderation** | Requests, failures, 429s and latency per connection and model kind, SystemOne, moderation decisions. |
+| **Grounded / Models & moderation** | Requests, failures, 429s and latency per connection and model kind, SystemOne, moderation decisions; since v0.4.0 the time to the first checked paragraph and paragraph checks by decision. |
 
 Each picks its data source through a `DS_PROMETHEUS` variable (Mimir works), filters by namespace, and needs Grafana 10.4 or later. Load them by hand (Dashboards → Import), with the Grafana dashboard sidecar (the `dashboards` component creates one ConfigMap per dashboard labelled `grafana_dashboard: "1"`; the sidecar must watch Grounded's namespace), with file provisioning, or with the Grafana Operator.
 

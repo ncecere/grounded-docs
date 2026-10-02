@@ -22,7 +22,7 @@ Platform admins and auditors can see health; nobody else can. Only platform admi
 | Trigger | What it sends | Stored as |
 |---|---|---|
 | **Test connection** (an admin) | `GET /models`, or one small SystemOne question for a SystemOne service | The connection's result, plus the result it implies for each enabled model on it |
-| **Test model** (an admin) | One small real request to the model: a short chat completion, an embedding, the moderation samples, the SystemOne sample questions or the OCR sample page. It costs a few tokens | The model's result |
+| **Test model** (an admin) | One small real request to the model: a short chat completion, an embedding, the moderation samples, the SystemOne sample questions, the OCR sample page, or two passages for a rerank model (the one that answers a fixed question must score higher). It costs a few tokens | The model's result |
 | **The scheduled check** (the worker's `health.check` job) | For each enabled connection, `GET /models`. For a SystemOne service, only a `GET` of its endpoint to check that it answers; never a question | The connection's result, plus the result it implies for each enabled model on it |
 | **Test server** (an admin) and the scheduled check of each enabled MCP server | Connect and read the tool list; never a tool call | The MCP server's result |
 

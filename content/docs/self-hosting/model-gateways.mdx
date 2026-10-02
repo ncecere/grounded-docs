@@ -22,7 +22,7 @@ The Kubernetes NetworkPolicies allow egress on ports 443 and 80. A gateway on an
 Self-hosted models are candidates for your most sensitive data, subject to your policy: tag them with the right maximum classification. Some things measured by the project on vLLM and SGLang:
 
 - **One GPU serves few requests at once**: about two chat streams for a 27B model. Further requests queue on the server. Chat and embeddings on the same GPU slow each other.
-- **Turn off thinking** for Qwen3-style models unless you need it. On one GPU it took answers from a median of about 14 s to 83 s for the same quality, and a small output limit can go entirely to reasoning. Use the model's **Extra request fields (JSON)**:
+- **Turn off thinking** for Qwen3-style models unless you need it. On one GPU it took answers from a median of about 14 s to 83 s for the same quality, and a small output limit can go entirely to reasoning. Since v0.4.0, set the model's **How to turn thinking off** to `chat_template_kwargs: {"enable_thinking": false}` and choose reasoning effort **Off** for an audience (Admin → Safety → Moderation → Reasoning) or an agent (Build → Advanced), so thinking stays available where you want it ([Moderation modes and reasoning](/docs/administration/moderation-modes#turning-thinking-off)). To turn it off for every request instead, use the model's **Extra request fields (JSON)**:
 
   ```json
   {"chat_template_kwargs": {"enable_thinking": false}}
@@ -44,7 +44,16 @@ For example `Qwen/Qwen3-Embedding-4B` (2,560 dimensions):
 
 - Kind chat, tool support on, context window the server's `max_model_len`, maximum output tokens 8192.
 - Compatibility: **Extra request fields (JSON)** as above; **Honours tool_choice** set to yes (SGLang honours `tool_choice: "required"`); **System prompt role** `system` (SGLang rejects `developer`); **Stream usage** on; **Output limit parameter** `max_tokens`; **Accepts reasoning effort** off.
+- **How to turn thinking off**: `chat_template_kwargs: {"enable_thinking": false}`, so agents and audiences can choose reasoning effort Off.
 - Reasoning tokens and the blank lines Qwen streams before answers need no setting.
+
+### Rerank: bge-reranker on vLLM
+
+Since v0.4.0 Grounded can rerank search results with a cross-encoder ([Reranking](/docs/administration/reranking)). For example `vllm serve BAAI/bge-reranker-v2-m3`, which answers `/rerank` and `/v1/rerank`:
+
+- Model: kind rerank on the connection that serves it, maximum classification as for your other self-hosted models, optionally **Max input tokens** (the model's limit).
+- Compatibility: the defaults (**Passages field** `documents`, **Accepts top_n** on). For Hugging Face text embeddings inference, set **Passages field** to `texts`.
+- Then choose it under **Admin → Models → Reranking settings**. It's small: 40 passages in a few hundred milliseconds on one GPU.
 
 vLLM serving other model families accepts `tool_choice` but may ignore it; leave **Honours tool_choice** at its default unless the server honours it.
 

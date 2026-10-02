@@ -84,7 +84,10 @@ POST /v1/agents/{team}/{agent}/chat
 | `agent.answer`, `agent.retrieve`, `agent.turn` | internal | team, agent and version IDs, the channel (`ui`, `api`, `openai`, `public`, `widget`, `mcp`, `test`), counts, the turn number and stop reason |
 | `retrieval.search`, `.vector`, `.lexical`, `.fusion` | internal | knowledge base and team IDs, `top_k`, candidates, results, fusion weights, embedding tokens |
 | `chat <model>`, `embeddings <model>` | client | the upstream model ID, input and output tokens, time to first token for streams, the stop reason, the number of tools offered |
-| `systemone <feature>` | client | the feature (`judging`, `citations`, `scope`, `moderation`, `test`), the model, questions, input tokens |
+| `systemone <feature>` | client | the feature (`judging`, `citations`, `scope`, `moderation`, `test`, and since v0.4.0 `cache` and `gaps`), the model, questions, input tokens |
+| `rerank`, `rerank <model>` | internal, client | Since v0.4.0, when the platform has a [rerank model](/docs/administration/reranking): the caller (`agent`, `retrieve`, `evaluation`), candidates, the time limit, the status and passages kept; the client span has the model, the number of documents and input tokens |
+| `answer_cache.lookup` | internal | Since v0.4.0: whether a [saved answer](/docs/using/editors/saved-answers) was found, and why not |
+| `moderation.paragraph` | internal | Since v0.4.0, one per check of an answer [streamed in checked paragraphs](/docs/administration/moderation-modes): the paragraph's number, the length of the text checked and the decision |
 | `execute_tool <tool>`, `tools/call <tool>` | internal, client | the tool's name, the MCP server's registry name and ID, the outcome, the result's size |
 | `tools/call search`, `tools/call ask`, `tools/list` | server | Grounded's own [MCP server](/docs/self-hosting/mcp-server) |
 | `job <kind>` | consumer | a background job: its kind, queue, attempt, ID and outcome |
