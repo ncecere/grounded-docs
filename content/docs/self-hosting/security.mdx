@@ -18,6 +18,7 @@ The repository's security package (data flow, controls with their tests, a depen
 | **API keys** | Guessing, a leaked database dump | 40-character random secrets stored only as HMAC digests keyed by `API_KEY_PEPPER`, which isn't in the database; expiry; per-key rate limits; revocation when the owner leaves. |
 | **Sign-in** | Forged tokens, login CSRF | OIDC with verified tokens, nonce, state and PKCE; users identified by issuer and subject, not email; sign-in rate limits. |
 | **Platform admins** | Reading team content | No content access by default; break-glass only, scoped, time-boxed, audited per read, owners notified. |
+| **Teams → people's questions** (since v0.4.0) | The gap report or the source viewer revealing what someone asked, or more of a knowledge base than they may read | Failed questions are kept apart from transcripts with a pseudonymous asker key; teams see a topic only once 3 different people asked, and a question's text only when its asker shared it; platform staff see counts per team; audit entries carry no label, question or reason. The source viewer serves only passages an answer cited, to the person who asked; whole documents only to the source's team editors and above. See [Conversation privacy](#conversation-privacy). |
 | **Supply chain** | A compromised build or image | Images built only in CI from actions pinned by commit, scanned by Trivy (fixable HIGH and CRITICAL fail the build), signed with cosign, with SBOM and provenance; `govulncheck` on every push. |
 
 ### Accepted risks
@@ -27,6 +28,17 @@ The repository's security package (data flow, controls with their tests, a depen
 - **Prompt injection can still mislead answers.** It's mitigated, not solved.
 - **The model gateway sees what's sent to it**: questions, passages and answers. Choose gateways and models per classification level accordingly.
 - An auditor sending a malformed body to an admin write route gets 400 instead of 403 (no data revealed), and the distroless base image is referenced by tag.
+
+## Conversation privacy
+
+Grounded's privacy decision for conversations (ADR-0010 in the repository) is that a transcript belongs to the person who had it: teams see aggregates and metadata only, platform admins nothing outside break-glass. v0.4.0 amends it for the [gap report](/docs/using/editors/gaps), which needs to know *what* agents can't answer:
+
+- The question of an answer that failed (nothing found, a refusal, every passage judged out, out of scope, an unsupported or contradicted claim, a thumbs-down) is kept apart from the transcript, with its embedding and a pseudonymous asker key; an anonymous session counts as one asker. It follows the conversation's retention, is deleted with the conversation, and is never linked to a person.
+- A team's editors, admins and owners see **topics**: a short label the team's chat model writes from the topic's questions, counts, reasons and a trend, and only once **at least 3 different people** are in the topic. Never a question's text or who asked.
+- On a thumbs-down, the person may tick **Share this question with the team** (off by default): the question is then shown in full to the team's editors, admins and owners, and can be added to an evaluation set. Unticking it takes it back.
+- Platform admins and auditors see failure counts per team only. Public pages and the widget tell visitors that questions that can't be answered may be grouped, without their details.
+
+The [source viewer](/docs/using/source-viewer) doesn't change who can read what: it serves a passage only to whoever may read the conversation whose answer cited it, and whole documents only to the people who can already read them in Data sources. [Saved answers](/docs/using/editors/saved-answers) are reused only for first questions, never contain anything about the person who asked, and are never saved when the answer called a tool.
 
 ## Hardened defaults
 
