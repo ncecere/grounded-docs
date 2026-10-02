@@ -35,6 +35,8 @@ With **Judge passages for every agent** on (the agents' default), the card also 
 
 With "search before every answer", judging starts only once moderation and the scope check allow an answer: small talk, out-of-scope questions and blocked questions make no judging requests.
 
+With a [rerank model](/docs/administration/reranking) (since v0.4.0), a search is reranked first and SystemOne judges only the agent's **passages kept after reranking** (6 by default, at most the candidates here) instead of 10 to 20, so judging costs less and answers start sooner.
+
 ### Citation checks
 
 After an answer, each **claim** (a factual sentence, list item or table row) is checked against each source it cites: supports, contradicts or says nothing. Each claim gets one verdict: **supported**, **not supported**, **uncited** (a factual sentence without a citation) or **unchecked** (a check failed). See [Claims and verdicts](/docs/using/chat#claims-and-verdicts) for how people see them.
@@ -42,7 +44,7 @@ After an answer, each **claim** (a factual sentence, list item or table row) is 
 - **Annotate** (default mode): verdicts are shown; nothing is removed.
 - **Enforce**: citations confidently unsupported or contradicted (at or above the auto-accept threshold, 0.8 by default) are removed; if nothing in the answer is supported, a strictly grounded agent replies with its refusal instead.
 
-Checks are bounded (20 seconds per answer by default, at most 30 claim–source pairs); pairs not answered in time are unchecked. Streamed answers are checked after they finish; public agents' answers, which are held back for moderation, are checked before they're shown. Verdicts below the auto-accept threshold are never acted on, only counted for review.
+Checks are bounded (20 seconds per answer by default, at most 30 claim–source pairs); pairs not answered in time are unchecked. Streamed answers, including those streamed in checked paragraphs (the public default since v0.4.0), are checked after they finish, and the verdicts appear in place; buffered answers are checked before they're shown. Verdicts below the auto-accept threshold are never acted on, only counted for review.
 
 ### Scope check
 
@@ -56,6 +58,15 @@ The check runs at the same time as input moderation and, with "search before eve
 ### Moderation
 
 A SystemOne model can also be a [moderation](/docs/administration/moderation-and-public-access) provider, with a severity score and a **support** action for self-harm: the reply is your configured support message (for example, crisis resources) instead of an answer or a refusal.
+
+### Other uses since v0.4.0
+
+The platform's SystemOne model also answers two optional checks that are set elsewhere, whatever the features above say:
+
+- **Near-identical saved answers**: whether two questions ask for the same information, before a [saved answer](/docs/using/editors/saved-answers) is reused for different words (per agent; 3-second limit; a failure means the question is answered live).
+- **Confirm similar questions** in the [gap report](/docs/using/editors/gaps#confirming-similar-questions-with-systemone): whether borderline questions or topics are about the same subject (per team; in the hourly job, at most 200 checks a run).
+
+Both are metered to the team like other SystemOne use.
 
 ## What's recorded
 
