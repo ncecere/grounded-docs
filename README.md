@@ -2,7 +2,7 @@
 
 The user and operator documentation for [Grounded](https://github.com/ncecere/grounded), the open-source, multi-tenant RAG and agents platform. It's published at <https://docs.grounded.bitop.dev>.
 
-These pages are for the people who use Grounded, the teams who build with it, and the operators who run it. The Grounded repository's own `docs/` folder stays the engineering record (design, decisions and the original runbooks). The docs describe **Grounded v0.3.0**.
+These pages are for the people who use Grounded, the teams who build with it, and the operators who run it. The Grounded repository's own `docs/` folder stays the engineering record (design, decisions and the original runbooks). The docs describe **Grounded v0.4.0**.
 
 A static site: [Fumadocs](https://fumadocs.dev) on Next.js with `output: "export"`, TypeScript and Tailwind CSS v4, served by nginx in a container. Search is Fumadocs' built-in static index, searched in the browser. No tracking, no cookies, no external fonts or CDNs: Inter is self-hosted.
 
@@ -22,7 +22,7 @@ npm run dev          # http://localhost:3000
 | `npm run check:links` | Checks every internal link and anchor in `out/` (run after a build). |
 | `npm run typecheck` | TypeScript. |
 | `npm start` | Serves `out/` locally. |
-| `npm run sync:openapi` | Refreshes `openapi/grounded.yaml` from a Grounded checkout (`../golang/grounded`, or `$GROUNDED_REPO`), or from GitHub at a tag: `npm run sync:openapi -- v0.3.0`. |
+| `npm run sync:openapi` | Refreshes `openapi/grounded.yaml` from a Grounded checkout (`../golang/grounded`, or `$GROUNDED_REPO`), or from GitHub at a tag: `npm run sync:openapi -- v0.4.0`. |
 | `npm run screenshots` | Imports screenshots (below). |
 | `npm run screenshots:check` | Lists screenshot slots that are still placeholders. |
 

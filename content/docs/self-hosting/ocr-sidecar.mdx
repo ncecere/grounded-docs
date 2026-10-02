@@ -11,10 +11,10 @@ Add the component and pin the image by digest, like Grounded's:
 
 ```yaml
 components:
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ocr-tesseract?ref=v0.3.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ocr-tesseract?ref=v0.4.0
 images:
   - name: ghcr.io/ncecere/grounded-ocr
-    newTag: v0.3.0
+    newTag: v0.4.0
     digest: sha256:<digest>
 ```
 
@@ -43,7 +43,7 @@ Each request is one page. The sidecar runs `OCR_CONCURRENCY` Tesseract processes
 The image includes `eng`, `spa`, `fra`, `deu`, `ita`, `por`, `nld`, `pol`, `rus`, `ukr`, `ara`, `hin`, `chi_sim`, `chi_tra`, `jpn`, `kor` and `vie` (and `osd`). For another language, derive an image:
 
 ```dockerfile
-FROM ghcr.io/ncecere/grounded-ocr:v0.3.0
+FROM ghcr.io/ncecere/grounded-ocr:v0.4.0
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr-ell \
  && rm -rf /var/lib/apt/lists/*
