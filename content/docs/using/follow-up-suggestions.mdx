@@ -1,0 +1,81 @@
+---
+title: Follow-up suggestions
+description: Up to three follow-up questions under an answer, as chips. Where they appear, how they're chosen and moderated, the agent's setting, saved answers, costs, and what operators should set on reasoning models.
+---
+
+Since v0.4.1, after an answer with citations, the chat offers up to three **follow-up questions** under it, as chips. Choosing one asks it, in the same conversation. The questions come from the passages the agent found, so each one leads to another answer from the knowledge base, not to a chatty prompt.
+
+<Screenshot slot="chat-follow-up-suggestions" />
+
+## In the chat
+
+- The chips appear a few seconds after the answer, under "You could also ask:". The answer is already complete by then: you can type your next question at once, and screen readers hear "Answer ready" without waiting for them.
+- Only the last answer has chips. Asking the next question, or choosing a chip, removes them.
+- They show in the signed-in chat, on public pages, in the widget and in an agent's **Try it** panel. On a phone a long suggestion wraps inside its chip.
+- If you're reading the end of the conversation when they arrive, the view glides down to show them. If you scrolled up, it stays where you are.
+- They aren't kept with the conversation: a conversation you open again shows no chips. Under a refusal you still get the agent's starter questions ("You can ask:"), also after a reload.
+
+<Screenshot slot="phone-public-follow-up-suggestions" />
+
+### When an answer gets them
+
+Only after an answer that:
+
+- cites at least one source,
+- isn't a refusal, "nothing found", small talk or out of scope,
+- wasn't replaced by a moderation notice, and
+- finished normally (it wasn't stopped, cut off or failed).
+
+Even then an answer may get none: the model can find no good follow-up, the call can fail or take too long, or every suggestion can be dropped (below). Nothing is shown then, and nothing says suggestions were expected.
+
+## For editors
+
+### The setting
+
+**Build → Advanced → Suggest follow-up questions**, on by default for every agent, including agents created before v0.4.1. Turn it off for an agent whose answers shouldn't invite more questions. Advanced's summary reads "suggests follow-up questions" or "no follow-up suggestions".
+
+The setting is part of the draft: people get the change when you [publish](/docs/using/editors/versions), and **Compare versions** shows it.
+
+<Screenshot slot="agent-build-advanced-follow-ups" />
+
+### How they're chosen
+
+A separate, small call to the agent's chat model, once the answer has ended. The answer, its citations and its claim checks are never changed by it.
+
+- **What the model reads:** the question, the answer (without citation markers, at most 2,000 characters) and the title and heading path of each passage found, cited ones first, at most 12 lines such as `Printing on campus › Prices`. Not the passages' text, the conversation, the agent's instructions or anything about the person. Results of MCP tools and passages kept apart as conflicting are left out; with no passage left, no call is made.
+- **What it's asked:** up to 3 short questions in the language of the question. Each must be answered by one of the listed passages, never mix topics from different passages, and ask for something the answer doesn't already say. Fewer, or none, rather than a weak question.
+- **What's kept:** one question per line, cleaned of list markers, emphasis, quotes and citation markers. Labels such as "Follow-up questions:", lines over 150 characters, duplicates and the question just asked are dropped, and the first 3 that remain are shown.
+
+### Moderation
+
+Suggestions are model text, so when the audience's moderation policy checks answers (in any of the [output modes](/docs/administration/moderation-modes)), they're checked too: one check for all of them, with the question. If the check doesn't pass, because it blocked them or the provider failed, they're dropped silently, with no notice, and the answer is untouched. Nothing unchecked is shown: the chips arrive only after the check. The answer's own moderation result doesn't change.
+
+### Saved answers
+
+When an answer is [saved](/docs/using/editors/saved-answers), its suggestions are saved with it, and someone who gets the saved answer gets the same chips, with no model call. An answer first saved from a request that doesn't get suggestions (a JSON answer or the OpenAI-compatible API) is reused without them.
+
+### Costs and analytics
+
+The call is metered as chat tokens of the agent's chat model, with `feature: suggestions` and the answer's channel on its usage events. It counts towards the team's daily chat tokens and monthly budget, and shows in **Costs** as Chat spend of that model, like the rest of the answer. The moderation check of the suggestions is metered as moderation requests with the same feature.
+
+An agent's [Analytics](/docs/using/editors/agent-analytics) per-answer tokens and latency stop at the answer: they don't include the suggestions.
+
+## Where they aren't offered
+
+The OpenAI-compatible endpoint, the MCP server's `ask`, chat requests with `stream: false`, and [evaluation](/docs/using/editors/evaluations) runs. None of them can show chips, so no call is made.
+
+## For platform admins and operators
+
+<Callout type="warn" title="Set How to turn thinking off on reasoning chat models">
+  The call has a 10-second limit and at most 1,024 output tokens, reasoning included. It turns thinking off whenever the chat model can ([Models → Compatibility → **How to turn thinking off**](/docs/administration/models#compatibility)), whatever the answer's reasoning effort, and otherwise asks for low effort. A reasoning model without **How to turn thinking off** can reason past the limit, and then no suggestions show.
+</Callout>
+
+- The call holds the person's concurrent-chat slot until it ends; the stream's `done` comes after it.
+- A failed call is logged as a warning, `follow-up suggestions failed; none are shown`. With [tracing](/docs/self-hosting/tracing) on, each call is an `agent.suggestions` span with the number of suggestions sent.
+- Nothing to deploy and no environment variable: an agent that doesn't want them turns them off in Build.
+
+## API
+
+- **Agent configuration:** `followUpSuggestions` (boolean, default `true`; absent in configurations saved before v0.4.1, which means on).
+- **Chat stream:** the event `suggestions`, `{"messageId": "…", "suggestions": ["…"]}` with 1 to 3 questions, comes after `message_end` and `citations_checked` and before `done`, only when there's at least one. Treat the answer as complete at `message_end`, or at `citations_checked` when `message_end` has `citationsPending: true`, and keep reading until `done`. Asking the next question may close the stream early; the answer is already stored. See [Native chat API](/docs/api/chat-api#the-event-stream).
+- JSON answers (`stream: false`) have no suggestions.

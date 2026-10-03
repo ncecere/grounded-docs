@@ -414,5 +414,41 @@
       "public-agent-page-feedback"
     ],
     "alt": "The same public page with the answer: renewals online and how many times by borrower type, two citation chips, Used 2 sources, and the thumbs up pressed."
+  },
+  "chat-follow-up-suggestions": {
+    "files": [
+      "chat-follow-up-suggestions"
+    ],
+    "alt": "A Help Desk Assistant answer to \"How much does colour printing cost, and how do I add money to my print account?\": the prices, how to add credit and the semester print credit, Used 1 source, then \"You could also ask:\" with three chips: \"What are the specific steps to print from a laptop?\", \"How do I request licensed software?\" and \"What technology is available in classrooms?\"."
+  },
+  "phone-public-follow-up-suggestions": {
+    "files": [
+      "phone-public-follow-up-suggestions"
+    ],
+    "alt": "A public agent's page on a phone: the Library Guide answering \"How many books can I borrow at once as a student?\" (50 items for undergraduates, 100 for graduate students), then \"You could also ask:\" with one chip whose question wraps onto two lines inside the screen."
+  },
+  "agent-build-advanced-follow-ups": {
+    "files": [
+      "agent-build-advanced-follow-ups"
+    ],
+    "alt": "An agent's Build, Advanced section: Reasoning effort, Minimum similarity, Rewrite follow-up questions on, Suggest follow-up questions on (\"After an answer with sources, offer up to 3 questions its sources can answer. Adds a short model call after the answer.\"), Rerank passages on and Passages kept after reranking 6."
+  },
+  "evaluation-set-needs-attention": {
+    "files": [
+      "evaluation-set-needs-attention"
+    ],
+    "alt": "An evaluation set's Questions tab: \"1 question needs attention\" in the header, Show: All questions or Needs attention (1), and a Needs attention column saying no document in IT help articles matches \"office-365-install-guide.pdf\" yet."
+  },
+  "evaluation-run-dialog-cant-pass": {
+    "files": [
+      "evaluation-run-dialog-cant-pass"
+    ],
+    "alt": "The Run dialog of the same set: the Rerank switch and the warning \"1 question can't pass: none of its expected documents is indexed. You can still start the run.\", with Cancel and Start run."
+  },
+  "agent-build-systemone-added-time": {
+    "files": [
+      "agent-build-systemone-added-time"
+    ],
+    "alt": "An agent's Build, SystemOne checks section: Passage judging and Scope check at the platform default (off), Citation checks On with \"Adds about 0.7 s per answer (platform median, last 14 days).\" under it, and Citation mode Annotate."
   }
 }
