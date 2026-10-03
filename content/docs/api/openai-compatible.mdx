@@ -135,6 +135,7 @@ With `"stream": true` the reply is `chat.completion.chunk` events:
 - A final chunk has `finish_reason` and `citations`, and `claims` when checks are on. It's held until the citation check ends; streamed answers are annotated, never rewritten.
 - With `stream_options.include_usage`, a usage chunk follows.
 - When the agent's audience streams **checked paragraphs** (the public default since v0.4.0), each content chunk is a paragraph that passed moderation, and there's no `reasoning_content`. A failing paragraph adds the notice and ends with `finish_reason: content_filter`; an unavailable provider sends the `moderation_unavailable` error. Without streaming, the answer is checked once, whole.
+- [Follow-up suggestions](/docs/using/follow-up-suggestions) (v0.4.1) aren't sent here, and no call is made for them; the [native chat API](/docs/api/chat-api#the-event-stream) has them.
 - Then `data: [DONE]`.
 
 ```sh

@@ -38,12 +38,15 @@ Named events whose data is JSON, in this order:
 | `message_start` | The answer begins. Since v0.4.0 `mode` says how the answer is moderated: `stream_retract`, `stream_checked` (each `text_delta` is a checked paragraph) or `buffer`; absent without output moderation. `buffered: true` means the text arrives whole (buffer mode, or a [saved answer](/docs/using/editors/saved-answers), which has no `mode`): show it from its start. |
 | `thinking_delta`, `text_delta`, `tool_call`, `retrieval`, `tool_result` | As they happen. `text_delta` carries raw model text. |
 | `moderation` | Only when moderation replaced the question's answer or the answer with a notice. In `stream_checked` mode it's sent as soon as a paragraph fails: `retracted` when paragraphs were shown, `withheld` when none were; later text is dropped. |
-| `message_end` | The final text (which replaces the deltas), `citations`, `usage`, `stopReason`, `refused`, `noContext` and `noContextReason`. For answers checked before release (buffered answers and JSON answers), also `claims` and `uncited`. Since v0.4.0 citations of passages carry `chunkId`. |
+| `message_end` | The final text (which replaces the deltas), `citations`, `usage`, `stopReason`, `refused`, `noContext` and `noContextReason`. For answers checked before release (buffered answers and JSON answers), also `claims` and `uncited`. Since v0.4.0 citations of passages carry `chunkId`. Since v0.4.1 `citationsPending: true` means the citations are being checked and `citations_checked` follows. |
 | `citations_checked` | Only with SystemOne citation checks on and citations in the answer: follows `message_end` and replaces the citations, with `claims`, `uncited` and counts; in enforce mode, also the text. |
+| `suggestions` | Since v0.4.1, after an answer with citations when the agent offers [follow-up suggestions](/docs/using/follow-up-suggestions): `{"messageId": "…", "suggestions": ["…"]}`, 1 to 3 questions of at most 150 characters. It follows `message_end` and `citations_checked`, and is sent only when there's at least one. |
 | `error` | Only on failure, for example `model_unavailable`, `model_busy` or `incomplete_answer`. |
 | `done` | Last. |
 
 A citation of a tool's result (an agent's [MCP tool](/docs/administration/mcp-servers)) has `kind: "tool"`, `server`, `tool` and `truncated`, and nil document and source IDs; passages have no `kind`.
+
+**The answer is complete** at `message_end`, or at `citations_checked` when `message_end` has `citationsPending: true`. Since v0.4.1 the stream may stay open after that for `suggestions`: show the answer as done, and keep reading until `done`. Closing the stream then (for example, because the person asked the next question) drops only the suggestions; the answer is already stored.
 
 Steps that don't apply are skipped: a question that stands on its own isn't rewritten, an agent that searches only when needed sends just `answering` before its first turn, and without passage judging there's no `checking`. A blocked question gets `conversation`, `status`, `message_start`, `moderation` and `message_end`. A `: ping` comment is sent every 15 seconds. Closing the connection stops the answer; the partial answer is saved with the stop reason `aborted`.
 
@@ -56,7 +59,7 @@ Errors before the stream starts (`agent_disabled`, `agent_policy_violation`, `ra
 | Route | Does |
 |---|---|
 | `GET /v1/conversations` | Your conversations (never anyone else's). |
-| `GET /v1/conversations/{id}` | One, with its messages, citations and claims. |
+| `GET /v1/conversations/{id}` | One, with its messages, citations and claims. Since v0.4.1 a message has `refused` when the answer was the agent's refusal (so a client can offer the starter questions again), and each stored tool call has `thinkingBefore`: how much of the message's thinking came before the call, in UTF-16 code units, to show the reasoning and the steps in the order they happened. Follow-up suggestions aren't stored. |
 | `GET /v1/conversations/{id}/export` | Markdown or JSON, with citations. |
 | `DELETE /v1/conversations/{id}` | Delete it (retention rules may keep the stored copy longer). |
 | `POST /v1/messages/{id}/feedback` | Thumbs up or down, with a reason for down: `incorrect`, `not_helpful`, `missing_sources`, `wrong_sources`, `outdated`, `harmful_or_unsafe` or `other`. Since v0.4.0, `share: true` with a thumbs down shares the question with the team's [gap report](/docs/using/editors/gaps) (`shared` in the result; `feedbackShared` on conversation messages). |
