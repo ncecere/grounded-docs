@@ -1,0 +1,62 @@
+---
+title: v0.4.1
+description: A patch release of small wins — follow-up questions under answers, evaluation questions that need attention, OCR for every TIFF page and partly scanned PDFs, SystemOne capacity that keeps answers first, and reasoning shown in order.
+---
+
+Released 2026-10-02. v0.4.1 is a patch release of small wins after [v0.4.0](/docs/releases/v0-4-0): follow-up questions after an answer, evaluation questions that can't pass flagged before you run them, OCR for every page of a TIFF and for partly scanned PDFs, SystemOne capacity that keeps answers first, and reasoning shown in the order it happened.
+
+Every feature was checked by hand on the reference data before the tag (the signed-in chat, the public page and widget on a phone, evaluations, OCR with real files, the agent editor), and the problems found were fixed.
+
+## Highlights
+
+- **Follow-up suggestions.** After an answer with citations, up to 3 follow-up questions appear under it as chips, in the chat, on public pages, in the widget and in Try it; choosing one asks it. A separate, small call to the agent's chat model writes them after the answer has ended, so nobody waits and the answer and its checks are untouched; each must be answered by one of the passages the answer found. They're moderated like answers, saved and replayed with saved answers, and metered as chat tokens with the feature `suggestions`. On for every agent; **Build → Advanced → Suggest follow-up questions** turns them off. See [Follow-up suggestions](/docs/using/follow-up-suggestions).
+- **Evaluation questions that need attention.** A set's page checks every question against the knowledge base as it is today: an expected document nothing matches (or one deleted), a must-mention phrase no passage contains, or an expected page that wasn't in the top 50 results in each of the question's last 3 retrieval runs (**out of reach**). The header says "3 questions need attention", the Questions tab has a column and a filter, and **Run** says how many questions can't pass, without blocking the run. See [Evaluations](/docs/using/editors/evaluations#questions-that-need-attention).
+- **OCR follow-ups.** Every page of a multi-page TIFF is read. A PDF indexed while OCR was off with some scanned pages stays **Ready**, is listed under **Needs OCR**, and **Retry with OCR** (or **Retry all that need OCR**) reads just those pages once OCR is on. The cluster smoke test now runs the OCR sidecar. See [Parsing and OCR](/docs/administration/parsing-and-ocr).
+- **SystemOne capacity: answers first.** When every slot of a SystemOne connection is busy, a freed slot goes to a check an answer is waiting for before background work (evaluation runs, the gap report's job), and background work holds at most half the slots, whatever the limit. Below the limit nothing changes. A new metric, `grounded_systemone_wait_seconds`, shows when the limit is too low, and the docs explain how to size it on large installs. Each SystemOne check in the agent editor shows the time it adds ("Adds about 0.7 s per answer"). See [SystemOne → Capacity](/docs/administration/systemone#capacity).
+- **Reasoning and tool steps in order.** For agents that let the model decide when to search, or that call MCP tools, the agent editor's Try it shows the reasoning before a tool call, the call, then the reasoning after it, instead of every step first and all the reasoning merged after them. Stored answers record where each call came in the reasoning (`thinkingBefore`), so they're shown the same way. See [Try it](/docs/using/editors/agents#try-it).
+
+<Screenshot slot="chat-follow-up-suggestions" />
+
+**Fixes.** Today's date in answers is the platform's (the time zone in **Admin → Costs → Settings**), not UTC's: in the evening in the Americas, agents said it was already tomorrow. A refusal opened again later offers the starter questions again. Follow-up chips wrap on phones, line up with the answer and come into view when they arrive. A disabled **Retry with OCR** says why at the top of the document's page. See the [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md) for the rest.
+
+## Requirements
+
+Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements).
+
+## Upgrading from v0.4.0
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade, then change every `?ref=v0.4.0` in your overlay to `?ref=v0.4.1` and pin the new digests of `ghcr.io/ncecere/grounded` and, if you run OCR, `ghcr.io/ncecere/grounded-ocr`. Refresh the dashboards and alert rules from `deploy/observability` (the SystemOne wait panels on Models and moderation). See [Upgrades](/docs/self-hosting/upgrades).
+
+**No migrations** (the schema stays at version 44) and **no new environment variables**. Rolling back to the v0.4.0 digest works.
+
+Things people will notice:
+
+- **Follow-up chips** under answers with citations, a few seconds after the answer ends. Each costs one small chat call. On a reasoning chat model, set **How to turn thinking off** (Admin → Models → Compatibility) so the call is quick; otherwise it may reach its 10-second limit and show none.
+- **Evaluation sets** may show questions that need attention right away: they're checked against the knowledge base as it is today.
+- **Partly scanned PDFs** processed from v0.4.1 on join **Needs OCR**. Ones processed before keep their old warning: delete them and upload them again to have their scanned pages read.
+- **"Today"** follows the platform time zone. Saved answers to questions about relative dates change day at the platform's midnight instead of UTC's.
+- **The agent editor**: Build → Advanced has **Suggest follow-up questions**, and each SystemOne check shows the time it adds once the platform has data.
+
+## API changes
+
+All additive; see the [API reference](/docs/api):
+
+- The chat event `suggestions` and `citationsPending` on `message_end` ([Native chat API](/docs/api/chat-api#the-event-stream)); `followUpSuggestions` in agent configurations.
+- `thinkingBefore` on a conversation message's stored tool calls, and `refused` on conversation messages.
+- `GET /v1/teams/{team}/evaluation-sets/{setId}/problems`: a set's questions that need attention.
+- `latencyP50Ms` on each feature of `GET /v1/systemone/status`.
+- The document retry endpoints and the needs-OCR counts include partly scanned PDFs (descriptions only).
+
+New metric: `grounded_systemone_wait_seconds` by feature and priority; `grounded_systemone_requests_total` documents every feature (`cache` and `gaps` too). New span: `agent.suggestions`; `systemone` spans carry the priority and the wait. See [Observability](/docs/self-hosting/observability#systemone-capacity) and [Tracing](/docs/self-hosting/tracing).
+
+## Known limitations
+
+The [v0.4.0 limitations](/docs/releases/v0-4-0#known-limitations) still apply, and:
+
+- **Follow-up suggestions** aren't kept with stored conversations (a conversation opened again shows no chips), and aren't offered on the OpenAI-compatible endpoint, MCP `ask`, JSON replies or evaluation runs.
+- **Out of reach** counts retrieval runs only (full-answer runs don't search 50 deep).
+- **The SystemOne limit is per process:** each API and worker pod has its own slots. A limit shared across the cluster is a possible follow-up.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.4.1`: `docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.4.1 (<commit>)`.
