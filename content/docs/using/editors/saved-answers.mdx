@@ -3,7 +3,7 @@ title: Saved answers
 description: Reuse a recent answer when someone asks an agent the same question again, at once and at no model cost. When answers are reused, the agent's settings, and the platform switch.
 ---
 
-When someone asks an agent a question it answered recently, under the same conditions, Grounded can send the **saved answer** again instead of searching and writing a new one. It arrives at once, costs no model tokens, and has the same citations and claim verdicts as the original. People chatting can't tell the difference: there's no "saved answer" note.
+When someone asks an agent a question it answered recently, under the same conditions, Grounded can send the **saved answer** again instead of searching and writing a new one. It arrives at once, costs no model tokens, and has the same citations, claim verdicts and [follow-up suggestions](/docs/using/follow-up-suggestions) as the original. People chatting can't tell the difference: there's no "saved answer" note.
 
 Saved answers are new in v0.4.0. They're **on by default for public agents**, where the same questions come up again and again, and off by default for the others.
 
@@ -29,7 +29,7 @@ All of these must hold:
 - **The same answering settings**: the moderation policy of the agent's audience, and the platform's SystemOne and reranking settings.
 - **The first question of a conversation.** Follow-ups are always answered live and never saved, whatever their wording: their answers were written with one person's earlier turns.
 - **The same question.** By default, the same words: case, extra spaces and the final punctuation don't matter. With **near-identical** questions on, a question that means almost the same as a saved one is reused only when SystemOne confirms that both ask for the same thing, so "opening hours on Saturday" never gets the answer about Sunday.
-- **The same day**, for questions about relative dates. A question with words such as *today*, *tomorrow*, *this week*, *open*, *hours* or *deadline* is only reused on the same day (UTC).
+- **The same day**, for questions about relative dates. A question with words such as *today*, *tomorrow*, *this week*, *open*, *hours* or *deadline* is only reused on the same day, in the platform's time zone (Admin → Costs → Settings, UTC by default; before v0.4.1 always UTC), the day the agent is told is today.
 - **Not expired.**
 
 Agents that let the model decide when to search answer every question live.

@@ -39,7 +39,7 @@ The currency is a display code only; there's no conversion. Tesseract and Tika O
 |---|---|---|
 | **Cost tracking** | Off | **Off**: nothing is tracked or refused. **Track only**: spend is reported to platform staff and each team's owners and admins; a team with a budget shows progress ("not enforced"); nothing is refused or notified. **Enforce**: Track only plus enforced monthly budgets. |
 | **Currency** | USD | The ISO 4217 code amounts are shown in. |
-| **Time zone** | UTC | Budget months and report days follow it (an IANA name such as `America/New_York`). Daily limits still reset at midnight UTC. |
+| **Time zone** | UTC | Budget months and report days follow it (an IANA name such as `America/New_York`). Since v0.4.1 it's also the day agents are told is today, and the day [saved answers](/docs/using/editors/saved-answers) to questions about relative dates are kept for; a change applies to the next answer. Daily limits still reset at midnight UTC. |
 | **Warning threshold** | 80% | Owners and admins are notified once a month when spend reaches it. |
 | **Default monthly budget** | None | The budget of teams without their own. |
 
@@ -56,6 +56,7 @@ A team's own mode overrides the platform's: **Inherit**, **Off**, **Track only**
 - **Overview**: total spend over a date range, a daily chart by kind (chat, embedding, SystemOne, moderation, OCR, **MCP tools** for calls to MCP servers, and, since v0.4.0, **Rerank**; Rerank shares Embedding's colour, as both are retrieval, and the legend and table name them apart) with the day table behind **Show data**, and **Top spenders** by Teams, Agents or Models. One CSV button downloads the grouping shown, every row (since v0.4.0 the CSV has a `rerank` column after `mcp`, before `tokens`).
 
 - The [gap report](/docs/using/editors/gaps)'s labels, grouping and optional SystemOne checks, and [saved answers](/docs/using/editors/saved-answers)' near-identical checks, are metered to the team like its other model use.
+- [Follow-up suggestions](/docs/using/follow-up-suggestions) (since v0.4.1) are chat tokens of the agent's chat model, so they're part of **Chat** spend for that model and agent; their usage events carry `feature: suggestions`. Their moderation check, when the audience checks answers, is metered as moderation requests with the same feature.
 - **Budgets**: every active team's mode, budget (plus this month's extensions), month-to-date spend, share and projected month-end.
 
 <Screenshot slot="admin-costs-budgets" />
