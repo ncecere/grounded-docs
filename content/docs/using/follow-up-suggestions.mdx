@@ -58,7 +58,7 @@ When an answer is [saved](/docs/using/editors/saved-answers), its suggestions ar
 
 The call is metered as chat tokens of the agent's chat model, with `feature: suggestions` and the answer's channel on its usage events. It counts towards the team's daily chat tokens and monthly budget, and shows in **Costs** as Chat spend of that model, like the rest of the answer. The moderation check of the suggestions is metered as moderation requests with the same feature.
 
-An agent's [Analytics](/docs/using/editors/agent-analytics) per-answer tokens and latency stop at the answer: they don't include the suggestions.
+Model usage in [Analytics](/docs/using/editors/agent-analytics) counts them with the rest of the chat model's tokens. An answer's own figures, such as its latency, stop at the answer and don't include them.
 
 ## Where they aren't offered
 
