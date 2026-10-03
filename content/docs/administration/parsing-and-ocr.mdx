@@ -8,7 +8,8 @@ Grounded parses PDF, Word, PowerPoint, HTML, Markdown and text itself. **OCR** r
 ## How it works
 
 - Only pages **without a text layer** are read. Grounded renders each such page to a greyscale image (300 DPI) and sends it to one backend. The text goes under the page's marker, so page numbers and citations work as for any page.
-- An image upload is a one-page document. Only the first page of a multi-page TIFF is read, with a warning.
+- A PNG or JPEG upload is a one-page document. A TIFF has a page for each of its pages (since v0.4.1), each read with OCR under its own page marker, up to the PDF page limit (5,000) and within the bounds below. A page that can't be read is a warning; a damaged first page fails the document. BigTIFF files aren't read.
+- A PDF with only some pages lacking text, processed while OCR was off, is indexed with its typed pages (**Ready**) and, since v0.4.1, also counts as needing OCR, with a message naming the pages. Retrying it once OCR is on sends only those pages to OCR.
 - A document's page says which pages were read, for example "Pages 3–7 were read with OCR (Tesseract)".
 - The crawler still ignores images.
 
@@ -56,10 +57,12 @@ Changes are audited. Each source also has its own OCR switch (on by default), so
 
 The same page lists **documents that failed or need OCR**, grouped by team and source: the count, the reason (needs OCR, OCR error, damaged or unsupported file, other failure) and the oldest date. It never shows file names, titles or text. For each group, platform admins can:
 
-- **Retry these**: queue them again. Needs-OCR documents and OCR errors are refused, with the reason, while OCR is off for the platform or the source, or the vision model isn't approved for the source's classification. Damaged files usually fail again; the team has to fix and re-upload them.
+- **Retry these**: queue them again. Needs-OCR documents and OCR errors are refused, with the reason, while OCR is off for the platform or the source, or the vision model isn't approved for the source's classification. Damaged files usually fail again; the team has to fix and re-upload them. Since v0.4.1 the needs-OCR group includes partly scanned PDFs (ready, with some pages unread), and retrying them reads just those pages.
 - **Notify owners**: the team's owners get **Documents need attention**, in the app and by email, with the count and a link to the source's documents filtered to Failed or Needs OCR. They can't turn this notification off. Shared sources have no owners to notify.
 
-Both actions are audited. Auditors see the list but not the actions. Teams can also retry their own needs-OCR documents from the source's Documents tab.
+Both actions are audited. Auditors see the list but not the actions. Teams can also retry their own needs-OCR documents from the source's Documents tab (**Retry all that need OCR**, or a document's **Retry with OCR**). While OCR can't read the source, the bulk retry leaves partly scanned PDFs out and a document's own retry is refused with the reason, since it would index the document again without those pages.
+
+Partly scanned PDFs processed before v0.4.1 aren't marked: they keep their old warning, and the team deletes and uploads them again to have their scanned pages read.
 
 ## Bounds
 

@@ -79,15 +79,15 @@ Websites repeat text on many pages: navigation, footers, "related content" cards
 Scanned PDF pages and images have no text layer. If your platform has turned OCR on, Grounded reads them:
 
 - Only pages without a text layer are read with OCR. Their text goes under the page's marker, so citations still name the page.
-- PNG, JPEG and single-page TIFF uploads become one-page documents. Only the first page of a multi-page TIFF is read.
+- PNG and JPEG uploads become one-page documents. A TIFF gets a page for each of its pages (since v0.4.1; before, only the first page was read), each read with OCR under its own page marker, within the OCR limits below. A page that can't be read is a warning.
 - A document's page says which pages were read with OCR, for example "Pages 3–7 were read with OCR (Tesseract)".
 - Each source has its own switch, **Settings → Read scanned pages with OCR**, on by default. Turn it off where scans are noise. With it off, scanned pages are skipped and images can't be uploaded to the source.
 
 <Screenshot slot="source-document-ocr" />
 
-Documents skipped as scanned before OCR was on show as **Needs OCR**. On the source's **Documents** tab, filter **Needs OCR**, then **Retry all that need OCR**. The button is disabled, with the reason, while OCR is off for the source or the platform.
+Documents skipped as scanned before OCR was on show as **Needs OCR**. On the source's **Documents** tab, filter **Needs OCR**, then **Retry all that need OCR**, or open one and choose **Retry with OCR**. The buttons are disabled while OCR is off for the source or the platform, and the reason is shown at the top of the document's page, for example "OCR is off for this source. Turn it on in the Settings tab first; until then, scanned pages can't be read."
 
-A PDF with only some pages lacking text is indexed with a warning that those pages were skipped. To read them once OCR is on, delete the document and upload it again.
+**Partly scanned PDFs** (since v0.4.1): a PDF with only some pages lacking text, processed while OCR was off, is indexed with its typed pages and shows **Ready**, with a warning that names the pages it couldn't read ("Page 2 has no text layer (it may be a scan) and wasn't read, because OCR is off for this document. Once OCR is on, retry it to read that page."). It also needs OCR: the **Needs OCR** filter finds it, and once OCR is on, **Retry all that need OCR** or its own **Retry with OCR** reads it again, sending only the pages without text to OCR. It keeps its passages until then. PDFs processed before v0.4.1 have only the old warning and aren't in the filter: to read their scanned pages, delete them and upload them again (uploading the same file over one changes nothing).
 
 OCR has limits: pages per document (200 by default) and **OCR pages per day** for the team (1,000 by default). A document that would pass the daily limit waits with "Waiting for the team's daily OCR page limit" and continues the next day (UTC), or as soon as the limit is raised.
 
