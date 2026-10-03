@@ -139,8 +139,18 @@
     "width": 1440,
     "height": 900
   },
+  "agent-build-advanced-follow-ups": {
+    "src": "/images/agent-build-advanced-follow-ups.webp",
+    "width": 1440,
+    "height": 900
+  },
   "agent-build-advanced-rerank": {
     "src": "/images/agent-build-advanced-rerank.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "agent-build-systemone-added-time": {
+    "src": "/images/agent-build-systemone-added-time.webp",
     "width": 1440,
     "height": 900
   },
@@ -184,6 +194,11 @@
     "width": 1440,
     "height": 900
   },
+  "chat-follow-up-suggestions": {
+    "src": "/images/chat-follow-up-suggestions.webp",
+    "width": 1440,
+    "height": 900
+  },
   "chat-source-cards": {
     "src": "/images/chat-source-cards.webp",
     "width": 1440,
@@ -216,6 +231,16 @@
   },
   "discover-agents": {
     "src": "/images/discover-agents.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "evaluation-run-dialog-cant-pass": {
+    "src": "/images/evaluation-run-dialog-cant-pass.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "evaluation-set-needs-attention": {
+    "src": "/images/evaluation-set-needs-attention.webp",
     "width": 1440,
     "height": 900
   },
@@ -273,6 +298,11 @@
     "src": "/images/oauth-consent.webp",
     "width": 1440,
     "height": 900
+  },
+  "phone-public-follow-up-suggestions": {
+    "src": "/images/phone-public-follow-up-suggestions.webp",
+    "width": 390,
+    "height": 844
   },
   "phone-source-viewer": {
     "src": "/images/phone-source-viewer.webp",
