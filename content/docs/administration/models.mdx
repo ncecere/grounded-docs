@@ -16,7 +16,7 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 | **API key** | Stored encrypted with `ENCRYPTION_KEY` (AES-256-GCM). The API never returns it; the page only shows that one is set. |
 | **Timeout** | Per request. |
 | **Requests per minute** | Optional. Enforced across every Grounded process. Set it just below your gateway key's limit (for example 110 for a key allowed 120). Without it, bulk work sends requests as fast as the gateway answers. |
-| **Maximum concurrent requests** | Default 8, per process. Applies to SystemOne calls, since a GPU serves few at once. |
+| **Maximum concurrent requests** | Default 8 (1–256), per Grounded process. Applies to SystemOne calls, since a GPU serves few at once: set it to what the SystemOne service serves at once, divided by the Grounded pods calling it. Since v0.4.1, answers get a free slot first, and evaluation runs and the gap job hold at most half ([SystemOne → Capacity](/docs/administration/systemone#capacity)). |
 
 <Screenshot slot="admin-connections" />
 

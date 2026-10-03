@@ -15,6 +15,10 @@ To use one, add a connection to a service that answers `POST /v1/systemone`, the
 
 The SystemOne page sets the platform defaults. Each agent can turn each check on or off for itself in Build → **SystemOne checks**; thresholds are platform-only. The page shows, for each check, its default and how many agents have it on ("Default: off", "On for 2 agents").
 
+Since v0.4.1 the agent editor also shows what each check costs in time: under each check in Build → **SystemOne checks**, "Adds about 0.7 s per answer (platform median, last 14 days)." ("under 0.1 s" below 100 ms). It's the same median the admin page and [Analytics](/docs/administration/analytics-and-logs) show, over every agent on the platform, so it carries no team's data. A check that no answer used in the last 14 days shows nothing.
+
+<Screenshot slot="agent-build-systemone-added-time" />
+
 ### Passage judging
 
 After retrieval and before the prompt is built, the model judges the top candidate passages (10 by default) against the question: is it relevant, does it contain usable evidence, does it contradict the question's premise, and is it trying to instruct an AI assistant?
@@ -67,6 +71,27 @@ The platform's SystemOne model also answers two optional checks that are set els
 - **Confirm similar questions** in the [gap report](/docs/using/editors/gaps#confirming-similar-questions-with-systemone): whether borderline questions or topics are about the same subject (per team; in the hourly job, at most 200 checks a run).
 
 Both are metered to the team like other SystemOne use.
+
+## Capacity
+
+Every SystemOne request takes one of its connection's slots, **Maximum concurrent requests** (Admin → Models → the connection; 1–256, default 8), and waits when they're all busy. Since v0.4.1, answers go first.
+
+- **Two priorities.** *Interactive* is everything an answer waits for (passage judging, the scope check, claim checks, moderation, the saved-answer check, a knowledge base's Try it) and **Test model**. *Background* is evaluation runs (every SystemOne call they make, through the agent or the knowledge base) and the gap report's hourly job.
+- **Priority matters only when every slot is busy.** Below the limit a request takes a free slot at once, as before. When they're all busy, a freed slot goes to the oldest interactive request first, then to the oldest background one.
+- **Background work holds at most half the slots**, at least one: 4 of 8, 32 of 64. With a limit of 1, background work still gets that slot when no answer is waiting. So a busy evaluation run or gap job can't fill the slots, and an answer waits at most for the requests already being served. Background work waits as long as answers keep every slot busy.
+- **The limit is per process.** Each Grounded process, every API pod and every worker pod, has its own slots for each connection, so the SystemOne service sees up to the limit times the number of pods. API pods serve chat; worker pods run evaluations and the gap job.
+
+### Sizing for large installs
+
+Set the limit to what the SystemOne service serves at once, divided by the Grounded pods that call it:
+
+- One GPU serving requests largely one after another needs only a few; the default 8 already queues there.
+- With several GPUs or replicas behind the connection, raise it, up to 256. For example, a service that serves 64 requests at once, called by 4 API pods and 2 worker pods: about 10 per pod.
+- A limit higher than the service serves doesn't help: the queue moves to the service, where nothing goes first.
+
+To see whether the limit is too low, watch `grounded_systemone_wait_seconds` by priority on the **Grounded / Models & moderation** dashboard ([Observability](/docs/self-hosting/observability#systemone-capacity)). Waiting at `background` priority is expected while a run or the gap job is busy. Lasting waits at `interactive` priority mean answers queue: raise the limit if the service has room (its request duration stays flat as you do), or add SystemOne capacity if it doesn't. The wait isn't part of a request's own timeout, which starts once it has a slot, but it is part of what a check adds to an answer, and passage judging's time limit cuts it short.
+
+A limit shared across the whole cluster isn't available yet.
 
 ## What's recorded
 
