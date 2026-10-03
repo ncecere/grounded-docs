@@ -46,17 +46,17 @@ namespace: grounded
 
 resources:
   - namespace.yaml   # your namespace, labelled for the restricted Pod Security Standard
-  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.4.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.4.1
 
 components:
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.4.0
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.4.0
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.4.0
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.4.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.4.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.4.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.4.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.4.1
 
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.4.0             # informational
+    newTag: v0.4.1             # informational
     digest: sha256:<digest>    # what is deployed
 
 configMapGenerator:
@@ -74,7 +74,7 @@ configMapGenerator:
 Copy `example-small` or `example-ha` from the repository as a starting point. Flux and Argo CD both build remote bases. Keep `?ref=` on a tag, and bump it together with the image digest.
 
 <Callout title="Pin by digest">
-  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.4.0`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
+  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.4.1`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
 </Callout>
 
 ### Components
