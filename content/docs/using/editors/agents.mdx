@@ -80,6 +80,10 @@ Shown when the platform has a [SystemOne model](/docs/administration/systemone).
 - **Citation checks**, with **Citation mode**: **annotate** marks each claim's verdict; **enforce** also removes confidently unsupported citations, and a strictly grounded agent with nothing supported refuses. See [Claims and verdicts](/docs/using/chat#claims-and-verdicts).
 - **Scope check**: before searching, spots small talk (answered briefly without a search) and questions outside the agent's subject (a strictly grounded agent refuses without a search).
 
+Since v0.4.1, under each check, the editor says how much time it adds on this platform, for example "Adds about 0.7 s per answer (platform median, last 14 days)." It's the median over every agent that used the check in the last 14 days, and is missing until some answer has used it.
+
+<Screenshot slot="agent-build-systemone-added-time" />
+
 Each check adds latency: passage judging roughly one SystemOne request per passage, but an answer waits for it at most the platform's passage judging time limit (1.5 s by default; passages not judged by then are used unjudged); citation checks one per claim and source after the answer. The scope check runs while the knowledge bases are searched, and passage judging starts only once it (and moderation) allow an answer, so small talk and out-of-scope questions spend no judging requests.
 
 ### Advanced
@@ -93,14 +97,19 @@ Each check adds latency: passage judging roughly one SystemOne request per passa
 | **Maximum searches** | With "let the model decide", how many model turns may search (1–8; default 4). The last turn must answer. |
 | **Minimum similarity** | Drop passages less similar than this (0–1). 0 turns it off. |
 | **Rewrite follow-up questions** | With "search before every answer", rewrite a follow-up that depends on the conversation ("what about summer?", "can I pay for it by card?") into a question that stands alone before searching (on by default). It adds a short model call, asked for low reasoning effort when the model accepts one (off when the answer's effort is Off). A question that stands alone isn't rewritten. |
+| **Suggest follow-up questions** | Since v0.4.1: after an answer with sources, offer up to 3 questions its sources can answer, as chips under it. On by default, for agents created before v0.4.1 too. It adds a short call to the chat model after the answer, so nobody waits for it. See [Follow-up suggestions](/docs/using/follow-up-suggestions). |
 | **Rerank passages** | Shown once the platform has a [rerank model](/docs/administration/reranking). A rerank model reads the question with each passage found and keeps the best: more precise, and SystemOne judges fewer passages. On by default. |
 | **Passages kept after reranking** | The best passages of each search given to SystemOne judging or the model (1–20; default 6). |
 
-<Screenshot slot="agent-build-advanced-rerank" />
+The section's summary lists what's on, for example "temperature 0.2 · 6,000 source tokens · rewrites follow-up questions into searches · suggests follow-up questions".
+
+<Screenshot slot="agent-build-advanced-follow-ups" />
 
 ### Try it
 
-The panel beside Build chats with the **draft**, so you can test a change before publishing it. It works like the chat, with two differences: you can open the model's reasoning, and every answer has **Add to evaluations**. A citation's source opens in the [source viewer](/docs/using/source-viewer) under the conversation. Test conversations aren't kept in your conversation history, never use or create [saved answers](/docs/using/editors/saved-answers), and don't count towards [Gaps](/docs/using/editors/gaps).
+The panel beside Build chats with the **draft**, so you can test a change before publishing it. It works like the chat, with two differences: you can open the model's reasoning, and every answer has **Add to evaluations**. It offers [follow-up suggestions](/docs/using/follow-up-suggestions) like the chat, when the draft has them on.
+
+Since v0.4.1 the reasoning and the answer's steps are shown in the order they happened. With **Let the model decide when to search**, or with tools, the model may think, search or call a tool, then think again: Try it shows the reasoning before the call, the call, then the reasoning after it, each part of the reasoning in its own collapsed **Reasoning** panel (only the last one streams, until the answer starts). With **Search before every answer** the search comes first, as before. Before v0.4.1 every step came first and all the reasoning was merged after them. A citation's source opens in the [source viewer](/docs/using/source-viewer) under the conversation. Test conversations aren't kept in your conversation history, never use or create [saved answers](/docs/using/editors/saved-answers), and don't count towards [Gaps](/docs/using/editors/gaps).
 
 ## Appearance
 
