@@ -30,6 +30,20 @@ Each **question** says what a good result is:
 
 The form warns, without blocking, when an expected document matches nothing in the knowledge base yet (usually a typo, or a document not added yet), and when a must-mention phrase appears in none of the agent's passages, since the answer can't then contain it from the sources.
 
+### Questions that need attention
+
+Documents change after questions are written. Since v0.4.1 a set's page runs the form's check for every question each time it opens, so you see the questions the knowledge base can't meet today before you run them.
+
+<Screenshot slot="evaluation-set-needs-attention" />
+
+A question **needs attention** when:
+
+- **An expected document matches nothing** in the knowledge base, or a picked document was deleted. When none of its expected documents is there, the question **can't pass**: runs mark it **Not scored**.
+- **A must-mention phrase appears in no passage** (agent sets only: only full-answer runs check phrases).
+- It's **out of reach**: "Expected page not found in the top 50 (last 3 runs)". The expected page is in the knowledge base, but each of the question's last 3 retrieval runs missed it, even in the deeper search of 50 results. That usually points to how the page is split into passages, or to the question's wording, not to the model. **See the latest result** opens that result's diagnosis. Only retrieval runs count (full-answer runs don't search 50 deep), and a run from before the question's expected documents changed, or one whose deeper search didn't happen, breaks the run of three. While the expected page isn't indexed, the question says that instead.
+
+While any question needs attention, the set's header says how many ("3 questions need attention", a link to them), and the Questions tab gets a **Needs attention** column, in the form's words, and a **Show: All questions · Needs attention** filter. The question's own page shows the same warnings. They're warnings only: nothing blocks a run.
+
 ### Other ways to add questions
 
 - **Import** (Questions tab → **Import questions**): a CSV file with `question,expected,must_mention` columns and an optional `note` column, with `|` between several values; or a URL-judged JSONL file with one `{"id", "question", "urls": [...]}` per line. The preview lists rows that can't be used, by line, and rows whose documents match nothing yet. **Add** adds the usable rows.
@@ -40,6 +54,10 @@ The form warns, without blocking, when an expected document matches nothing in t
 ## Running a set
 
 **Run** on the set's page starts a run. A set runs one run at a time.
+
+When some questions can't pass, the run dialog says so before you start, for example "1 question can't pass: none of its expected documents is indexed. You can still start the run." For a full-answer run, questions with a must-mention phrase in no source count too.
+
+<Screenshot slot="evaluation-run-dialog-cant-pass" />
 
 <Tabs items={['Retrieval', 'Full answer']}>
 <Tab value="Retrieval">
