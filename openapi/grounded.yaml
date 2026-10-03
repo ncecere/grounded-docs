@@ -2565,8 +2565,10 @@ paths:
       description: >-
         Queues the source's failed or skipped documents with the error code
         again, for example every document skipped as scanned (needs_ocr) once
-        OCR is on. 400 invalid_error_code for other codes. Audited
-        (document.retry_bulk).
+        OCR is on. While OCR can read the source, partly scanned PDFs indexed
+        without their scanned pages (ready, needs_ocr) are queued too and
+        parsed again with OCR for those pages. 400 invalid_error_code for
+        other codes. Audited (document.retry_bulk).
       requestBody:
         required: true
         content:
@@ -2766,6 +2768,11 @@ paths:
       tags: [sources]
       operationId: retryDocument
       summary: Queue a failed or skipped document again
+      description: >-
+        Queues a failed or skipped document again, or a partly scanned PDF
+        indexed without its scanned pages (ready, needs_ocr), which is parsed
+        again with OCR for those pages; that needs OCR to read the source (409
+        ocr_off, saying why). Other documents: 409 not_retryable.
       responses:
         "200":
           description: Queued
@@ -3652,8 +3659,10 @@ paths:
       description: >-
         Queues the source's failed or skipped documents with the error code
         again, for example every document skipped as scanned (needs_ocr) once
-        OCR is on. 400 invalid_error_code for other codes. Audited
-        (document.retry_bulk).
+        OCR is on. While OCR can read the source, partly scanned PDFs indexed
+        without their scanned pages (ready, needs_ocr) are queued too and
+        parsed again with OCR for those pages. 400 invalid_error_code for
+        other codes. Audited (document.retry_bulk).
       requestBody:
         required: true
         content:
@@ -3778,6 +3787,11 @@ paths:
       tags: [admin, sources]
       operationId: adminRetrySharedDocument
       summary: Queue a failed or skipped document of a shared source again
+      description: >-
+        Queues a failed or skipped document again, or a partly scanned PDF
+        indexed without its scanned pages (ready, needs_ocr), which is parsed
+        again with OCR for those pages; that needs OCR to read the source (409
+        ocr_off, saying why). Other documents: 409 not_retryable.
       responses:
         "200":
           description: Queued
@@ -4697,7 +4711,10 @@ paths:
         notice), message_end, citations_checked (only when SystemOne citation
         checks are on and the answer has citations: it follows message_end and
         replaces the answer's citations, and in enforce mode its text), error
-        (only on failure), done. A blocked
+        (only on failure), suggestions (follow-up questions, v0.4.1 and
+        later: only after an answer with citations, when the agent offers
+        them; it follows message_end and citations_checked, and the answer
+        is complete before it), done. A blocked
         question gets conversation, status, message_start, moderation, message_end. A ": ping" comment is sent every 15 s. Errors before the
         stream starts (agent_disabled, agent_policy_violation, rate_limited,
         quota_exceeded, budget_exhausted, and model_unavailable when the agent's
@@ -5954,7 +5971,8 @@ paths:
       description: >-
         OCR is off until an admin turns it on (docs/ocr.md). backends says which
         backends are configured (only those can be chosen); needsOcr counts the
-        documents per team skipped as scanned, which OCR could now read.
+        documents per team that need OCR (skipped as scanned, or partly scanned
+        PDFs indexed without their scanned pages), which OCR could now read.
       responses:
         "200":
           description: The settings (the defaults with revision 1 until saved)
@@ -6033,9 +6051,10 @@ paths:
       description: >-
         Admin, Parsing & OCR (owner decision 3 of docs/v0.2.0.md section 7). Counts
         per team, source and reason class with the oldest date: no document
-        file names, titles, URLs or text. A document that failed or was
-        skipped as scanned (needs_ocr) is counted; documents that are waiting
-        or were skipped as empty are not.
+        file names, titles, URLs or text. A document that failed or needs OCR
+        (needs_ocr: skipped as scanned, or a partly scanned PDF indexed
+        without its scanned pages) is counted; documents that are waiting or
+        were skipped as empty are not.
       responses:
         "200":
           description: The groups, largest teams' sources first
@@ -6116,8 +6135,9 @@ paths:
       summary: Whether a SystemOne model is configured, and the platform's feature defaults (any signed-in user)
       description: >-
         Editors use it to decide whether to show the "SystemOne checks"
-        override and the playground's judge switch. available is false when no
-        SystemOne model is set or it (or its connection) is disabled.
+        override and the playground's judge switch, and to show each check's
+        median added time. available is false when no SystemOne model is set
+        or it (or its connection) is disabled.
       responses:
         "200":
           description: Status
@@ -6841,6 +6861,37 @@ paths:
         "200": { $ref: "#/components/responses/OkReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
         "409": { $ref: "#/components/responses/ErrorReply" }
+  /v1/teams/{team}/evaluation-sets/{setId}/problems:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - $ref: "#/components/parameters/EvaluationSetIdParam"
+    get:
+      tags: [evaluations]
+      operationId: listEvaluationSetProblems
+      summary: The set's questions whose expectations the knowledge bases can't meet today (editors, admins and owners; changes nothing)
+      description: >-
+        The set page's "Needs attention" (docs/evaluations.md §1). The
+        question form's check, run for every question of the set in a few
+        batched queries: expected documents that no document of the set's
+        knowledge bases matches (not_indexed) or picked documents that are
+        gone (deleted), and, for an agent's set, must-mention phrases in no
+        passage. A question is also out of reach when its expected document
+        was in the knowledge base but not found in the top 50 results in
+        each of its last 3 retrieval runs. Warnings only: nothing blocks a
+        run. Questions without a problem are left out.
+      responses:
+        "200":
+          description: The questions that need attention, in the set's order
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/EvaluationQuestionProblem" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
   /v1/teams/{team}/evaluation-sets/{setId}/documents:
     parameters:
       - $ref: "#/components/parameters/TeamParam"
@@ -7573,7 +7624,7 @@ components:
       name: errorCode
       in: query
       required: false
-      description: Only documents with this error code, e.g. needs_ocr (skipped as scanned)
+      description: "Only documents with this error code, e.g. needs_ocr (documents that need OCR: skipped as scanned, or partly scanned and ready)"
       schema: { type: string, maxLength: 64, pattern: "^[a-z_]+$" }
     DocumentTagParam:
       name: tag
@@ -9069,7 +9120,9 @@ components:
           description: >-
             Most requests each Grounded process sends through this connection at
             once. Applies to SystemOne models, whose GPU serves requests
-            largely one after another (default 8).
+            largely one after another (default 8). When every slot is busy,
+            answers are served first and background work (evaluation runs, the
+            gap topics job) holds at most half the slots (at least one).
         enabled: { type: boolean }
         modelCount: { type: integer, format: int64 }
         revision: { $ref: "#/components/schemas/Revision" }
@@ -10018,7 +10071,7 @@ components:
         version: { type: integer, format: int32 }
         status: { $ref: "#/components/schemas/DocumentStatus" }
         errorCode: { type: string }
-        errorMessage: { type: string, description: "Why the document wasn't indexed, for people (e.g. \"This PDF appears to be damaged or password-protected…\")" }
+        errorMessage: { type: string, description: "Why the document wasn't indexed, for people (e.g. \"This PDF appears to be damaged or password-protected…\"); for a ready document with errorCode needs_ocr (a partly scanned PDF), the pages that need OCR" }
         errorDetail: { type: string, description: "The technical detail behind errorMessage (the parser's own text), shown on demand; '' when there is none" }
         pages: { type: integer, format: int32 }
         chunkCount: { type: integer, format: int32 }
@@ -10051,7 +10104,7 @@ components:
       type: object
       required: [errorCode]
       properties:
-        errorCode: { type: string, enum: [needs_ocr], description: "needs_ocr: documents skipped as scanned" }
+        errorCode: { type: string, enum: [needs_ocr], description: "needs_ocr: documents that need OCR (skipped as scanned, and partly scanned PDFs while OCR can read the source)" }
     DocumentRetryResult:
       type: object
       required: [retried]
@@ -10076,7 +10129,7 @@ components:
         concurrency: { type: integer, format: int32, description: "Pages read at once per worker (OCR_CONCURRENCY)" }
         needsOcr:
           type: array
-          description: Documents skipped as scanned (needs_ocr), per team; teamId null for platform-shared sources
+          description: "Documents that need OCR (needs_ocr: skipped as scanned, or partly scanned), per team; teamId null for platform-shared sources"
           items: { $ref: "#/components/schemas/NeedsOcrCount" }
         revision: { $ref: "#/components/schemas/Revision" }
         updatedAt: { type: string, format: date-time, nullable: true }
@@ -10091,7 +10144,7 @@ components:
       type: string
       enum: [needs_ocr, ocr_error, damaged, other]
       description: >-
-        needs_ocr: skipped as scanned with OCR off; ocr_error: OCR failed (for example the OCR service stayed
+        needs_ocr: skipped as scanned, or partly scanned and indexed without the scanned pages, with OCR off; ocr_error: OCR failed (for example the OCR service stayed
         unavailable); damaged: a damaged, password-protected, too large or unsupported file; other: any other failure
     DocumentProblemGroup:
       type: object
@@ -11025,6 +11078,7 @@ components:
           items: { type: string, format: uuid }
         rerank: { type: boolean, description: "Rerank searches with the platform's rerank model (when one is set); absent in configurations saved before v0.4 (on)" }
         rerankTopN: { type: integer, minimum: 1, maximum: 20, description: "Passages each reranked search keeps, for judging or the model" }
+        followUpSuggestions: { type: boolean, description: "Suggest up to 3 follow-up questions under an answer with citations (docs/follow-ups.md); absent in configurations saved before v0.4.1 (on)" }
     AgentConfigInput:
       type: object
       description: >-
@@ -11066,6 +11120,7 @@ components:
           items: { type: string, format: uuid }
         rerank: { type: boolean, default: true, description: "Rerank searches with the platform's rerank model (docs/v0.4.0.md §3); it only applies once a platform admin sets one" }
         rerankTopN: { type: integer, minimum: 1, maximum: 20, default: 6, description: "Passages each reranked search keeps, for judging or the model" }
+        followUpSuggestions: { type: boolean, default: true, description: "Suggest up to 3 follow-up questions the retrieved passages answer, under an answer with citations (docs/follow-ups.md): a small chat-model call after the answer, metered as chat tokens" }
     AgentSystemOne:
       type: object
       description: >-
@@ -11179,17 +11234,20 @@ components:
           properties:
             enabled: { type: boolean, description: The platform default }
             candidates: { type: integer }
+            latencyP50Ms: { type: number, format: double, nullable: true, description: "The platform's median time this check added to an answer over the last 14 UTC days (as on the admin SystemOne page); null without checked answers or when no SystemOne model is available" }
         citations:
           type: object
           required: [enabled, mode]
           properties:
             enabled: { type: boolean, description: The platform default }
             mode: { type: string, enum: [annotate, enforce] }
+            latencyP50Ms: { type: number, format: double, nullable: true, description: "The platform's median time this check added to an answer over the last 14 UTC days (as on the admin SystemOne page); null without checked answers or when no SystemOne model is available" }
         scope:
           type: object
           required: [enabled]
           properties:
             enabled: { type: boolean, description: The platform default }
+            latencyP50Ms: { type: number, format: double, nullable: true, description: "The platform's median time this check added to an answer over the last 14 UTC days (as on the admin SystemOne page); null without checked answers or when no SystemOne model is available" }
     RerankStatus:
       type: object
       required: [available, defaultTopN]
@@ -12173,6 +12231,30 @@ components:
             (buffered and JSON answers): the answer's claims with their
             verdicts (docs/systemone.md §3).
           items: { $ref: "#/components/schemas/Claim" }
+        citationsPending:
+          type: boolean
+          description: >-
+            The citations are checked now (SystemOne citation checks on a
+            streamed answer): wait for citations_checked (or done) before
+            treating the answer as final (v0.4.1 and later).
+    ChatEventSuggestions:
+      type: object
+      description: >-
+        SSE event suggestions (v0.4.1 and later; docs/follow-ups.md): up to 3
+        follow-up questions the answer's passages can answer, written by the
+        agent's chat model after the answer ended. Follows message_end and
+        citations_checked, before done; sent only when there is at least one
+        (never after a refusal, an answer without citations, a moderated
+        answer or an error), and not on the OpenAI-compatible endpoint or
+        MCP ask. Choosing one asks it as the next question.
+      required: [messageId, suggestions]
+      properties:
+        messageId: { type: string, format: uuid }
+        suggestions:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: { type: string, maxLength: 150 }
     ChatEventCitationsChecked:
       type: object
       description: >-
@@ -12244,6 +12326,10 @@ components:
         query: { type: string }
         error: { type: string, description: "Set with isError: why the call failed or wasn't made, in a sentence for people" }
         result: { type: string, description: "What an MCP tool returned (the start of its source's text), or a note when it gave no source" }
+        thinkingBefore:
+          type: integer
+          minimum: 0
+          description: "How much of the message's thinking came before this call, in UTF-16 code units (the length of thinking's start), so reasoning and tool steps can be shown in the order they happened (v0.4.1 and later)"
     ConversationRetrieval:
       type: object
       description: "The search an answer ran before the model (retrieval mode always)"
@@ -12283,6 +12369,7 @@ components:
         feedback: { $ref: "#/components/schemas/FeedbackRating" }
         feedbackReason: { $ref: "#/components/schemas/FeedbackReason" }
         feedbackShared: { type: boolean, description: "The asker shared the question with the team with a thumbs-down (the gap report, docs/gaps.md)" }
+        refused: { type: boolean, description: "The answer is the agent's refusal (nothing in its sources answers the question, or it's out of scope): the chat offers the agent's starter questions under it, as it did live" }
         uncited:
           type: array
           description: >-
@@ -13181,6 +13268,44 @@ components:
           type: array
           description: "The phrases; found: its words appear in a passage of the knowledge bases"
           items: { $ref: "#/components/schemas/EvaluationMention" }
+    EvaluationQuestionProblem:
+      type: object
+      description: What a set's check found about one question. Any problem is a warning; runs still check the question.
+      required: [questionId, expected, missingReason, mustMention, outOfReach]
+      properties:
+        questionId: { type: string, format: uuid }
+        expected:
+          type: array
+          description: The expected documents the knowledge bases don't hold (not_indexed or deleted)
+          items: { $ref: "#/components/schemas/EvaluationExpectedItem" }
+        missingReason:
+          type: string
+          nullable: true
+          description: >-
+            Set when none of the expected documents is held: the question
+            can't pass, and a run doesn't score it. not_indexed (none is) or
+            deleted (a picked document is gone). Null when one is held.
+          enum: [not_indexed, deleted]
+        mustMention:
+          type: array
+          description: "Must-mention phrases whose words appear in no passage (an agent's sets): a full answer can't take them from the sources"
+          items: { type: string }
+        outOfReach:
+          nullable: true
+          description: >-
+            The expected document is in the knowledge base but wasn't found
+            in the top 50 results in each of the question's last 3 retrieval
+            runs (a chunking or wording problem, not a model one). Null
+            otherwise.
+          allOf: [{ $ref: "#/components/schemas/EvaluationOutOfReach" }]
+    EvaluationOutOfReach:
+      type: object
+      required: [runs, depth, runId, resultId]
+      properties:
+        runs: { type: integer, description: The retrieval runs looked at (3) }
+        depth: { type: integer, description: How many results each searched (50) }
+        runId: { type: string, format: uuid, description: The latest of those runs }
+        resultId: { type: string, format: uuid, description: The question's result in it (its diagnosis) }
     EvaluationRunKind:
       type: string
       description: retrieval checks retrieval only; answer asks the agent and scores the answer
