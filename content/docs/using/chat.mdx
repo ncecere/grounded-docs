@@ -20,7 +20,9 @@ You can also type an agent's name in the command palette (⌘K or Ctrl+K). An ag
 Open an agent and type your question, or pick one of its starter questions. Enter sends; Shift+Enter adds a line.
 
 - Until the first words arrive, the chat says what the agent is doing: "Understanding the question…" (a follow-up is being turned into a search), "Searching *agent*'s knowledge…", "Checking the passages…" and "Writing the answer…". Each step is shown only when it happens, and screen readers announce it once. This works the same on the chat page, in Try it, on public pages and in the widget.
-- The answer streams in as it's written. While a reasoning model is thinking you see "Thinking…" (or "Thinking about your question…" when answers are checked before they're shown), never its reasoning.
+- The answer streams in as it's written. While a reasoning model is thinking you see "Thinking…" (or "Thinking about your question…" when answers are checked before they're shown), never its reasoning. Editors testing an agent in its **Try it** panel can open the reasoning; since v0.4.1 it's shown in the order things happened, with each part of the reasoning before or after the search or tool call it led to ([Try it](/docs/using/editors/agents#try-it)).
+- After an answer with sources, up to three **follow-up questions** may appear under it a few seconds later, as chips: choose one to ask it. You don't have to wait for them; the answer is already complete. See [Follow-up suggestions](/docs/using/follow-up-suggestions).
+- Agents know today's date in the time zone your platform admins chose (Admin → Costs → Settings; UTC unless they changed it), so "today", "tomorrow" and "this week" mean your organisation's day. Before v0.4.1 the date was UTC's, so an evening question in the Americas could get tomorrow's date.
 - An answer that was given recently to the same first question may arrive at once, all of it: it's a [saved answer](/docs/using/editors/saved-answers), with the same sources and checks as the original.
 - Follow-up questions can refer to earlier turns ("and for a second copy?"). When a question depends on the conversation, Grounded rewrites it into a question that stands alone before it searches; a question that already stands alone is searched as you wrote it, which is faster.
 - You can stop an answer while it's being written. The part written so far is kept.
@@ -28,12 +30,14 @@ Open an agent and type your question, or pick one of its starter questions. Ente
 
 <Screenshot slot="chat-answer-with-claims" />
 
+<Screenshot slot="chat-follow-up-suggestions" />
+
 ### When the agent can't answer
 
 Agents are strictly grounded unless their team turned that off. A strictly grounded agent answers only from its sources:
 
 - If its sources cover part of your question, it answers that part and says what they don't cover.
-- If they have nothing relevant, it replies with the team's refusal message and says it searched. The agent's starter questions appear below, as a hint of what it covers.
+- If they have nothing relevant, it replies with the team's refusal message and says it searched. The agent's starter questions appear below, as a hint of what it covers, also when you open the conversation again later (since v0.4.1).
 - With a scope check on, a question outside the agent's subject gets "This is outside what *agent* covers." without a search.
 - Greetings and small talk get a short reply and an offer to help.
 
@@ -122,6 +126,7 @@ A public agent has a page of its own, and may be embedded on a website as a chat
 - If you're signed in, a public agent's page keeps your conversations like any other agent's.
 - Since v0.4.0 you can rate answers with the same thumbs, reasons and **Share this question with the team** tick as in the app, and open a citation's source in the [source viewer](/docs/using/source-viewer) (a full-screen sheet in the widget and on phones). Both work only for answers in your own session.
 - The page's footer says that questions the assistant can't answer may be grouped, without your details, to improve it ([Gaps](/docs/using/editors/gaps#privacy)).
+- Since v0.4.1 answers there offer [follow-up suggestions](/docs/using/follow-up-suggestions) too, when the agent has them on. On a phone, a long suggestion wraps inside its chip.
 - The widget keeps a session of its own, separate from the public page's, even on the same site.
 - In the widget, Escape closes the panel and returns focus to the launcher button.
 
