@@ -53,7 +53,7 @@ Since v0.4.0 Grounded can rerank search results with a cross-encoder ([Reranking
 
 - Model: kind rerank on the connection that serves it, maximum classification as for your other self-hosted models, optionally **Max input tokens** (the model's limit).
 - Compatibility: the defaults (**Passages field** `documents`, **Accepts top_n** on). For Hugging Face text embeddings inference, set **Passages field** to `texts`.
-- Then choose it under **Admin → Models → Reranking settings**. It's small: 40 passages in a few hundred milliseconds on one GPU.
+- Then choose it on **Admin → Models → Reranking**, whose setup guide links each step. It's small: 40 passages in a few hundred milliseconds on one GPU.
 
 vLLM serving other model families accepts `tool_choice` but may ignore it; leave **Honours tool_choice** at its default unless the server honours it.
 

@@ -29,7 +29,7 @@ All of these must hold:
 - **The same answering settings**: the moderation policy of the agent's audience, and the platform's SystemOne and reranking settings.
 - **The first question of a conversation.** Follow-ups are always answered live and never saved, whatever their wording: their answers were written with one person's earlier turns.
 - **The same question.** By default, the same words: case, extra spaces and the final punctuation don't matter. With **near-identical** questions on, a question that means almost the same as a saved one is reused only when SystemOne confirms that both ask for the same thing, so "opening hours on Saturday" never gets the answer about Sunday.
-- **The same day**, for questions about relative dates. A question with words such as *today*, *tomorrow*, *this week*, *open*, *hours* or *deadline* is only reused on the same day, in the platform's time zone (Admin → Costs → Settings, UTC by default; before v0.4.1 always UTC), the day the agent is told is today.
+- **The same day**, for questions about relative dates. A question with words such as *today*, *tomorrow*, *this week*, *open*, *hours* or *deadline* is only reused on the same day, in the platform's time zone (Admin → Settings, UTC by default; on Admin → Costs → Settings before v0.4.2, and always UTC before v0.4.1), the day the agent is told is today.
 - **Not expired.**
 
 Agents that let the model decide when to search answer every question live.
@@ -56,7 +56,7 @@ The agent's **Analytics → Usage** shows the share of answers given from saved 
 
 ## For platform admins
 
-**Admin → Overview → Features → Saved answers** turns saved answers off for every agent (auditors see it read-only). While it's off, nothing is reused or saved, including answers being written when it was turned off; answers already saved stay until they expire. The switch is recorded in the audit log as `platform.answer_cache`.
+**Admin → Settings → Features → Saved answers** (on the admin Overview before v0.4.2) turns saved answers off for every agent (auditors see it read-only). While it's off, nothing is reused or saved, including answers being written when it was turned off; answers already saved stay until they expire. The switch is recorded in the audit log as `platform.answer_cache`.
 
 <Screenshot slot="admin-features-saved-answers" />
 

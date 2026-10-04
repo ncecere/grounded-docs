@@ -14,7 +14,7 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 | **Name** | Shown in model lists and used as the `connection` label in metrics. |
 | **Base URL** | The gateway's API root, including `/v1`, for example `https://gateway.example.org/v1`. Admins may point it at private addresses; the crawler's address rules don't apply here. |
 | **API key** | Stored encrypted with `ENCRYPTION_KEY` (AES-256-GCM). The API never returns it; the page only shows that one is set. |
-| **Timeout** | Per request. |
+| **Timeout** | Per request, 1 to 600 seconds. |
 | **Requests per minute** | Optional. Enforced across every Grounded process. Set it just below your gateway key's limit (for example 110 for a key allowed 120). Without it, bulk work sends requests as fast as the gateway answers. |
 | **Maximum concurrent requests** | Default 8 (1–256), per Grounded process. Applies to SystemOne calls, since a GPU serves few at once: set it to what the SystemOne service serves at once, divided by the Grounded pods calling it. Since v0.4.1, answers get a free slot first, and evaluation runs and the gap job hold at most half ([SystemOne → Capacity](/docs/administration/systemone#capacity)). |
 
@@ -24,7 +24,7 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 
 ### Health
 
-Since v0.3.0 every **Test connection** and **Test model** stores its result, and the worker re-tests enabled connections every 15 minutes at no cost. **Connections** and **Models** have a **Health** column ("Healthy · 3 minutes ago", "Failing · since 2 hours ago" or "Not tested yet") with a Health filter; a record page shows the last test's time, who ran it, and the error class and message when it failed. Failures appear under **Needs attention** on the admin Overview. See [Stored health](/docs/self-hosting/health).
+Since v0.3.0 every **Test connection** and **Test model** stores its result, and the worker re-tests enabled connections every 15 minutes at no cost. **Connections** and **Models** have a **Health** column ("Healthy · 3 minutes ago", "Failing · since 2 hours ago" or "Not tested yet") with a Health filter; a record page shows the last test's time, who ran it, and the error class and message when it failed. Failures appear under **Needs attention** on the admin Overview, and ⌘K offers **Failing models** and **Failing connections** (type "failing" or "health"). Since v0.4.2 team members see a model's health too, without the message: the model pickers in the agent editor mark a failing chat model **Failing**, and **New agent** starts on a healthy one. See [Stored health](/docs/self-hosting/health).
 
 Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/completions`, and `/moderations` for moderation endpoints) plus `POST /v1/systemone` for SystemOne models and, since v0.4.0, `POST /rerank` (the Cohere and Jina shape that LiteLLM, vLLM and SGLang serve) for rerank models. It has no vendor-specific code.
 
@@ -33,14 +33,14 @@ Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/comp
 **Models → Models → Add model** adds one model from a connection:
 
 - **Upstream model ID**: what the gateway calls it. **Display name**: what people see.
-- **Kind**: **Chat**, **Embedding**, **Rerank**, **Moderation**, **SystemOne** or **Vision (OCR)**. A rerank model is used once it's chosen under **Reranking settings** ([Reranking](/docs/administration/reranking)).
+- **Kind**: **Chat**, **Embedding**, **Rerank**, **Moderation**, **SystemOne** or **Vision (OCR)**. A rerank model is used once it's chosen on **Admin → Models → Reranking** ([Reranking](/docs/administration/reranking)), whose setup guide opens Add model with kind Rerank chosen.
 - **Maximum classification**: the most sensitive level this model may process. Which models may take Restricted data is your organisation's policy, commonly self-hosted models or services under a data agreement. Tag each model as you add it.
 - Kind-specific capabilities: for chat, the context window, maximum output tokens, tool calling and vision; for embeddings, the dimensions and maximum input tokens; for rerank, an optional maximum input length (longer passages are shortened to fit with the question).
 - **Enabled**: a disabled model stops being offered and used.
 
 <Screenshot slot="admin-models" />
 
-Once a rerank model exists, a notice above the list says whether reranking is on, with which model, how many candidates and time limit, and how many published agents rerank; **Reranking settings** changes it ([Reranking](/docs/administration/reranking)). A model in use can't be deleted, and its record page says why beside the disabled **Delete**.
+Reranking's status and settings are on their own page, **Admin → Models → Reranking**, since v0.4.2 (before, a notice and a **Reranking settings** dialog on this page). A model in use can't be deleted, and its record page says why, in words, beside the disabled **Delete** ("Reranking uses this model. To delete it, choose None or another model on Admin → Models → Reranking first.").
 
 **Test model** sends a tiny real request: a one-word chat completion, an embedding of a short string (it reports the dimensions the gateway actually returns), a benign and a harmful sample for moderation, two passages for a rerank model (one that answers a fixed question must score above one that doesn't), or the built-in sample page for a vision model.
 
@@ -61,6 +61,8 @@ Gateways differ in small ways. A model's **Compatibility** section adjusts what 
 | Passages field (API: `compat.rerankDocumentsField`) | rerank | `documents` | `texts` for servers such as Hugging Face text embeddings inference. |
 | Accepts top_n (API: `compat.supportsRerankTopN`) | rerank | on | Send `top_n`; turn it off for a server that rejects it. |
 | Server accepts the dimensions parameter | embedding | off | For profiles with output dimensions: send the OpenAI `dimensions` parameter. When off, Grounded shortens and renormalises the vectors itself. |
+
+A model's record page shows its compatibility settings, for auditors too. The form warns when **Extra request fields** also set thinking (for example `enable_thinking`), which **How to turn thinking off** should do instead, and **Reasoning effort** in Build and in moderation says when no chat model accepts it.
 
 [Model gateways](/docs/self-hosting/model-gateways) has recipes for self-hosted servers.
 

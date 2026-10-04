@@ -3,7 +3,7 @@ title: MCP server and OAuth
 description: Turn on Grounded's MCP server and, optionally, experimental OAuth sign-in for MCP clients. Discovery endpoints, token lifetimes, what's recorded and the known limitations.
 ---
 
-Grounded can serve the Model Context Protocol at `POST /mcp`, so AI tools can search knowledge bases and ask agents with an API key ([Connect AI tools](/docs/using/mcp) is the guide for people). Since v0.3.0. It's **off** on a new install, and so is its experimental OAuth sign-in. Both are switches on the admin Overview; neither needs a configuration change or a restart.
+Grounded can serve the Model Context Protocol at `POST /mcp`, so AI tools can search knowledge bases and ask agents with an API key ([Connect AI tools](/docs/using/mcp) is the guide for people). Since v0.3.0. It's **off** on a new install, and so is its experimental OAuth sign-in. Both are switches on [Admin → Settings](/docs/administration/settings#features) (on the admin Overview before v0.4.2); neither needs a configuration change or a restart.
 
 ## What it is
 
@@ -22,7 +22,7 @@ Grounded can serve the Model Context Protocol at `POST /mcp`, so AI tools can se
 <Steps>
 <Step>
 
-As a platform admin, open **Admin → Overview** and find **MCP server** under **Features**.
+As a platform admin, open **Admin → Settings** and find **MCP server** under **Features** (on the admin Overview before v0.4.2; the Overview's Features card still shows whether it's on, with a link).
 
 </Step>
 <Step>
@@ -69,7 +69,7 @@ With OAuth sign-in on, an AI tool can connect without an API key: the person sig
 ### Turning it on
 
 1. Turn on the MCP server (above).
-2. On **Admin → Overview → Features**, find **OAuth sign-in for MCP clients** (marked **Experimental**) and turn on **Allow OAuth sign-in**.
+2. On **Admin → Settings → Features**, find **OAuth sign-in for MCP clients** (marked **Experimental**) and turn on **Allow OAuth sign-in**.
 
 It takes effect only while the MCP server is on. While it's off, every endpoint below answers `404`, and existing tokens are refused (`401`, `oauth_off`) until it's turned on again; the connections are kept. Each change is audited as `platform.mcp_oauth`. The API is the same `/v1/admin/settings/mcp`, with `oauthEnabled`; `GET /v1/me` reports it, in effect, as `capabilities.mcpOAuth`.
 
