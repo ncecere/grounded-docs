@@ -13,19 +13,21 @@ Home lists the agents you can use. The agent directory groups them:
 
 <Screenshot slot="discover-agents" />
 
-You can also type an agent's name in the command palette (⌘K or Ctrl+K). An agent may also have a public page or appear in a widget on a website; those work without signing in (see [Public pages and the widget](#public-pages-and-the-widget)).
+Search the directory by name or description: letters and digits are compared, so "wifi" finds "Wi-Fi" (v0.4.2). Your search shows as a chip beside the filters, and **Clear all** clears it with them. You can also type an agent's name in the command palette (⌘K or Ctrl+K). An agent may also have a public page or appear in a widget on a website; those work without signing in (see [Public pages and the widget](#public-pages-and-the-widget)).
 
 ## Asking a question
 
-Open an agent and type your question, or pick one of its starter questions. Enter sends; Shift+Enter adds a line.
+Open an agent and type your question, or pick one of its starter questions. Enter sends; Shift+Enter adds a line. A new chat starts with the cursor in the message box on a computer (not on a phone, where the keyboard would cover the welcome), and keyboard users reach it with **Skip to message box**, right after **Skip to content**.
 
-- Until the first words arrive, the chat says what the agent is doing: "Understanding the question…" (a follow-up is being turned into a search), "Searching *agent*'s knowledge…", "Checking the passages…" and "Writing the answer…". Each step is shown only when it happens, and screen readers announce it once. This works the same on the chat page, in Try it, on public pages and in the widget.
-- The answer streams in as it's written. While a reasoning model is thinking you see "Thinking…" (or "Thinking about your question…" when answers are checked before they're shown), never its reasoning. Editors testing an agent in its **Try it** panel can open the reasoning; since v0.4.1 it's shown in the order things happened, with each part of the reasoning before or after the search or tool call it led to ([Try it](/docs/using/editors/agents#try-it)).
+- Until the first words arrive, the chat says what the agent is doing: "Understanding the question…" (a follow-up is being turned into a search), "Searching *agent*'s knowledge…", "Checking the passages…", "Thinking about your question…" (the model has the question) and "Writing the answer…". Each step is shown only when it happens, and screen readers announce it once. This works the same, in the same words, on the chat page, in Try it, on public pages and in the widget (v0.4.2).
+- The search shows as a step above the answer, for example "6 passages checked, 2 kept" when SystemOne judged them. A follow-up searched together with your earlier question reads "“…?” with your earlier question".
+- The answer streams in as it's written. You never see a reasoning model's thinking, only "Thinking about your question…". Editors testing an agent in its **Try it** panel can open the reasoning; since v0.4.1 it's shown in the order things happened, with each part of the reasoning before or after the search or tool call it led to ([Try it](/docs/using/editors/agents#try-it)).
 - After an answer with sources, up to three **follow-up questions** may appear under it a few seconds later, as chips: choose one to ask it. You don't have to wait for them; the answer is already complete. See [Follow-up suggestions](/docs/using/follow-up-suggestions).
-- Agents know today's date in the time zone your platform admins chose (Admin → Costs → Settings; UTC unless they changed it), so "today", "tomorrow" and "this week" mean your organisation's day. Before v0.4.1 the date was UTC's, so an evening question in the Americas could get tomorrow's date.
+- Agents know today's date in the time zone your platform admins chose ([Admin → Settings](/docs/administration/settings); UTC unless they changed it), so "today", "tomorrow" and "this week" mean your organisation's day. Before v0.4.1 the date was UTC's, so an evening question in the Americas could get tomorrow's date.
 - An answer that was given recently to the same first question may arrive at once, all of it: it's a [saved answer](/docs/using/editors/saved-answers), with the same sources and checks as the original.
-- Follow-up questions can refer to earlier turns ("and for a second copy?"). When a question depends on the conversation, Grounded rewrites it into a question that stands alone before it searches; a question that already stands alone is searched as you wrote it, which is faster.
-- You can stop an answer while it's being written. The part written so far is kept.
+- Follow-up questions can refer to earlier turns ("and for a second copy?"). When a question depends on the conversation, Grounded rewrites it into a question that stands alone before it searches; a question that already stands alone is searched as you wrote it, which is faster. Since v0.4.2 a rewrite is used only when it reads as a search query: if the model answered instead of rewriting, the follow-up is searched with your earlier question, and the step never shows that text.
+- With an agent that calls tools, the answer is the model's final turn. Narration it writes before a tool call ("I'll check the outage tool…") is taken back when the call starts and isn't kept (v0.4.2); the status goes back to "Thinking about your question…". Each call shows as a step named by the tool's title, such as "Used Check outage".
+- **Stop** ends an answer while it's being written. The part you got is kept, a citation cut off midway ("[1") is dropped, and the answer says "Stopped. The answer may be incomplete." with **Ask again**, also after a reload (v0.4.2).
 - If you're offline, the question stays in the box with **Retry**. An answer cut off midway says so and offers **Retry**.
 
 <Screenshot slot="chat-answer-with-claims" />
@@ -57,13 +59,15 @@ If the safety check itself is unavailable, a public agent refuses with "The safe
 
 ## Citations
 
-Each factual sentence should end with a numbered citation chip such as **[1]**. Sources are numbered 1, 2, 3… in the order the answer uses them.
+Each factual sentence should end with a numbered citation chip such as **[1]**. Sources are numbered 1, 2, 3… in the order the answer first cites them, while it streams and after, so no number changes when the answer ends (v0.4.2). A chip stays on the same line as the word before it.
 
-- Hover, click, or press Enter or Space on a chip to open its card: the cited passage, with its heading path and pages. Focus moves into the card; Escape returns you to the chip.
+**Copy answer** (under the answer) copies the text with the same numbers, followed by its sources, each with its section ("Connect to campus Wi-Fi — Networks"). [Exports](#your-conversations) number the same way.
+
+- Hover, click, or press Enter or Space on a chip to open its card, below the chip when there's room: the cited passage, with its heading path and pages. Focus moves into the card; Escape returns you to the chip.
 - **Show source *n*** opens the cited passage in the **source viewer**, highlighted in its document beside the answer, with the claims that cite it ([Checking a source](/docs/using/source-viewer)). Where there's no viewer, such as a deleted agent's transcript, it reads **Show source *n* below** and opens the answer's sources, which start collapsed.
 - The source cards under an answer open the viewer too.
 - A web page is linked to its original URL when the agent's citation mode includes links. Uploaded files are cited by title only; you can't download them from a chat.
-- Some agents can also call **tools** while they answer, such as a service status check. A tool's result is cited like a document and reads **From *Service status* · check_outage** among the sources: the service, then the tool. Claim checks treat it like any other source. A tool gets only the details the agent puts in a call, not your conversation. See [Tools from MCP servers](/docs/administration/mcp-servers#results-are-sources).
+- Some agents can also call **tools** while they answer, such as a service status check. A tool's result is cited like a document and reads **From *Service status* · Check outage** among the sources: the service, then the tool's title (its name, such as `check_outage`, when it has no title; before v0.4.2 always the name). Claim checks treat it like any other source. A tool gets only the details the agent puts in a call, not your conversation. See [Tools from MCP servers](/docs/administration/mcp-servers#results-are-sources).
 
 <Screenshot slot="chat-tool-source" />
 
@@ -74,13 +78,15 @@ When the platform has a [SystemOne model](/docs/administration/systemone) and ci
 | Verdict | Meaning | On the chip |
 |---|---|---|
 | **Supported** | At least one source it cites supports it. | A check mark |
-| **Not supported** | It cites sources, and none of them supports it. | A warning; red when its own source contradicts it |
+| **Not supported** | It cites sources, and none of them supports it. | A warning; red when its own source confidently contradicts it |
 | **Uncited** | It states a fact but cites nothing. A small "Uncited" mark follows the sentence. | No chip |
 | **Unchecked** | Nothing supports it and a check failed or timed out. | No mark |
 
 Headings, questions, greetings and sentences such as "the sources don't mention the fee" aren't claims.
 
-The answer has a one-line summary above its sources, such as "9 of 10 claims supported · 1 uncited". It counts supported claims over supported, not supported and uncited ones; unchecked claims are left out.
+The answer has a one-line summary above its sources, such as "4 of 6 claims supported · 1 contradicted · 1 uncited". It counts supported claims over supported, not supported and uncited ones, and since v0.4.2 names every mark: "contradicted" for claims a cited source contradicts, "not supported" for the others; unchecked claims are left out.
+
+A source is shown contradicting a claim only on a confident verdict (at or above the platform's auto-accept threshold, 80% by default). A less confident "contradicts" reads as not supported, in amber (v0.4.2).
 
 A chip's card states its claim's verdict first, then what this source says about it, for example "Claim not supported. This source contradicts it (92% confidence)". A supporting verdict under 50% reads "with low confidence". Under the answer, each source card breaks down the claims citing it in the verdict colours: "Supports 3 claims · 1 not supported", or "Supports 2 claims · 1 contradicted" (before v0.4.0, "Supports 2 of 3 claims that cite it").
 
@@ -96,7 +102,7 @@ A chip's card states its claim's verdict first, then what this source says about
 
 ## Feedback
 
-Each answer has thumbs up and thumbs down buttons; the one you chose stays highlighted. A thumbs down asks for a reason from a fixed list: incorrect, not helpful, missing sources, wrong sources, outdated, harmful or unsafe, or other. The team sees counts of ratings and reasons in its analytics, never your question or the answer.
+Each answer has thumbs up and thumbs down buttons; the one you chose stays pressed (no pop-up message; screen readers hear it). Since v0.4.2 you can take a rating back: press a pressed thumbs up again, or choose **Remove my rating** in the thumbs-down menu. A thumbs down asks for a reason from a fixed list: incorrect, not helpful, missing sources, wrong sources, outdated, harmful or unsafe, or other. The team sees counts of ratings and reasons in its analytics, never your question or the answer.
 
 The thumbs-down menu also has **Share this question with the team**, off by default. Tick it before you choose a reason, and the team's editors can read your question (never who asked) in their [gap report](/docs/using/editors/gaps), to see what the agent is missing. Unticking it, or rating the answer up instead, takes the question back. Without the tick, a question the agent couldn't answer still counts towards the gap report's topics, but its text is never shown. A thumbs down also retires a [saved answer](/docs/using/editors/saved-answers), so the next person gets a fresh one.
 
@@ -106,21 +112,23 @@ If you're an editor on the agent's team, an answer you rated down, or one withou
 
 ## Your conversations
 
-The sidebar lists your recent conversations. The **Conversations** page has all of them, searchable and filtered by agent and date. From a conversation's "…" menu you can:
+The sidebar lists your recent conversations. The **Conversations** page has all of them, searchable and filtered by agent and date. Times are relative ("2 days ago", counted by calendar day) with the exact time on hover, and a title cut short shows in full on hover. From a conversation's "…" menu you can:
 
-- **Rename** it.
-- **Export** it as Markdown or JSON, with its citations.
+- **Rename** it. Renaming doesn't change when it was last active.
+- **Export** it as Markdown or JSON, with its citations. Since v0.4.2 the export numbers sources as the chat shows them, and the Markdown gives times in your time zone.
 - **Delete** it. It disappears for you at once. The stored copy is removed later according to your organisation's retention rules, which may keep it longer.
 
 Nobody else can read your conversations: not your team's admins, not platform admins. The only exception is a platform admin in a time-limited, audited break-glass session with the conversations scope; your team's owners are told when one starts and ends. Your organisation's terms of use may say more.
 
-If an agent is deleted, its conversations stay readable for you, read-only.
+If an agent is deleted, its conversations stay readable for you, read-only. A link to a conversation that was deleted, or isn't yours, says "This conversation isn't available." with **Start a new chat**; a question typed there starts a new conversation.
+
+The last answer's follow-up chips come back when you reload the page in the same browser tab (v0.4.2); another tab or browser shows the answer without them.
 
 ## Public pages and the widget
 
 A public agent has a page of its own, and may be embedded on a website as a chat widget. Neither needs you to sign in.
 
-- You chat in an anonymous session that ends 24 hours after its last use (the install may set another length). There's no history across sessions.
+- You chat in an anonymous session that ends 24 hours after its last use (the install may set another length). There's no history across sessions. Since v0.4.2 the session also ends when someone signs in or out in the same browser, so the next person on a shared computer doesn't see your conversation. **Sign in** on the page brings you back to the agent afterwards.
 - **New chat** starts a new conversation within the session.
 - Anonymous conversations are deleted after a short period, 24 hours by default.
 - If you're signed in, a public agent's page keeps your conversations like any other agent's.
@@ -128,6 +136,7 @@ A public agent has a page of its own, and may be embedded on a website as a chat
 - The page's footer says that questions the assistant can't answer may be grouped, without your details, to improve it ([Gaps](/docs/using/editors/gaps#privacy)).
 - Since v0.4.1 answers there offer [follow-up suggestions](/docs/using/follow-up-suggestions) too, when the agent has them on. On a phone, a long suggestion wraps inside its chip.
 - The widget keeps a session of its own, separate from the public page's, even on the same site.
-- In the widget, Escape closes the panel and returns focus to the launcher button.
+- In the widget, Escape closes the panel and returns focus to the launcher button. Since v0.4.2 the widget has one header, its starter questions in view, and the cursor in the message box when it opens.
+- Both follow the light or dark setting of your device ([dark mode](/docs/using/personal-settings#public-pages-and-the-widget)).
 
 <Screenshot slot="public-agent-page-feedback" />
