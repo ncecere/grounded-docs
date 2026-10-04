@@ -32,9 +32,11 @@ The Share tab lists the agent's addresses:
 - **Short address**: `/a/<short-name>`, if a platform admin has assigned one.
 - **Stable address**: `/a/id/<agent-id>`. It never changes, even if the team or agent is renamed; widgets use it.
 
+Since v0.4.2 the tab shows the new audience, links and widget right after you publish, without a reload.
+
 ## Public page
 
-A public agent's page is a minimal, branded chat that works without the app: the install's name, the agent's header and the conversation, with a **Sign in** link. Anonymous visitors chat in a session that ends 24 hours after its last use. Their conversations are deleted after the classification level's anonymous retention (24 hours by default). If the platform turned on CAPTCHA, visitors complete it when a session starts.
+A public agent's page is a minimal, branded chat that works without the app: the install's name, the agent's header and the conversation, with a **Sign in** link that brings the visitor back to the agent. It follows the visitor's light or dark setting. Anonymous visitors chat in a session that ends 24 hours after its last use, or when someone signs in or out in the same browser (v0.4.2). Their conversations are deleted after the classification level's anonymous retention (24 hours by default). If the platform turned on CAPTCHA, visitors complete it when a session starts.
 
 <Screenshot slot="public-agent-page" />
 
@@ -59,7 +61,7 @@ The widget puts the agent on another website as a launcher button that opens a c
 Team admins and owners create one under **Share → Widget**. A publishable key (`pk_…`) can only start chat sessions with this one agent. Give it:
 
 - a name;
-- **Allowed origins**: the sites that may embed it, such as `https://www.example.org`, or a wildcard like `https://*.example.org`. Exact origins only: no path, query or fragment.
+- **Allowed origins**: the sites that may embed it, such as `https://www.example.org`, or a wildcard like `https://*.example.org`. Exact origins only: no path, query or fragment. A lone `*` (or `https://*`) is refused, since it would allow every site: list each site, or use a wildcard under your own domain. Since v0.4.2 the list says "Added origin …" and "Remove origin …" to screen readers.
 - optionally, lower per-minute limits (**Questions per minute per address**, **per visitor**).
 
 The key is embedded in web pages, so it isn't secret. What protects it is the allowed origins list, enforced by the embed page's `frame-ancestors` policy and checked when a session starts, and the rate limits.
@@ -77,7 +79,7 @@ Paste it into the site's HTML:
         integrity="sha384-…" crossorigin="anonymous" async></script>
 ```
 
-`data-position="bottom-left"` moves the launcher from the default bottom right. The Share tab fills in your install's address, the agent's ID and the script's Subresource Integrity hash; replace `pk_…` with your key, which is shown only once, when it's created.
+`data-position="bottom-left"` moves the launcher from the default bottom right. The Share tab fills in your install's address, the agent's ID and the script's Subresource Integrity hash; replace `pk_…` with your key, which is shown only once, when it's created. (Before v0.4.2 a false "Leave without saving?" could hide that one-time secret after **Create key**; it no longer does.)
 
 </Step>
 <Step>
@@ -89,7 +91,9 @@ The Share tab shows a live preview, and **Open in new tab** opens it on its own.
 </Step>
 </Steps>
 
-The launcher uses the agent's accent colour and is named "Chat with *agent*" for screen readers. Escape closes the panel and returns focus to the launcher. On a phone the panel fills the screen and the launcher hides while it's open; sources open as a full-screen sheet.
+The launcher uses the agent's accent colour and is named "Chat with *agent*" for screen readers. The panel follows the visitor's light or dark setting; in dark the launcher gets a light ring so a dark accent still stands out, and its focus ring is white (v0.4.2). Escape closes the panel and returns focus to the launcher. On a phone the panel fills the screen and the launcher hides while it's open; sources open as a full-screen sheet.
+
+Since v0.4.2 the panel has one header (the agent's name, and **New chat** in a slim row once there's a conversation), a compact welcome with every starter question in view, and the cursor in the message box when it opens; a site that isn't allowed to embed the agent gets the refusal in place of the chat.
 
 Since v0.4.0 the widget always starts **its own session** with its publishable key, separate from the public page's even when the widget is on the same site as Grounded, so the key's limits, its switch and its allowed origins always apply. Widget visitors start one new conversation after the upgrade. Revoke a key to stop every site that uses it; the platform's kill switch and public access switch also stop embeds.
 
