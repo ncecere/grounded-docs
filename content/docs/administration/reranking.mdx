@@ -1,16 +1,82 @@
 ---
 title: Reranking
-description: Put the passages that best answer a question first with a cross-encoder rerank model. Deploying one, choosing it for the platform, the agent setting, comparing with evaluations, costs and monitoring.
+description: Put the passages that best answer a question first with a cross-encoder rerank model. The Reranking page (status, setup guide, settings and test), deploying a reranker, the agent setting, comparing with evaluations, costs and monitoring.
 ---
 
-A **rerank model** (a cross-encoder such as bge-reranker or Qwen3-Reranker) reads the question together with each passage a search found and scores how well the passage answers it. That's more precise than the usual vector and keyword fusion, and it scores all the passages in one call. Since v0.4.0, once a platform admin chooses a rerank model, every search reranks: agents, a knowledge base's **Try it**, the retrieval API and the MCP server's `search` tool. Without one, retrieval works as before.
+A **rerank model** (a cross-encoder such as bge-reranker or Qwen3-Reranker) reads the question together with each passage a search found and scores how well the passage answers it. That's more precise than the usual vector and keyword fusion, and it scores all the passages in one call. Once a platform admin chooses a rerank model on **Admin → Models → Reranking**, every search reranks: agents, a knowledge base's **Try it**, the retrieval API and the MCP server's `search` tool. Without one, retrieval works as before.
+
+Reranking arrived in v0.4.0. Since v0.4.2 it has its own page, so an install shows that reranking exists before it has a rerank model; before, its settings were a dialog on Admin → Models that only appeared once a rerank model existed.
+
+## The Reranking page
+
+**Admin → Models → Reranking** (`/admin/reranking`) is always in the admin sidebar, and ⌘K finds it as "Reranking" or "Reranking settings". It's where reranking is set up and checked. Auditors see everything on it read-only, with the reason.
+
+<Screenshot slot="admin-reranking" />
+
+From top to bottom:
+
+- **Status**: on or off, and why it's off (no rerank model chosen, the model no longer exists, or the model or its connection is disabled); the model, linking to its page, with its stored [health](/docs/self-hosting/health); the **candidates** per search; the **time limit**; how many published agents rerank; and **Turned off by**, the published agents that turned reranking off for themselves, each linking to its admin record.
+- **Set up reranking**: a guide shown until a rerank model is chosen (below).
+- **Settings**: the rerank model, candidates and time limit (below).
+- **Test**: the same search without and with reranking, side by side (below).
+
+Admin → Overview → Features has a **Reranking** row: **Off** with **Set up**, or **On · Reranker** (the model's name) with how many candidates and published agents rerank, linking to this page. A chosen model that is disabled, or on a disabled connection, reads **Off** in amber.
+
+## Setting it up
+
+Until a rerank model is chosen, **Set up reranking** lists three steps, marks the ones that are done, and has a button for each. Its **How to deploy a reranker** link opens the guide in Grounded's repository; [Deploying a reranker](#deploying-a-reranker) below covers the same ground.
+
+<Steps>
+<Step>
+
+**Connect a server that serves `/rerank`.** LiteLLM, vLLM and SGLang serve it for reranker models such as bge-reranker; a connection you already have works if its server does. **Add connection** opens the connection form and comes back to the Reranking page, which then offers **Test** with the new connection's name: it reports the time it took and the models the server offers.
+
+</Step>
+<Step>
+
+**Add a model of kind Rerank on it.** **Add model** opens Add model with kind **Rerank** chosen, on the connection you just added. Set its **maximum classification** like any model's, and optionally **Max input tokens**: longer passages are shortened to fit with the question. If your server differs, open **Compatibility**: **Passages field** (`documents`, the default, or `texts`) and **Accepts top_n** (on by default; turn it off for a server that rejects it).
+
+Then **Test model** on the model's page: it scores a passage that answers a fixed question and one that doesn't, and passes when the first scores higher. The result is stored as the model's health. The scheduled health check only looks for the model in its connection's model list, so it sends nothing to the reranker.
+
+</Step>
+<Step>
+
+**Choose it here.** **Choose the model** jumps to **Settings** on the same page. Every search then reranks, and agents can turn it off for themselves.
+
+</Step>
+</Steps>
+
+<Callout title="One page for the whole path">
+  An admin who has never set up reranking can start from the sidebar's **Reranking**, or from **Set up** on the Overview's Features card, and follow the buttons: nothing needs to be found on another page.
+</Callout>
+
+## Settings
+
+<Screenshot slot="admin-reranking-settings" />
+
+| Setting | Default | Meaning |
+|---|---|---|
+| **Rerank model** | None | The rerank models from Admin → Models, each with its last test (**Healthy**, **Failing** or **Not tested**). **None** turns reranking off. |
+| **Candidates** | 40 | Passages a search fetches and reranks, 5 to 50 (more when a search asks for more results, at most 50). |
+| **Time limit** | 2,000 ms | The longest a search waits for the reranker, 200 to 10,000 ms. A slower or failed call keeps the usual order. |
+
+- **A model that may not work** asks first. Choosing a model that is disabled, failed its last test or was never tested shows a warning ("This model may not work", with a link to test it on its page), and **Save settings** asks "Rerank with …?" with **Save anyway**: until it works, every search waits for it up to the time limit and then keeps the usual order.
+- **Save settings** appears once something changes and checks each field first. Saving is recorded in the audit log ("Changed reranking settings", with the model by name and each value). It changes the settings' revision, which starts every agent's [saved answers](/docs/using/editors/saved-answers) afresh.
+- **If another admin saved first**, your edits stay in the form, a notice lists what changed ("Rerank model: now …"), and the save bar offers **Overwrite with mine** or **Discard mine and load theirs**.
+- **A rerank model in use can't be deleted**: choose **None** here first. Its page says so beside the disabled **Delete**. A disabled rerank model, or one on a disabled connection, turns reranking off until it's enabled again.
+
+## Test
+
+**Test** searches a knowledge base in one of **your** teams: choose the team, the knowledge base and a question, then **Compare**. The search runs once in the usual order and once reranked, with the saved settings and the knowledge base's own search, as its **Try it** does. The two lists are side by side; each reranked passage shows its rerank score and where it was before ("was #3", "same place", or "not in the usual top results"). A line above them says how the search was reranked, or that a slow or failed call kept the usual order.
+
+Only your own teams are offered: platform staff don't read team content without [break-glass](/docs/administration/break-glass). A platform admin who isn't in any team sees a note instead.
 
 ## How a search uses it
 
 <Steps>
 <Step>
 
-The search fetches the platform's **candidate count** of passages (40 by default) and fuses them as usual.
+The search fetches the platform's **candidates** (40 by default) and fuses them as usual.
 
 </Step>
 <Step>
@@ -51,41 +117,6 @@ It reads `{"results": [{"index": 1, "relevance_score": 0.98}, …]}`; a `data` l
 
 A reranker is small: a model like bge-reranker-v2-m3 scores 40 passages in a few hundred milliseconds on one GPU. See also [Model gateways](/docs/self-hosting/model-gateways).
 
-## Choosing the rerank model
-
-<Steps>
-<Step>
-
-**Admin → Models → Add model**, kind **Rerank**, on the connection that serves it. Set its **maximum classification** like any model's, and optionally **Max input tokens**: longer passages are shortened to fit with the question.
-
-</Step>
-<Step>
-
-If your server differs, open **Compatibility**: **Passages field** (`documents`, the default, or `texts`) and **Accepts top_n** (on by default; turn it off for a server that rejects it).
-
-</Step>
-<Step>
-
-**Test model** scores a passage that answers a fixed question and one that doesn't. It passes when the first scores higher, and the result is stored as the model's [health](/docs/self-hosting/health). The scheduled health check only looks for the model in its connection's model list, so it sends nothing to the reranker.
-
-</Step>
-<Step>
-
-**Admin → Models → Reranking settings** (the button above the list, shown once a rerank model exists): choose the **Rerank model**, the **Candidates** (5 to 50) and the **Time limit** (200 to 10,000 ms). **Save settings** stays off until something changes.
-
-</Step>
-</Steps>
-
-<Screenshot slot="admin-reranking-settings" />
-
-The notice above the list then says what reranking does: "Searches rerank their best 40 passages with Reranker, waiting at most 2 s. 5 published agents rerank."
-
-<Screenshot slot="admin-models" />
-
-- Saving is recorded in the audit log ("Changed reranking settings", with the model by name and each value). Saving changes the settings' revision, which starts every agent's [saved answers](/docs/using/editors/saved-answers) afresh.
-- Auditors see **Reranking settings** disabled: only platform admins can change reranking.
-- A rerank model in use can't be deleted: choose **None** in Reranking settings first. A disabled rerank model, or one on a disabled connection, turns reranking off until it's enabled again.
-
 ## For editors: the agent's setting
 
 Once the platform has a rerank model, an agent's **Build → Advanced** shows:
@@ -95,7 +126,7 @@ Once the platform has a rerank model, an agent's **Build → Advanced** shows:
 
 <Screenshot slot="agent-build-advanced-rerank" />
 
-These are part of the draft, like the rest of Build. In a knowledge base's **Try it**, each passage shows its **Rerank** score beside the usual score, the result says how the search was reranked ("Reranked the best 40 passages in 452 ms"), and the **Rerank** switch compares with the usual order (switching it searches again).
+These are part of the draft, like the rest of Build, and Advanced's summary includes reranking when it's closed. In a knowledge base's **Try it**, each passage shows its **Rerank** score beside the usual score, the result says how the search was reranked ("Reranked the best 40 passages in 452 ms"), the bars follow the rerank score, and the **Rerank** switch compares with the usual order (switching it searches again).
 
 <Screenshot slot="kb-try-it-rerank" />
 
@@ -105,6 +136,10 @@ These are part of the draft, like the rest of Build. In a knowledge base's **Try
 
 ## Costs and monitoring
 
-- Each rerank call records rerank requests and tokens for the team (and agent). Tokens are the server's count, or an estimate when it reports none. Price rerank models per million tokens and per request under [Costs → Prices](/docs/administration/costs); spend reports show them as **Rerank**.
+- Each rerank call records rerank requests and tokens for the team (and agent). Tokens are the server's count, or an estimate when it reports none. Price rerank models per million tokens and per request under [Costs → Prices](/docs/administration/costs); spend reports show them as **Rerank**, and the spend chart draws them with embedding ("Embedding and rerank").
 - Metrics: `grounded_rerank_requests_total{caller, status}` and `grounded_rerank_duration_seconds{caller}`, plus `grounded_model_requests_total{kind="rerank"}` per connection. The Chat and retrieval dashboard has a Reranking row ([Observability](/docs/self-hosting/observability)).
 - Traces have a `rerank` span with a `rerank <model>` span under it ([Tracing](/docs/self-hosting/tracing)). Neither records the question or the passages.
+
+## API
+
+`GET` and `PUT /v1/admin/rerank` read and change the settings (platform admins; auditors read; the response lists the agents that turn reranking off as `agentsOff`). Any signed-in user can read `GET /v1/rerank/status`. See the [API reference](/docs/api).
