@@ -1,0 +1,64 @@
+---
+title: v0.4.2
+description: Ready for a wider beta — every finding of a pre-beta bug hunt and its re-test fixed, a Reranking page, an Admin Settings page and dark mode.
+---
+
+Released 2026-10-04. v0.4.2 is a patch release that gets Grounded ready for a wider beta. Four testers used [v0.4.1](/docs/releases/v0-4-1) by role on a copy of the reference data (a platform admin and auditor, a team owner and editor building an assistant, members and signed-out visitors on phones and with a keyboard, and a visual sweep of every page at five widths) and filed 119 findings; a second round re-tested the fixes and found 63 more. All of them are fixed here, about 180 in all, along with three things the owner asked for: a **Reranking** page, an **Admin Settings** page and **dark mode**.
+
+## Highlights
+
+- **Admin → Models → Reranking.** Reranking has its own page, always in the sidebar like SystemOne: whether it's on and with which model (and its health), the candidates and time limit, the agents that turned it off, a setup guide while nothing is set up (a connection that serves `/rerank`, a model of kind Rerank, then choose it, with a button for each step), the settings (moved from a dialog on Admin → Models) and a before-and-after test on a knowledge base. Admin → Overview's Features card reads **Reranking: Off · Set up** or the model in use. Before, its settings appeared only once a rerank model existed, so nothing said reranking was there. See [Reranking](/docs/administration/reranking).
+- **Admin → Settings.** The platform's general settings in one place: the time zone (which also sets the date agents are told), the currency and default monthly budget (moved from Costs → Settings, which keeps the cost tracking mode and warning threshold), the feature switches (moved from the Overview, which keeps each feature's state with a link), and what the environment sets, read-only. See [Settings](/docs/administration/settings).
+- **Dark mode.** Grounded follows the device's light or dark setting, and the account menu's **Theme** sets System, Light or Dark (kept in this browser; ⌘K has it too). The public page and the widget follow the visitor's device. Every page was checked in dark, by every role, at desktop and phone sizes. See [Your settings and dark mode](/docs/using/personal-settings).
+- **Answers you can rely on with tools.** In tool mode the answer is the model's final turn: what it wrote before calling a tool is no longer shown or stored (a reader who saw some of it has it cleared). Results of tools the model called are no longer judged out by SystemOne. A follow-up's rewritten search query is checked before use, and the earlier question is searched when the rewrite doesn't read as a query. Reasoning a model writes into its answer (`<think>…</think>`) is treated as reasoning. A low-confidence "contradicts" shows as "not supported". See [Chatting with an agent](/docs/using/chat).
+- **Your work is kept.** A save conflict (someone saved first) keeps what you typed on every settings form, lists what changed, and offers **Overwrite with mine** or **Discard mine and load theirs**. A new widget key's one-time secret can no longer be hidden by a false "Leave without saving?". Bulk delete acts on exactly the documents it names.
+- **Phones, tablets and keyboards.** The agent Build tab no longer scrolls past its content at any size; tables, filters, tabs and breadcrumbs fit on a phone; below 1100 px the sidebar starts as icons; a new chat focuses the message box, two Tabs away with **Skip to message box**.
+
+<Screenshot slot="admin-reranking" />
+
+**Smaller fixes**, among many: a link to a deleted conversation says "This conversation isn't available." instead of retrying until you're rate-limited; a rate limit shows a countdown and **Try again now** instead of a blank error; citation numbers stay put when an answer ends, and Copy answer and the exports use the same ones; Stop offers **Ask again**; follow-up chips are real questions, and come back after a reload in the same tab; tool steps use the tool's title ("Used Check outage"); **New agent** starts on a healthy chat model, and failing models and MCP tools are marked **Failing**; editors can't change a live public agent's name, look or welcome; OCR languages, currencies and the crawl allowlist are validated (private and metadata addresses are refused); budget extensions can be revoked; unused classification levels can be deleted; legal holds take a conversation's link; ⌘K finds settings by several words. The [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md) has the full list.
+
+## Requirements
+
+Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements).
+
+## Upgrading from v0.4.1
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade, then change every `?ref=v0.4.1` in your overlay to `?ref=v0.4.2` and pin the new digests of `ghcr.io/ncecere/grounded` and, if you run OCR, `ghcr.io/ncecere/grounded-ocr`. See [Upgrades](/docs/self-hosting/upgrades).
+
+**No migrations** (the schema stays at version 44) and **no new environment variables**.
+
+Things people will notice:
+
+- **Dark mode** on devices set to dark. Anyone who prefers light chooses it under the account menu's **Theme**.
+- **New admin pages:** Admin → Models → Reranking and Admin → Settings. The time zone, currency and default budget moved from Costs → Settings, and the feature switches from the Overview.
+- **Editors** can no longer change the name, address, description, accent colour, welcome message or starter questions of an agent that's live for signed-in users or the public; team admins and owners can, and editors still edit the draft.
+- **The crawl allowlist** refuses private, loopback, link-local and metadata addresses (the crawler never fetched them) and asks before saving `*`.
+- **Tool-mode agents** stream only their final turn. On the OpenAI-compatible endpoint, agents with tools send their answer at the end instead of streaming it, because that protocol can't take text back.
+- **Anonymous public sessions** end when someone signs in or out in the same browser, so a visitor starts a new conversation then.
+
+## API changes
+
+All additive; see the [API reference](/docs/api):
+
+- The chat event `text_reset` ([Native chat API](/docs/api/chat-api#the-event-stream)); `title` on `tool_call` and on a conversation message's stored tool calls; the `thinking` status at the model's start in every mode.
+- `tz` on conversation exports, which are numbered as the chat shows them; `none` as a feedback rating (takes a rating back).
+- `health` on `GET /v1/chat-models` and `serverHealth` on `GET /v1/mcp-tools`.
+- `GET /v1/admin/features` (the Overview's features in one request) and `DELETE /v1/admin/teams/{team}/budget/extensions/{extensionId}` (revoke an extension).
+- `403 live_profile_forbidden` when an editor changes a live agent's profile; the web preview's `fetch_failed` is a 422 (was 502).
+- Generated Go clients: `apitypes.Up` and `Down` are now `FeedbackRatingUp` and `FeedbackRatingDown`.
+
+No new metrics, spans or dashboards.
+
+## Known limitations
+
+The [v0.4.1 limitations](/docs/releases/v0-4-1#known-limitations) still apply, and:
+
+- **The theme** is kept per browser, not per account.
+- **Follow-up chips** after a reload are remembered by the browser tab, not stored with the conversation.
+- **A stopped answer** can store a token that was on its way to the browser when Stop was pressed.
+- **Partly scanned PDFs** processed before v0.4.1 still need to be uploaded again to have their scanned pages read.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.4.2`: `docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version` prints `grounded v0.4.2 (<commit>)`.
