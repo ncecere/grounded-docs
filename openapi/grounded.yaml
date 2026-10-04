@@ -546,6 +546,10 @@ paths:
       tags: [teams]
       operationId: revokeInvite
       summary: Revoke an open invite
+      description: >-
+        Team owners and admins (within their role's reach), and platform
+        admins for any open invite, such as an owner invite sent from Admin ->
+        Teams.
       responses:
         "200": { $ref: "#/components/responses/OkReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
@@ -1173,6 +1177,23 @@ paths:
                 properties:
                   data: { $ref: "#/components/schemas/Classification" }
         "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+        "409": { $ref: "#/components/responses/ErrorReply" }
+        "412": { $ref: "#/components/responses/ErrorReply" }
+        "428": { $ref: "#/components/responses/ErrorReply" }
+    delete:
+      tags: [admin]
+      operationId: adminDeleteClassification
+      summary: Delete an unused classification level (platform admins; audited)
+      description: >-
+        409 classification_in_use when teams, models, data sources or MCP
+        servers use the level (details.uses counts each); 409
+        last_classification for the only level.
+      parameters:
+        - $ref: "#/components/parameters/IfMatchHeader"
+      responses:
+        "200": { $ref: "#/components/responses/OkReply" }
         "403": { $ref: "#/components/responses/ErrorReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
         "409": { $ref: "#/components/responses/ErrorReply" }
@@ -2333,6 +2354,10 @@ paths:
       tags: [agents]
       operationId: listUsableChatModels
       summary: Chat models teams can choose for agents
+      description: >-
+        Enabled chat models on enabled connections, with each model's latest
+        stored health (healthy, failing or untested), so the New agent dialog
+        can default to a working model and the pickers can warn.
       responses:
         "200":
           description: Enabled chat models on enabled connections, by display name
@@ -2353,9 +2378,9 @@ paths:
       summary: MCP tools teams can choose for agents
       description: >-
         Approved tools of enabled MCP servers (docs/mcp-client.md), with the
-        server's name and classification ceiling: an agent whose knowledge
-        bases hold data above a server's ceiling can't use its tools. The
-        server's URL and credentials are never returned.
+        server's name, classification ceiling and latest stored health: an
+        agent whose knowledge bases hold data above a server's ceiling can't
+        use its tools. The server's URL and credentials are never returned.
       responses:
         "200":
           description: Tools, by server and name
@@ -2896,6 +2921,7 @@ paths:
       tags: [web]
       operationId: mapSite
       summary: Preview the URLs a crawl would discover from one page (its links and, optionally, sitemaps). Synchronous, at most 30 s; nothing is stored. Editors and above, or an API key with the ingest scope.
+      description: "When the start page can't be read, the reply is a 422 that says what the site answered (fetch_failed: \"That page returned 404 (not found). Check the address.\"; robots_disallowed), not a 5xx."
       requestBody:
         required: true
         content:
@@ -2915,7 +2941,6 @@ paths:
         "403": { $ref: "#/components/responses/ErrorReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
         "422": { $ref: "#/components/responses/ErrorReply" }
-        "502": { $ref: "#/components/responses/ErrorReply" }
         "503": { $ref: "#/components/responses/MaintenanceReply" }
   /v1/teams/{team}/domain-requests:
     parameters:
@@ -3388,6 +3413,26 @@ paths:
                 required: [data]
                 properties:
                   data: { $ref: "#/components/schemas/AdminOverview" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+  /v1/admin/features:
+    get:
+      tags: [admin]
+      operationId: adminGetFeatures
+      summary: The admin Overview's feature states and setup steps in one response (platform admins and auditors)
+      description: >-
+        What the Overview's Features card and setup checklist show, read in
+        one request instead of one per setting (docs/v0.4.2.md M4). Each
+        settings object is what its own GET returns, with its revision.
+      responses:
+        "200":
+          description: Features
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/AdminFeatures" }
         "403": { $ref: "#/components/responses/ErrorReply" }
   /v1/admin/attention:
     get:
@@ -3972,6 +4017,13 @@ paths:
       tags: [agents]
       operationId: updateAgent
       summary: Change profile fields and/or replace the draft config (editors). The draft is checked leniently.
+      description: >-
+        Editors may change the draft of any agent. The profile fields (name,
+        slug, description, accent colour, welcome message and starter
+        questions) aren't versioned: they reach people at once. So while the
+        agent is published beyond the team (to signed-in users or the
+        public), only team admins and owners may change them, as only they
+        may publish there (403 live_profile_forbidden for editors).
       parameters:
         - $ref: "#/components/parameters/IfMatchHeader"
       requestBody:
@@ -4705,7 +4757,7 @@ paths:
         agent is doing before the answer's first words: rewriting, searching,
         checking, answering; one event per step, and clients should ignore
         steps they don't know), retrieval (always mode), message_start, then
-        thinking_delta / text_delta / tool_call /
+        thinking_delta / text_delta / text_reset / tool_call /
         retrieval / tool_result as they happen, moderation (only when
         moderation replaced the question's answer or the answer with a
         notice), message_end, citations_checked (only when SystemOne citation
@@ -4921,11 +4973,17 @@ paths:
       tags: [chat]
       operationId: exportConversation
       summary: Download a conversation as Markdown or JSON (with citations)
+      description: "Answers are numbered as the chat shows them: sources 1..n in the order the answer first cites them, in the text, the source list and the claims (v0.4.2)."
       parameters:
         - name: format
           in: query
           required: false
           schema: { type: string, enum: [markdown, json], default: markdown }
+        - name: tz
+          in: query
+          required: false
+          description: "The reader's IANA time zone (such as America/New_York) for the Markdown's times; UTC when absent or unknown."
+          schema: { type: string, maxLength: 64 }
       responses:
         "200":
           description: The export, as an attachment (JSON is not wrapped in data)
@@ -6534,6 +6592,33 @@ paths:
                 properties:
                   data: { $ref: "#/components/schemas/TeamBudget" }
         "400": { $ref: "#/components/responses/ErrorReply" }
+        "403": { $ref: "#/components/responses/ErrorReply" }
+        "404": { $ref: "#/components/responses/ErrorReply" }
+  /v1/admin/teams/{team}/budget/extensions/{extensionId}:
+    parameters:
+      - $ref: "#/components/parameters/TeamParam"
+      - name: extensionId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [costs, admin]
+      operationId: adminRevokeBudgetExtension
+      summary: Revoke one of this month's extensions of a team's budget (platform admins; audited as costs.extension_revoke)
+      description: >-
+        To correct an extension, revoke it and grant the right amount. Only
+        the current month's extensions can be revoked (404 otherwise); the
+        audit log keeps the revoked one.
+      responses:
+        "200":
+          description: The team's budget
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: "#/components/schemas/TeamBudget" }
         "403": { $ref: "#/components/responses/ErrorReply" }
         "404": { $ref: "#/components/responses/ErrorReply" }
   /v1/teams/{team}/spend:
@@ -8190,6 +8275,63 @@ components:
       required: [ok]
       properties:
         ok: { type: boolean }
+    AdminFeatures:
+      type: object
+      required: [evaluations, mcp, costs, ocr, groupMappingRules, systemOne, rerank, publicAccess, publicModeration, maintenance, setup]
+      properties:
+        evaluations: { $ref: "#/components/schemas/EvaluationSettings" }
+        mcp: { $ref: "#/components/schemas/MCPSettings" }
+        answerCache: { $ref: "#/components/schemas/AnswerCacheSettings" }
+        costs: { $ref: "#/components/schemas/AdminFeatureCosts" }
+        ocr: { $ref: "#/components/schemas/AdminFeatureOCR" }
+        groupMappingRules: { type: integer, description: SSO group mapping rules }
+        systemOne: { $ref: "#/components/schemas/SystemOneSettings" }
+        rerank: { $ref: "#/components/schemas/RerankSettings" }
+        rerankModel: { $ref: "#/components/schemas/AdminFeatureModel" }
+        publicAccess: { $ref: "#/components/schemas/PublicAccessSettings" }
+        publicModeration: { type: boolean, description: The public audience's moderation policy has a provider }
+        maintenance: { $ref: "#/components/schemas/MaintenanceSettings" }
+        setup: { $ref: "#/components/schemas/AdminSetupState" }
+    AdminFeatureCosts:
+      type: object
+      required: [settings, teams]
+      properties:
+        settings: { $ref: "#/components/schemas/CostSettings" }
+        teams:
+          type: array
+          description: "Active teams whose effective cost mode isn't the platform's (a team setting)"
+          items: { $ref: "#/components/schemas/AdminFeatureTeamMode" }
+    AdminFeatureTeamMode:
+      type: object
+      required: [teamName, mode]
+      properties:
+        teamName: { type: string }
+        mode: { $ref: "#/components/schemas/CostMode" }
+    AdminFeatureOCR:
+      type: object
+      required: [enabled, backend]
+      properties:
+        enabled: { type: boolean }
+        backend: { $ref: "#/components/schemas/OcrBackend" }
+    AdminFeatureModel:
+      type: object
+      description: The chosen rerank model (absent when none is chosen)
+      required: [displayName, enabled]
+      properties:
+        displayName: { type: string }
+        enabled: { type: boolean, description: The model and its connection are enabled }
+    AdminSetupState:
+      type: object
+      description: What the Overview's "Set up this install" checklist needs
+      required: [connections, chatModelClassifications, defaultProfile, teams]
+      properties:
+        connections: { type: integer }
+        chatModelClassifications:
+          type: array
+          description: The maximum classification of each enabled chat model
+          items: { type: string }
+        defaultProfile: { type: boolean, description: An active default embedding profile exists }
+        teams: { type: integer, description: "Teams (0 or 1: whether any exists)" }
     AdminOverview:
       type: object
       required: [teams, users, content, failedIngest, teamsNearLimits]
@@ -8508,7 +8650,7 @@ components:
       type: object
       required: [pendingDomainRequests]
       properties:
-        pendingDomainRequests: { type: integer, format: int64, description: Domain requests waiting for review }
+        pendingDomainRequests: { type: integer, format: int64, description: "Domain requests waiting for review (pending, and not already covered by the platform allowlist)" }
     NotificationType:
       type: string
       enum:
@@ -8742,11 +8884,12 @@ components:
           allOf: [{ $ref: "#/components/schemas/TeamRole" }]
     TeamSummary:
       type: object
-      required: [team, memberCount, ownerCount, agentCount, sourceCount, kbCount, documentCount, storageBytes]
+      required: [team, memberCount, ownerCount, ownerInvites, agentCount, sourceCount, kbCount, documentCount, storageBytes]
       properties:
         team: { $ref: "#/components/schemas/Team" }
         memberCount: { type: integer, format: int64 }
         ownerCount: { type: integer, format: int64 }
+        ownerInvites: { type: integer, format: int64, description: "Open owner invites (an owner invited by email who hasn't signed in yet)" }
         agentCount: { type: integer, format: int64 }
         sourceCount: { type: integer, format: int64, description: The team's own data sources (shared sources aren't counted) }
         kbCount: { type: integer, format: int64 }
@@ -9255,7 +9398,7 @@ components:
         message: { type: string, description: A short message for admins (never a header value or a raw body) }
     MCPToolOption:
       type: object
-      required: [id, serverId, serverName, name, title, description, maxClassification]
+      required: [id, serverId, serverName, name, title, description, maxClassification, serverHealth]
       properties:
         id: { type: string, format: uuid }
         serverId: { type: string, format: uuid }
@@ -9264,6 +9407,17 @@ components:
         title: { type: string }
         description: { type: string, description: What the model reads about the tool }
         maxClassification: { type: string, description: "The server's ceiling: agents whose knowledge bases hold more sensitive data can't use it" }
+        serverHealth: { $ref: "#/components/schemas/PickerHealth" }
+    PickerHealth:
+      type: object
+      description: >-
+        A model's or MCP server's latest stored health as pickers show it to
+        team members (adminListHealthChecks has the details): untested when
+        it was never checked.
+      required: [status]
+      properties:
+        status: { type: string, enum: [healthy, failing, untested] }
+        since: { type: string, format: date-time, description: "When the current status began (absent when untested)" }
     HealthSubjectKind:
       type: string
       description: What a health check tested
@@ -9922,7 +10076,7 @@ components:
         revision: { $ref: "#/components/schemas/Revision" }
     ChatModelOption:
       type: object
-      required: [id, key, displayName, description, maxClassification, supportsTools, supportsReasoningEffort, supportsThinkingOff]
+      required: [id, key, displayName, description, maxClassification, supportsTools, supportsReasoningEffort, supportsThinkingOff, health]
       properties:
         id: { type: string, format: uuid }
         key: { type: string }
@@ -9934,6 +10088,7 @@ components:
         supportsTools: { type: boolean, description: "Required for retrieval mode tool" }
         supportsReasoningEffort: { type: boolean, description: "Reasoning effort low, medium and high can be chosen" }
         supportsThinkingOff: { type: boolean, description: "Reasoning effort off can be chosen (the model's compatibility says how to turn thinking off)" }
+        health: { $ref: "#/components/schemas/PickerHealth" }
     EmbeddingProfileOption:
       type: object
       required: [id, key, name, description, dimensions, chunkSize, maxClassification, isDefault]
@@ -10798,7 +10953,7 @@ components:
             details: { $ref: "#/components/schemas/LimitErrorDetails" }
     PlatformLimit:
       type: object
-      required: [key, group, unit, period, label, description, default, ceiling, builtInDefault, custom]
+      required: [key, group, unit, period, label, description, default, ceiling, builtInDefault, custom, capped]
       properties:
         key: { $ref: "#/components/schemas/LimitKey" }
         group: { $ref: "#/components/schemas/LimitGroup" }
@@ -10820,6 +10975,17 @@ components:
           description: "The most Grounded allows for this limit, whatever the ceiling: an empty default or ceiling means it, and higher values are refused. Absent when there is none."
           type: integer
           format: int64
+        capped:
+          type: array
+          description: Active teams whose own value is above the ceiling, so the ceiling applies to them
+          items: { $ref: "#/components/schemas/CappedTeam" }
+    CappedTeam:
+      type: object
+      required: [teamSlug, teamName, override]
+      properties:
+        teamSlug: { type: string }
+        teamName: { type: string }
+        override: { type: integer, format: int64, description: "The team's own value" }
     PlatformLimits:
       type: object
       required: [revision, updatedAt, items]
@@ -11256,14 +11422,26 @@ components:
         defaultTopN: { type: integer, description: Passages an agent keeps after reranking unless it sets rerankTopN }
     RerankSettings:
       type: object
-      required: [modelId, candidates, timeLimitMs, agents, revision]
+      required: [modelId, candidates, timeLimitMs, agents, agentsOff, revision]
       properties:
         modelId: { type: string, format: uuid, nullable: true, description: "The rerank model; null: searches aren't reranked" }
         candidates: { type: integer, minimum: 5, maximum: 50, description: "Fused hits a search reranks (more when a search asks for more results)" }
         timeLimitMs: { type: integer, minimum: 200, maximum: 10000, description: "The longest a search waits for the rerank call; then it keeps the fusion order" }
         agents: { type: integer, description: "Published agents that rerank (they don't turn it off)" }
+        agentsOff:
+          type: array
+          description: "Published agents whose published version turns reranking off (at most 100, by team and name)"
+          items: { $ref: "#/components/schemas/RerankOffAgent" }
         revision: { $ref: "#/components/schemas/Revision" }
         updatedAt: { type: string, format: date-time, nullable: true }
+    RerankOffAgent:
+      type: object
+      required: [agentId, name, teamSlug, teamName]
+      properties:
+        agentId: { type: string, format: uuid }
+        name: { type: string }
+        teamSlug: { type: string }
+        teamName: { type: string }
     RerankSettingsInput:
       type: object
       required: [modelId, candidates, timeLimitMs]
@@ -12175,6 +12353,21 @@ components:
       required: [delta]
       properties:
         delta: { type: string }
+    ChatEventTextReset:
+      type: object
+      description: >-
+        SSE event text_reset (v0.4.2): discard the answer's text received so
+        far; the next text_delta starts the answer again. tool_call: the
+        model's turn that wrote it turned out to call a tool, and the answer
+        is the model's final turn only, so that text (narration or a first
+        draft) is neither shown nor stored. thinking: the text was the
+        model's reasoning (a bare </think>), and it follows as
+        thinking_delta. Thinking, steps and sources are kept. Only text the
+        reader got is reset: a buffered answer never sends it. Clients that
+        ignore it show that text until message_end.text replaces it.
+      required: [reason]
+      properties:
+        reason: { type: string, enum: [tool_call, thinking], description: "Clients should treat unknown reasons alike" }
     ChatEventToolCall:
       type: object
       description: "SSE event tool_call"
@@ -12182,6 +12375,7 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
+        title: { type: string, description: "An MCP tool's title for people (its server's title for it); absent for search_knowledge and tools without one (v0.4.2 and later)" }
         arguments: { description: The model's JSON arguments }
     ChatEventToolResult:
       type: object
@@ -12320,6 +12514,7 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
+        title: { type: string, description: "An MCP tool's title for people, stored with its result; absent for search_knowledge, tools without one and answers stored before v0.4.2" }
         arguments: { description: The model's JSON arguments }
         isError: { type: boolean }
         hitCount: { type: integer }
@@ -12340,7 +12535,8 @@ components:
         judging: { $ref: "#/components/schemas/RetrievalJudging" }
     FeedbackRating:
       type: string
-      enum: [up, down]
+      description: "up or down; none takes the reader's rating back (v0.4.2)."
+      enum: [up, down, none]
     FeedbackReason:
       type: string
       enum: [incorrect, not_helpful, missing_sources, wrong_sources, outdated, harmful_or_unsafe, other]
@@ -12624,7 +12820,7 @@ components:
     PlatformAnalyticsModel:
       type: object
       description: One model's tokens in the usage ledger (all usage, including draft tests, and ingestion for embedding models)
-      required: [modelId, modelName, kind, chatInputTokens, chatOutputTokens, embeddingTokens]
+      required: [modelId, modelName, kind, chatInputTokens, chatOutputTokens, embeddingTokens, otherTokens]
       properties:
         modelId: { type: string, format: uuid }
         modelName: { type: string, description: '"" when the model was deleted' }
@@ -12632,6 +12828,7 @@ components:
         chatInputTokens: { type: integer, format: int64 }
         chatOutputTokens: { type: integer, format: int64 }
         embeddingTokens: { type: integer, format: int64 }
+        otherTokens: { type: integer, format: int64, description: "SystemOne, rerank and OCR (vision) tokens, as Costs counts them" }
     PlatformAnalyticsAgent:
       type: object
       required: [agentId, agentSlug, agentName, teamId, teamSlug, teamName, deleted, answers, noContextRate, satisfaction, citationSupportRate]
