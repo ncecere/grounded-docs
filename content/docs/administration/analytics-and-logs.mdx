@@ -5,13 +5,13 @@ description: Platform analytics without message content, the audit log of every 
 
 ## Analytics
 
-**Usage & spend → Analytics** shows platform admins and auditors how the install is used, over a date range, optionally filtered by team and audience. It has tabs:
+**Usage & spend → Analytics** shows platform admins and auditors how the install is used, over a date range (first in the filter row, as on Costs), optionally filtered by team and audience. It has tabs:
 
 | Tab | Shows |
 |---|---|
-| **Overview** | The daily chart first, then answers, conversations, unique users, public share, satisfaction, refusals and no-context answers, latency and time to first token, errors, and moderation (questions blocked, answers withheld, flagged, support messages). |
+| **Overview** | The daily chart first (an area chart of answers and conversations started, since v0.4.2), then answers, conversations, unique users, public share, satisfaction, refusals and no-context answers, latency and time to first token, errors, and moderation (questions blocked, answers withheld, flagged, support messages). |
 | **Breakdown** | Answers by audience and by channel (app, API, OpenAI-compatible API, public page, widget, test chats, and **MCP server** for AI tools). |
-| **Models & tokens** | Tokens by model, from the usage ledger (chat and embedding, ingestion included). |
+| **Models & tokens** | Tokens by model, from the usage ledger: chat and embedding (ingestion included), and since v0.4.2 SystemOne, rerank and OCR tokens too, as Costs counts them. |
 | **Top agents & teams** | The most used agents and teams, and since v0.4.0 **Failed questions** per team (below). |
 | **Checks** | Shown while a SystemOne model is configured: passage judging, citation checks (claims supported, and "Cited sources that support their claim" per source), and the scope check. |
 

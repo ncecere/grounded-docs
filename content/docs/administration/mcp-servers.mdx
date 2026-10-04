@@ -24,7 +24,7 @@ This is Grounded as an MCP *client*. For the other direction, AI tools searching
 | **Description** | Optional, for admins. |
 | **Enabled** | Turned off, no agent calls its tools and the health check skips it. |
 
-Then open the server and press **Read tools**. Grounded fetches its tool list; every new tool starts **Not approved**.
+Since v0.4.2, adding a server reads its tool list at once and says how many tools it read, or why it couldn't (the server is down, or refuses the credentials); **Read tools** on the server's page tries again. Every new tool starts **Not approved**: open the server to review and approve them. If another server already has the URL, the form says so (allowed, for different credentials, but its tools are listed twice).
 
 Grounded speaks only Streamable HTTP to MCP servers and never starts local (stdio) servers. OAuth to outside servers isn't supported yet: use a static header.
 

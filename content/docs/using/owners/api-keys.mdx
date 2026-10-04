@@ -37,7 +37,7 @@ The **MCP** scope works only while a platform admin has turned the MCP server on
 ## Creating one
 
 1. **Team settings → API keys → New API key.**
-2. Name it after what will use it ("Course site search"), pick personal or service, the scopes, any restrictions, and optionally an expiry date.
+2. Name it after what will use it ("Course site search"), pick personal or service, the scopes, any restrictions, and optionally an expiry date (a calendar; choose the day again to clear it).
 3. Copy the secret. **It's shown once**, right after creation; Grounded stores only a keyed hash of it. The dialog also shows an example request, and for a key with the MCP scope the MCP server's address.
 
 Keys look like `rag_<id>_<secret>`. Send them as a bearer token:

@@ -28,10 +28,12 @@ Only platform admins create teams. **People → Teams → Create team** asks for
 A team's admin page has tabs for its **Overview**, **Members**, **SSO groups**, **Limits** and **Settings**:
 
 - **Overview**: counts, usage against limits, recent changes, pending domain requests, and the **Budget** card (cost tracking and the monthly budget; see [Costs](/docs/administration/costs)).
-- **Members**: the team's members. Owners manage their own members; a platform admin can **Assign an owner**, which promotes a member, adds someone who has signed in, or invites a new email address. An owner assigned this way is never changed by SSO group rules.
+- **Members**: the team's members. Owners manage their own members; a platform admin can **Assign an owner**, which promotes a member, adds someone who has signed in, or invites a new email address. An owner assigned this way is never changed by SSO group rules. Since v0.4.2 a team whose owner is still invited reads "Owner invited" (here, in the teams list and on its Overview), the tab lists open invites, and platform admins can revoke them.
 - **Limits**: per-team overrides of the platform's limits. See [Limits](/docs/administration/limits).
 - **SSO groups**: the rules that map identity-provider groups to roles in this team. See [SSO groups](/docs/administration/sso-groups).
 - **Settings**: the name, description and approved classification, and archiving.
+
+On your own user record, changing your platform role or status says "You'll lose access" before you confirm.
 
 Platform admins don't see a team's sources, knowledge bases, agents' settings or conversations from here. A team's own pages show platform staff a notice instead of content.
 

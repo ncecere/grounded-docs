@@ -17,7 +17,9 @@ Classification levels describe how sensitive data is, and Grounded enforces what
 | **Sensitive** | 1 | Everyone who signs in | Models tagged Sensitive or higher |
 | **Restricted** | 2 | Team | Only models an admin tags for Restricted |
 
-You can rename them, change their descriptions and settings, and add levels (a separate level for especially regulated data, for example). A higher rank is more sensitive.
+You can rename them, change their descriptions and settings, and add levels (a separate level for especially regulated data, for example). A higher rank is more sensitive. Adding a level says what it changes, and an ordering error names the levels involved.
+
+Since v0.4.2 a level nothing uses can be **deleted** from its row's menu. A level that sources, teams, shared sources or other settings still use can't be: the refusal says what uses it.
 
 <Screenshot slot="admin-classifications" />
 

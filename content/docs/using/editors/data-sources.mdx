@@ -41,7 +41,7 @@ For a crawl you can set:
 - **Exclude patterns**: skip matching paths, such as `/calendar/**`. `*` matches within a path segment, `**` across segments.
 - **Include subdomains** and **Use sitemaps** (also start from the pages listed in robots.txt and sitemap.xml).
 
-**Preview pages** shows the URLs a crawl would start with, without storing anything. Use it to check the scope before you create the source.
+**Preview pages** shows the URLs a crawl would start with, without storing anything. Use it to check the scope before you create the source. If the start page can't be read, the preview says what the site answered, for example "That page returned 404 (not found). Check the address." (v0.4.2).
 
 The crawler always respects robots.txt, spaces its requests to each site, and doesn't run JavaScript: pages that only render their content in the browser come back empty. It fetches public sites only; sites behind a sign-in aren't supported. PDF and Word files it finds are parsed like uploads. Images are ignored.
 
@@ -97,6 +97,8 @@ OCR has limits: pages per document (200 by default) and **OCR pages per day** fo
 
 A document moves through pending, fetching, parsing, chunking and embedding to **ready**. Others end as **failed** (with the error; you can retry), **skipped** (empty, or needs OCR) or **deleted**. A document can also **wait**: for the team's daily OCR or crawl page limit, for its monthly budget when the platform enforces budgets, or while the platform is in maintenance mode.
 
+Select documents in the table to retry or delete several at once. Since v0.4.2 the selection follows what the table shows: a filter, a search or another page clears the rows it hides, so the bar, the footer and the **Delete** dialog count the same rows and Delete removes exactly the ones it names. A disabled **Retry** says why beside it.
+
 ## Classification
 
 A source's classification says how sensitive its data is. It limits which models may embed it and which audiences its agents may have. A knowledge base takes the level of its most sensitive source, and an agent the level of its most sensitive knowledge base.
@@ -108,7 +110,7 @@ A source's classification says how sensitive its data is. It limits which models
 ## Other actions
 
 - **Pause source**: it accepts no uploads, and documents waiting to be processed wait. Documents already indexed stay searchable. Resume it to continue.
-- **Delete source**: its documents leave search at once. Their stored files are removed later, according to the platform's retention settings.
+- **Delete source**: its documents leave search at once. Their stored files are removed later, according to the platform's retention settings. A source that knowledge bases still search can't be deleted: since v0.4.2 the dialog names them, with links to their Sources tab, and offers no Delete until you detach it.
 - Deleting a document works the same way.
 
 Your team's limits cap storage, documents, sources, crawl pages per day and concurrent crawls. A crawl that reaches the daily page limit waits until the next day (UTC) or until the limit is raised; it doesn't fail. Owners and admins see the limits under [Usage and spend](/docs/using/owners/usage-and-spend).

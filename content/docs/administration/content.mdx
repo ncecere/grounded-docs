@@ -23,7 +23,7 @@ description: The admin portal's Content group — platform-shared sources, every
 
 Web sources can only fetch hosts on the platform's **crawl allowlist**. **Content → Crawl domains** has two tabs:
 
-- **Allowlist**: host patterns such as `example.org` or `*.example.org`, or `*` for anything. A new install's allowlist is empty, so no web source can crawl until you add patterns (or set `CRAWL_ALLOWLIST_SEED`, which adds patterns once, on first start). An empty allowlist is shown under Needs attention.
-- **Requests**: domains teams have asked for, with their reason. **Approve** allows the domain for that team only; **Deny** refuses it with a note. An approval can later be revoked. The requester is notified of the decision.
+- **Allowlist**: host patterns such as `example.org` or `*.example.org`, or `*` for anything (adding `*` asks you to confirm). Since v0.4.2 it's a list like the others, with a row menu, search and columns, and it refuses addresses the crawler would never fetch anyway: private, loopback, link-local and cloud metadata IP addresses (such as `10.0.0.5`, `127.0.0.1` or `169.254.169.254`). Host names are checked when they're resolved, at crawl time. A new install's allowlist is empty, so no web source can crawl until you add patterns (or set `CRAWL_ALLOWLIST_SEED`, which adds patterns once, on first start). An empty allowlist is shown under Needs attention.
+- **Requests**: domains teams have asked for, with their reason. **Approve** allows the domain for that team only; **Deny** refuses it with a note. An approval can later be revoked. The requester is notified of the decision. A request the allowlist already covers says so, and since v0.4.2 isn't counted as waiting under Needs attention.
 
 Whatever the allowlist says, the crawler always refuses private, loopback and link-local addresses, cloud metadata addresses and ports other than 80 and 443. Every hop of a redirect is checked, and addresses are pinned when the connection is made.

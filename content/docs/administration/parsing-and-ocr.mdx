@@ -32,7 +32,7 @@ A vision model is subject to its **maximum classification**, like any model: sou
 
 ### Choose the backend
 
-**Content → Parsing & OCR**: turn on **Read scanned pages and images with OCR**, choose the backend and the **Languages** (Tesseract codes joined with `+`, such as `eng` or `eng+spa`), or the vision model. List only the languages your documents use: more languages are slower and can be less exact. A vision model reads any language.
+**Content → Parsing & OCR**: turn on **Read scanned pages and images with OCR**, choose the backend and the **Languages** (Tesseract codes joined with `+`, such as `eng` or `eng+spa`), or the vision model. List only the languages your documents use: more languages are slower and can be less exact. Since v0.4.2 the languages are checked against the Tesseract sidecar when you save, and one it doesn't have is named on the field. A vision model reads any language; **Vision model** can only be chosen once a model of kind Vision (OCR) exists, and says so until then.
 
 </Step>
 <Step>

@@ -10,7 +10,7 @@ Platform admins can't read a team's documents or anyone's conversations. When an
 | Scope | The admin can read | Through |
 |---|---|---|
 | **Documents** | The team's data sources, their documents and passages, tags, crawl history and repeated blocks | The team's Data sources pages |
-| **Conversations** | The list of conversations with the team's agents (title, agent, times, number of questions; never who had them) and their transcripts | **Break-glass → Read conversations** |
+| **Conversations** | The list of conversations with the team's agents (title, agent, times, number of questions; never who had them) and their transcripts (since v0.4.2 a transcript shows its conversation ID with a copy button, for a [legal hold](/docs/administration/retention#legal-holds)) | **Break-glass → Read conversations** |
 
 Nothing else. The admin can't upload, edit, sync, delete, export, rename, give feedback or chat, and sees no knowledge base or agent settings or keys. Sessions work in a browser only, never with an API key. Conversations their users deleted stay hidden.
 
@@ -59,6 +59,7 @@ One admin can have one open session per team.
 
 - **When it starts** (or is approved): a notification in the app and by email with the admin's name, what they can read, until when, the reason and who approved it.
 - **While it's active**: a notice on the team's pages with the same details.
+- Since v0.4.2 these notices give times in the platform time zone ([Settings](/docs/administration/settings)).
 - **When it ends**: a summary of kinds and counts, for example "Conversation transcripts: 3 conversations (5 reads)". Never which conversation or what it said.
 - **The team's audit log** lists the session and every read.
 

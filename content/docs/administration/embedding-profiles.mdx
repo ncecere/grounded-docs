@@ -18,7 +18,7 @@ A profile defines:
 | **Chunk size** and **overlap** | Passage size in tokens. |
 | **Default fusion weights** | Optional: the vector and keyword weights for knowledge bases on this profile that don't set their own. |
 
-Everything except the name, description, status, the default flag and the default fusion weights is **fixed** once the profile exists, because stored vectors depend on it. One profile is the platform default for new sources. A profile can be retired, or deleted once nothing uses it; the Profiles tab shows what uses each one.
+Everything except the name, description, status, the default flag and the default fusion weights is **fixed** once the profile exists, because stored vectors depend on it. One profile is the platform default for new sources. A profile can be retired, or deleted once nothing uses it; the Profiles tab shows what uses each one, and since v0.4.2 the profile's own page has **Retire** and **Delete** too. Deleting a profile that past migrations refer to keeps their history. A new profile's key follows its name until you type one.
 
 Each profile has its own vector table, so different profiles never mix.
 

@@ -6,7 +6,8 @@ description: Platform defaults and ceilings for team limits, per-team overrides,
 Limits keep one team from using more than its share of storage, ingestion, queries and models. Each limit has a **platform default** and a **ceiling**; a team may have an **override** up to the ceiling. **Usage & spend → Limits** sets the defaults and ceilings in five tabs: **Team resources**, **Ingestion**, **Queries & chat**, **Public agents** and **Evaluations**. A team's overrides are on its admin page's **Limits** tab.
 
 - An empty override means "inherit the default". `0` means "blocked".
-- Lowering a ceiling also caps existing overrides. A new override above the ceiling is refused.
+- Lowering a ceiling also caps existing overrides. A new override above the ceiling is refused. Since v0.4.2 a ceiling below a team's override names the teams it caps, on the row and in the save message.
+- Where a default differs from its built-in value, the row shows "Built-in default: N" with **Use it** to go back to it.
 - Changes are audited and take a revision check, so two admins can't overwrite each other.
 - Team owners and admins see their effective limits and usage in [Usage & spend](/docs/using/owners/usage-and-spend), but can't change them.
 
