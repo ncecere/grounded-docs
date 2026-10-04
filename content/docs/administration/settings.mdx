@@ -1,0 +1,66 @@
+---
+title: Settings
+description: Admin → Settings, the platform's general settings in one place — currency, time zone and default budget, the feature switches, what the environment sets, and links to the areas with settings of their own.
+---
+
+**Admin → Operations → Settings** (`/admin/settings`; ⌘K finds it as "settings", "time zone" or "currency") holds the platform's general settings in one place. Since v0.4.2. Platform admins change them; platform auditors see the page read-only, with the reason.
+
+<Screenshot slot="admin-settings" />
+
+Before v0.4.2 these were spread out: the currency, time zone and default budget were on **Costs → Settings**, and the feature switches on the admin **Overview**. Costs → Settings keeps the cost tracking mode and the warning threshold, and the Overview's Features card still shows each feature's state, with a link here.
+
+## Money and time
+
+| Setting | Default | Meaning |
+|---|---|---|
+| **Currency** | USD | The ISO 4217 code amounts are shown in. It must name a currency ("XYZ" is refused). It's a display code only: nothing is converted, so enter [prices](/docs/administration/costs#1-enter-prices) in it. The budget field's label shows it once it's a valid code. |
+| **Time zone** | UTC | An IANA name such as `America/New_York`; type to search ("New_York", "Berlin"). Budget months, cost report days, the date agents are told is today, and the day [saved answers](/docs/using/editors/saved-answers) to questions about relative dates are kept for all follow it. A change applies at once, with no rebuild. Daily limits still reset at midnight UTC. |
+| **Default monthly budget** | None | The budget of teams without their own: enforced while cost tracking is **Enforce**, shown as progress in **Track only**. Empty means none: such teams are tracked but never refused. A team's own budget, set on its page, replaces it. |
+
+These are stored with the cost settings, so saving is audited as `costs.settings_update` and takes a revision check. If another admin saved first, here or on Costs → Settings, your edits stay in the form and a notice lists what changed, naming the page ("Warning threshold (%): now "81" (changed on Costs → Settings; your save keeps it)"); the save bar offers **Overwrite with mine** or **Discard mine and load theirs**.
+
+## Features
+
+The platform's switches. Each applies at once and is audited; turning one off asks first and says what stops. Auditors see them disabled.
+
+| Feature | Default | What it does |
+|---|---|---|
+| **Evaluations** | On | Evaluation sets for knowledge bases and agents. Off hides every team's Evaluations tabs and stops automatic runs; sets and runs are kept. **Evaluation limits** links to [Limits](/docs/administration/limits). See [Evaluations](/docs/using/editors/evaluations). |
+| **MCP server** | Off | AI tools search knowledge bases and ask agents at `/mcp` (**Allow MCP clients**). When on, the row shows the address; **Setup guide** opens [Connect AI tools](/docs/using/mcp). See [MCP server and OAuth](/docs/self-hosting/mcp-server). |
+| **OAuth sign-in for MCP clients** (Experimental) | Off | AI tools connect by signing in as the person using them (**Allow OAuth sign-in**); only while the MCP server is on. People manage their apps under **Connected apps**. |
+| **Saved answers** | On | Agents may reuse a recent answer to the same first question (**Allow saved answers**); each agent has its own setting. See [Saved answers](/docs/using/editors/saved-answers). |
+
+More on each switch, and on the other optional features, is in [Features overview](/docs/administration/features).
+
+## From the environment
+
+What the deployment's environment sets is shown read-only, each with the variable that sets it:
+
+| Setting | Variable |
+|---|---|
+| Instance name | `INSTANCE_NAME` |
+| Organisation name | `ORG_NAME` |
+| Colour theme (light or dark is each person's choice, in their [account menu](/docs/using/personal-settings)) | `UI_THEME` |
+| Logo | `UI_LOGO_URL` |
+| Help link | `SUPPORT_URL` |
+
+They're changed in the environment and apply after a restart. See [Configuration](/docs/self-hosting/configuration).
+
+## Other settings
+
+Areas that keep their own pages are linked at the end, with what each holds:
+
+| Page | Holds |
+|---|---|
+| [Costs](/docs/administration/costs) | Cost tracking (Off, Track only or Enforce) and the budget warning threshold. |
+| [Moderation](/docs/administration/moderation-and-public-access) | What each audience may be told, and the moderation provider. |
+| [Public access](/docs/administration/moderation-and-public-access#public-access) | Whether agents can answer anonymous visitors, and the public page and widget. |
+| [Limits](/docs/administration/limits) | Default limits and ceilings for every team, public caps and evaluation limits. |
+| [Retention](/docs/administration/retention) | How long conversations, logs and deleted files are kept, and legal holds. |
+| [Reranking](/docs/administration/reranking) | The rerank model, candidates and time limit. |
+| [SystemOne](/docs/administration/systemone) | The model that judges passages, checks citations and spots out-of-scope questions. |
+| [Parsing & OCR](/docs/administration/parsing-and-ocr) | How documents are read, OCR and its languages. |
+
+## API
+
+The money-and-time settings are part of `GET` and `PUT /v1/admin/costs/settings`; the switches keep their own endpoints (`/v1/admin/settings/evaluations`, `/v1/admin/settings/mcp`, `/v1/admin/settings/answer-cache`). `GET /v1/admin/features` (since v0.4.2) returns what the Overview's Features card shows in one request. See the [API reference](/docs/api).

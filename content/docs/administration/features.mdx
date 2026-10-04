@@ -1,45 +1,51 @@
 ---
 title: Features overview
-description: The optional features on the admin Overview's Features card, their defaults, and where each one is set up.
+description: The optional features on the admin Overview's Features card, their defaults, and where each one is set up. The switches are on Admin → Settings.
 ---
 
 Several of Grounded's features are optional. Every one of them except evaluations and saved answers is **off** on a new install, and nothing changes for anyone until an admin sets it up. The admin **Overview** has a **Features** card with each feature's state and a link to where it's configured. Auditors see the states.
 
+Since v0.4.2 the switches themselves (evaluations, the MCP server, OAuth sign-in for MCP clients and saved answers) are on **[Admin → Settings](/docs/administration/settings)**; their rows on the Overview say whether each is on and link there ("Settings for Evaluations"). Before, the switches were on the Overview.
+
 | Feature | Default | Where it's set up | What it needs |
 |---|---|---|---|
-| **Evaluations** | On | The switch on the Features card; limits under [Limits](/docs/administration/limits) | Nothing extra |
-| **MCP server** | Off | The switch on the Features card (**Allow MCP clients**); see [MCP server and OAuth](/docs/self-hosting/mcp-server) | API keys with the MCP scope |
-| **OAuth sign-in for MCP clients** (Experimental) | Off | The switch on the Features card (**Allow OAuth sign-in**) | The MCP server on, and OIDC sign-in |
-| **Saved answers** | On (each agent decides; on by default for public agents) | The switch on the Features card (**Allow saved answers**); each agent's Settings | Nothing extra; near-identical matching needs a SystemOne model |
+| **Evaluations** | On | The switch on [Admin → Settings](/docs/administration/settings#features); limits under [Limits](/docs/administration/limits) | Nothing extra |
+| **MCP server** | Off | The switch on Admin → Settings (**Allow MCP clients**); see [MCP server and OAuth](/docs/self-hosting/mcp-server) | API keys with the MCP scope |
+| **OAuth sign-in for MCP clients** (Experimental) | Off | The switch on Admin → Settings (**Allow OAuth sign-in**) | The MCP server on, and OIDC sign-in |
+| **Saved answers** | On (each agent decides; on by default for public agents) | The switch on Admin → Settings (**Allow saved answers**); each agent's Settings | Nothing extra; near-identical matching needs a SystemOne model |
 | **Cost tracking** | Off | [Costs](/docs/administration/costs): Off, Track only or Enforce | Prices for your models |
 | **OCR** | Off | [Parsing & OCR](/docs/administration/parsing-and-ocr) | A backend: the OCR sidecar, Apache Tika's full image, or a vision model |
 | **SSO groups** | No rules | [SSO groups](/docs/administration/sso-groups) | A groups claim from your identity provider |
 | **SystemOne** | Not configured | [SystemOne](/docs/administration/systemone) | A service that answers `POST /v1/systemone` |
+| **Reranking** | Off | [Admin → Models → Reranking](/docs/administration/reranking) (since v0.4.2 on the card) | A server that serves `/rerank` and a model of kind Rerank |
 | **Public access** | Off | [Public access](/docs/administration/moderation-and-public-access#public-access) | A moderation provider for the public audience |
 | **Maintenance** | Off | [Maintenance](/docs/administration/maintenance) | Nothing extra |
-
-[Reranking](/docs/administration/reranking) (since v0.4.0) isn't on the card: it's off until a platform admin chooses a rerank model under **Admin → Models → Reranking settings**.
 
 The card says more than on or off where it matters:
 
 - **Cost tracking** names teams whose own mode differs from the platform's, for example "Track only · 1 team enforced".
-- **SystemOne** says how many published agents use its checks ("Configured · checks on 2 agents"), by their own setting or the platform default.
+- **SystemOne** says which checks published agents use ("Citation checks on 2 published agents and passage judging on 1, …").
 - **SSO groups** shows the number of rules.
 - **OCR** shows the chosen backend.
-- **MCP server**, when on, shows the address AI tools connect to, with a **Setup guide** link.
+- **Reranking** reads **Off** with **Set up**, which opens the Reranking page and its setup guide, or **On** with the rerank model's name.
+- **MCP server**, when on, shows the address AI tools connect to; on Admin → Settings the row has a **Setup guide** link.
 - **OAuth sign-in for MCP clients** reads "On · MCP server off" when it's switched on but has no effect yet, because the MCP server is off.
 
 <Screenshot slot="admin-overview-features" />
+
+The card reads everything in one request (`GET /v1/admin/features`, since v0.4.2) instead of about 17.
 
 ## The evaluations switch
 
 Evaluations are on by default. Turning them off hides every team's Evaluations tabs and pages, makes the evaluation API answer 404 for everyone, and stops automatic runs. Sets and runs are kept and come back when it's turned on again. Turning it off asks for confirmation first, saying what disappears. The switch is audited ("Turned evaluations off").
 
-Before v0.2.1 this switch was under Limits → Evaluations, which now keeps only the two evaluation limits.
+It's on Admin → Settings → Features since v0.4.2 (on the Overview from v0.2.1 to v0.4.1, and under Limits → Evaluations before that, which now keeps only the two evaluation limits).
 
 ## The MCP switches
 
 **MCP server** lets AI tools search knowledge bases and ask agents at `/mcp`, with API keys that have the MCP scope. **OAuth sign-in for MCP clients** also lets a person connect a tool by signing in and approving it, without a key; it's experimental and only takes effect while the MCP server is on. Turning either off asks for confirmation, since connected tools stop at once; keys and connections are kept. Both are audited (`platform.mcp`, `platform.mcp_oauth`). See [MCP server and OAuth](/docs/self-hosting/mcp-server).
+
+<Screenshot slot="admin-features-mcp" />
 
 Agents calling tools on *outside* MCP servers has no switch: nothing happens until an admin registers a server and approves a tool under [MCP servers](/docs/administration/mcp-servers).
 
