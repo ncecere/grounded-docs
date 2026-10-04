@@ -76,9 +76,9 @@ The chosen tools join the agent's knowledge search. The model decides whether to
 
 ### Results are sources
 
-A tool's result is **untrusted text**. It's given to the model as a numbered source, framed like a passage under the same rule: it's data, never instructions. With SystemOne [passage judging](/docs/administration/systemone) on, it's judged against the question first, and a result judged irrelevant isn't given to the model.
+A tool's result is **untrusted text**. It's given to the model as a numbered source, framed like a passage under the same rule: it's data, never instructions. With SystemOne [passage judging](/docs/administration/systemone) on, it's judged against the question too, but since v0.4.2 a result the model asked for is never left out for relevance: a conflicting one is marked like a passage, and only a result judged a prompt injection is left out (the step says "Left out: the result contained instructions to the assistant."). Before v0.4.2 a result judged irrelevant wasn't given to the model. Agents are told to report a failed tool in words.
 
-The answer cites it with `[n]` like any passage. Among the answer's sources it reads **From *Service status* · check_outage** and opens like a passage. Citation checks verify claims against it, and a strictly grounded agent answers only from passages and tool results. The citation is stored with the answer, so reopening the conversation shows it. In the API, such a citation has `kind: "tool"`, `server` and `tool`.
+The answer cites it with `[n]` like any passage. Among the answer's sources it reads **From *Service status* · Check outage** (the tool's title, when its server gives one; its name, `check_outage`, otherwise and before v0.4.2) and opens like a passage; the chat's step reads "Used Check outage". Citation checks verify claims against it, and a strictly grounded agent answers only from passages and tool results. The citation is stored with the answer, so reopening the conversation shows it. In the API, such a citation has `kind: "tool"`, `server` and `tool`.
 
 <Screenshot slot="chat-tool-source" />
 

@@ -27,6 +27,8 @@ After retrieval and before the prompt is built, the model judges the top candida
 - Evidence is re-ranked by relevance.
 - Passages that contradict the question's premise are kept apart, as conflicting evidence, and the model is told to point out the conflict rather than treat it as fact.
 - If nothing usable is left, a strictly grounded agent refuses **without calling the chat model**.
+- **Results of [MCP tools](/docs/administration/mcp-servers) the model called** are judged too, but since v0.4.2 never dropped for relevance: the model asked for them (judged against a two-part question, a result answering one part used to be dropped). A conflicting one is marked like a passage, and only a result judged a prompt injection is left out.
+- The chat's search step reads, for example, "6 passages checked, 2 kept".
 
 If a judgment times out or fails, the passage keeps its place and is used (fail-open).
 
@@ -47,6 +49,8 @@ After an answer, each **claim** (a factual sentence, list item or table row) is 
 
 - **Annotate** (default mode): verdicts are shown; nothing is removed.
 - **Enforce**: citations confidently unsupported or contradicted (at or above the auto-accept threshold, 0.8 by default) are removed; if nothing in the answer is supported, a strictly grounded agent replies with its refusal instead.
+
+Since v0.4.2 a "contradicts" verdict below the auto-accept threshold counts as **not supported** (amber), not as a contradiction (red): only a confident contradiction is shown as one. The answer's summary names every mark, for example "4 of 6 claims supported · 1 contradicted · 1 uncited".
 
 Checks are bounded (20 seconds per answer by default, at most 30 claim–source pairs); pairs not answered in time are unchecked. Streamed answers, including those streamed in checked paragraphs (the public default since v0.4.0), are checked after they finish, and the verdicts appear in place; buffered answers are checked before they're shown. Verdicts below the auto-accept threshold are never acted on, only counted for review.
 
