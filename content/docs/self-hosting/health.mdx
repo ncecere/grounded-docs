@@ -10,6 +10,7 @@ Since v0.3.0, Grounded keeps the latest test result of every model connection, m
 - **Admin → Connections**, **Models** and **MCP servers** have a **Health** column: "Healthy · 3 minutes ago", "Failing · since 2 hours ago", or **Not tested yet**, with a **Health** filter.
 - A connection's, model's or server's page shows the exact time of the last test, who ran it (an admin or the scheduled check) and, when it failed, the error class and the message.
 - The admin Overview lists failures under **Needs attention**: "1 connection is failing", "2 models are failing", "1 MCP server is failing", each linking to its list filtered to the failing ones.
+- Since v0.4.2 team members see it too, without the message: `GET /v1/chat-models` and `GET /v1/mcp-tools` carry each model's and MCP server's latest status (`health`, `serverHealth`: healthy, failing or untested, with when it began). The **New agent** dialog starts on a healthy chat model (else one never tested, never a failing one while another exists), the model pickers mark a failing model **Failing**, and **Build → Tools** says when a tool's server is failing its checks. [Reranking](/docs/administration/reranking)'s page shows the rerank model's health, and its settings warn before you choose a failing or untested one.
 
 <Screenshot slot="admin-connections-health" />
 
