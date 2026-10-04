@@ -16,14 +16,14 @@
     "files": [
       "chat-answer-sources"
     ],
-    "alt": "A Help Desk Assistant answer to \"I forgot my NetID password. How do I reset it?\": numbered steps with citation chips marked with check marks, one sentence marked Uncited, the summary \"5 of 6 claims supported · 1 uncited\", and the two sources opened below."
+    "alt": "A Help Desk Assistant answer to \"I forgot my NetID password. How do I reset it?\": numbered steps with citation chips marked with check marks, one sentence marked Uncited, the summary \"5 of 6 claims supported · 1 uncited\", the two sources opened below (\"Supports 4 claims\" and \"Supports 1 claim\"), and three follow-up questions."
   },
   "chat-citation-card": {
     "files": [
       "chat-citation-card",
       "chat-answer-with-claims"
     ],
-    "alt": "The same answer with a citation chip's card open: \"Claim supported by this source (100% confidence)\", the claim's text, the cited passage, and \"Show source 1 below\"."
+    "alt": "The same answer with a citation chip's card open below it: \"Claim supported by this source (98% confidence)\", the claim's text, the cited passage, and \"Show source 1\"."
   },
   "public-agent-page": {
     "files": [
@@ -75,7 +75,7 @@
       "agent-build",
       "agent-editor-build-try-it"
     ],
-    "alt": "The agent editor's Build tab for Help Desk Assistant: the instructions and the collapsed Model, Knowledge, Tools, Answering, Safety and SystemOne checks sections, beside the Try it panel with a draft answer that searched the knowledge base and used check_outage, its claim summary and Add to evaluations."
+    "alt": "The agent editor's Build tab for Help Desk Assistant, filling the window: the instructions and the collapsed Model, Knowledge, Tools, Answering, Safety and SystemOne checks sections, beside the Try it panel, which answered \"Is email down right now?\" after a step reading \"Used Check outage\", with \"1 of 1 claim supported\" and two follow-up questions."
   },
   "agent-share": {
     "files": [
@@ -128,7 +128,7 @@
       "team-members",
       "team-settings-members-sso-managed"
     ],
-    "alt": "Team settings, Members tab: the team's only owner, an editor marked \"Managed by SSO group it-staff\", and two members whose roles can be changed."
+    "alt": "Team settings, Members: the team's only owner, an editor marked \"Managed by SSO group it-staff\", and two members whose roles can be changed."
   },
   "team-usage-spend": {
     "files": [
@@ -147,7 +147,7 @@
     "files": [
       "admin-overview-features"
     ],
-    "alt": "Admin Overview: the platform at a glance, Needs attention with a failing connection, and the Features card listing each optional feature's state, including the MCP server and OAuth sign-in rows, with recent changes."
+    "alt": "Admin Overview: the platform at a glance, Needs attention (all clear), and the Features card listing each optional feature's state with a link to where it's set: Settings for Evaluations, the MCP server, OAuth sign-in and Saved answers, then Cost tracking, OCR, SSO groups, SystemOne, Reranking \"On · Reranker\", Public access and Maintenance; Recent changes below."
   },
   "admin-teams": {
     "files": [
@@ -177,7 +177,7 @@
     "files": [
       "admin-models"
     ],
-    "alt": "Admin, Models: the Reranking notice (\"Searches rerank their best 40 passages with Reranker, waiting at most 2 s. 5 published agents rerank.\") with Reranking settings, and a chat model, an embedding model, a rerank model and a SystemOne model with their connection, maximum classification, what uses them, their status and health, below filters by kind, connection and health."
+    "alt": "Admin, Models: the Kind filter and a chat model, an embedding model, a rerank model (used by Reranking) and a SystemOne model, each Enabled and Healthy."
   },
   "admin-embedding-migrations": {
     "files": [
@@ -203,7 +203,7 @@
       "admin-costs",
       "admin-costs-overview"
     ],
-    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens (chat, embedding, SystemOne, rerank and OCR), requests, unpriced usage Yes, and spend per day by kind, with Rerank and MCP tools in the legend."
+    "alt": "Admin, Costs, Overview tab for the last 30 days: total spend, tokens (chat, embedding, SystemOne, rerank and OCR), requests, unpriced usage Yes, and spend per day by kind, with \"Embedding and rerank\" as one series beside Chat, SystemOne, Moderation, OCR and MCP tools."
   },
   "admin-costs-budgets": {
     "files": [
@@ -263,7 +263,7 @@
     "files": [
       "admin-features-mcp"
     ],
-    "alt": "Admin Overview, Features: the MCP server row switched on, with the address clients use and a Setup guide link, and the OAuth sign-in for MCP clients row switched on and marked Experimental."
+    "alt": "Admin, Settings, the Features card: Evaluations with Evaluation limits; MCP server on, with the address clients use, Setup guide and Allow MCP clients; OAuth sign-in for MCP clients on and marked Experimental, with How it works; and Saved answers on."
   },
   "admin-user-connected-apps": {
     "files": [
@@ -365,13 +365,13 @@
     "files": [
       "admin-features-saved-answers"
     ],
-    "alt": "Admin Overview, Features: Saved answers, On, \"Agents reuse a recent answer to the same question: at once, at no model cost. On by default for public agents; each agent has its own setting.\", with the Allow saved answers switch, among the MCP server, OAuth sign-in, cost tracking, OCR, SSO groups, SystemOne, public access and maintenance rows."
+    "alt": "Admin, Settings, the Features card: Saved answers On, \"Agents reuse a recent answer to the same question: at once, at no model cost. On by default for public agents; each agent has its own setting.\", with the Allow saved answers switch, below the evaluations and MCP switches."
   },
   "admin-reranking-settings": {
     "files": [
       "admin-reranking-settings"
     ],
-    "alt": "Admin, Models, Reranking: the Settings card with Rerank model Reranker (Healthy), Candidates 40 and Time limit 2,000 ms, above the Test card."
+    "alt": "Admin, Models, Reranking, scrolled to Settings: Rerank model \"Reranker · Healthy\", Candidates 40 (5 to 50), Time limit 2,000 ms (200 to 10,000; a slower or failed call keeps the usual order), and the Test card below with its team and knowledge base."
   },
   "agent-build-advanced-rerank": {
     "files": [
@@ -425,7 +425,7 @@
     "files": [
       "phone-public-follow-up-suggestions"
     ],
-    "alt": "A public agent's page on a phone: the Library Guide answering \"How many books can I borrow at once as a student?\" (50 items for undergraduates, 100 for graduate students), then \"You could also ask:\" with one chip whose question wraps onto two lines inside the screen."
+    "alt": "A public agent's page on a phone: the Library Guide answering \"How many books can I borrow at once as a student?\" (50 items for undergraduates, 100 for graduate students), then \"You could also ask:\" with one chip that wraps inside the screen."
   },
   "agent-build-advanced-follow-ups": {
     "files": [
@@ -455,42 +455,42 @@
     "files": [
       "admin-reranking"
     ],
-    "alt": "Admin, Models, Reranking: the page's Status card reading On, \"Every search reranks: agents, Try it, the retrieval API and MCP search\", the model Reranker with its health, 40 passages per search, a 2 s time limit, how many published agents rerank and which turned it off."
+    "alt": "Admin, Models, Reranking: the Status card reading On, \"Every search reranks: agents, Try it, the retrieval API and MCP search.\", the model Reranker marked Healthy, 40 passages per search, a 2 s time limit, 5 published agents rerank, and no published agent turns it off; the Settings card starts below."
   },
   "admin-settings": {
     "files": [
       "admin-settings"
     ],
-    "alt": "Admin, Operations, Settings: Money and time with the currency and time zone, the default monthly budget, and the Features card with the Evaluations, MCP server, OAuth sign-in for MCP clients and Saved answers switches."
+    "alt": "Admin, Operations, Settings: Money and time with the currency (USD) and the time zone (America/New_York), the Default budget card with the default monthly budget empty, and the start of the Features card."
   },
   "account-menu-theme": {
     "files": [
       "account-menu-theme"
     ],
-    "alt": "The account menu opened from the person's name at the bottom of the sidebar: Notification settings, Connected apps, and the Theme group with System, Light and Dark."
+    "alt": "The account menu opened from the person's name at the bottom of the sidebar: their name and email, Notification settings, Connected apps, the Theme group with System (selected), Light and Dark, and Sign out."
   },
   "dark-chat-answer": {
     "files": [
       "dark-chat-answer"
     ],
-    "alt": "A Help Desk Assistant answer in dark mode: the steps, citation chips, the claims summary and the sources, in light text on a dark background."
+    "alt": "The Help Desk Assistant's answer in dark mode: the steps with citation chips, \"5 of 6 claims supported · 1 uncited\", the two source cards and the follow-up questions, in light text on a dark background."
   },
   "dark-agent-build": {
     "files": [
       "dark-agent-build"
     ],
-    "alt": "The agent editor's Build tab in dark mode: the instructions, the collapsed sections and Try it."
+    "alt": "The agent editor's Build tab in dark mode: the instructions, the collapsed sections and Try it with the answer that used Check outage."
   },
   "dark-phone-public-page": {
     "files": [
       "dark-phone-public-page"
     ],
-    "alt": "A public agent's page on a phone in dark mode, following the device's setting."
+    "alt": "The public Library Guide on a phone in dark mode, following the device's setting: the question, the search step, the answer with its citation chips and a follow-up question."
   },
   "dark-admin-page": {
     "files": [
       "dark-admin-page"
     ],
-    "alt": "An admin page in dark mode."
+    "alt": "Admin, Models, Reranking in dark mode: the Status card and the start of Settings."
   }
 }

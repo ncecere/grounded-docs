@@ -1,4 +1,9 @@
 {
+  "account-menu-theme": {
+    "src": "/images/account-menu-theme.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-analytics": {
     "src": "/images/admin-analytics.webp",
     "width": 1440,
@@ -92,10 +97,15 @@
   "admin-overview-features": {
     "src": "/images/admin-overview-features.webp",
     "width": 1440,
-    "height": 1848
+    "height": 1940
   },
   "admin-parsing-ocr": {
     "src": "/images/admin-parsing-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-reranking": {
+    "src": "/images/admin-reranking.webp",
     "width": 1440,
     "height": 900
   },
@@ -106,6 +116,11 @@
   },
   "admin-retention": {
     "src": "/images/admin-retention.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-settings": {
+    "src": "/images/admin-settings.webp",
     "width": 1440,
     "height": 900
   },
@@ -223,6 +238,26 @@
     "src": "/images/crawl-domains.webp",
     "width": 1440,
     "height": 900
+  },
+  "dark-admin-page": {
+    "src": "/images/dark-admin-page.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "dark-agent-build": {
+    "src": "/images/dark-agent-build.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "dark-chat-answer": {
+    "src": "/images/dark-chat-answer.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "dark-phone-public-page": {
+    "src": "/images/dark-phone-public-page.webp",
+    "width": 390,
+    "height": 844
   },
   "data-source-web": {
     "src": "/images/data-source-web.webp",
