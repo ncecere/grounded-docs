@@ -1,0 +1,41 @@
+---
+title: Your settings and dark mode
+description: The account menu — notification settings, connected apps, and the theme (System, Light or Dark). Public pages and the widget follow the device.
+---
+
+Everything you set for yourself is in the **account menu**: select your name at the bottom of the sidebar.
+
+<Screenshot slot="account-menu-theme" />
+
+| Setting | What it does | Where it's kept |
+|---|---|---|
+| **Notification settings** | Which events reach you in the app and by email. Some are required. Only the team events your role can get are listed. | Your account |
+| **Connected apps** | AI tools you connected with OAuth sign-in; disconnect one to stop it at once ([Connect AI tools](/docs/using/mcp)). | Your account |
+| **Theme** | **System** (the default), **Light** or **Dark**. Since v0.4.2. | This browser |
+
+## Theme: light and dark
+
+Since v0.4.2 Grounded has a dark mode. With **System**, it follows your device's light or dark setting and changes with it while the page is open: a device that switches to dark at sunset takes Grounded with it. **Light** and **Dark** keep that look whatever the device says.
+
+<Screenshot slot="dark-chat-answer" />
+
+- **Kept in this browser**, not in your account: another browser or device starts on System, and signing out keeps your choice. Other tabs of the same browser change at once.
+- **⌘K** (or Ctrl+K) has **Theme: System**, **Theme: Light** and **Theme: Dark**, with the current one marked.
+- **No flash.** The page is drawn in your theme from the start, before anything else shows.
+- **Both themes are checked.** Every page passes WCAG 2.1 AA contrast in both, and agents' accent colours carry white text in both.
+
+<Screenshot slot="dark-agent-build" />
+
+### Public pages and the widget
+
+A public agent's page and the widget on another site have no account menu: both **follow the visitor's device setting**. A choice made in the account menu applies to the public page too when it's opened in the same browser on the same Grounded site. On another site, the widget follows the device: in dark, its launcher has a light ring so a dark accent colour still stands out, and its focus ring is white.
+
+<Screenshot slot="dark-phone-public-page" />
+
+### For platform admins
+
+Admin pages follow each person's theme like the rest of the app.
+
+<Screenshot slot="dark-admin-page" />
+
+The instance's colour theme (`UI_THEME`) is set by whoever runs Grounded and shown read-only on [Admin → Settings](/docs/administration/settings#from-the-environment); every theme has light and dark values, and light or dark is each person's choice.

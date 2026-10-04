@@ -462,5 +462,35 @@
       "admin-settings"
     ],
     "alt": "Admin, Operations, Settings: Money and time with the currency and time zone, the default monthly budget, and the Features card with the Evaluations, MCP server, OAuth sign-in for MCP clients and Saved answers switches."
+  },
+  "account-menu-theme": {
+    "files": [
+      "account-menu-theme"
+    ],
+    "alt": "The account menu opened from the person's name at the bottom of the sidebar: Notification settings, Connected apps, and the Theme group with System, Light and Dark."
+  },
+  "dark-chat-answer": {
+    "files": [
+      "dark-chat-answer"
+    ],
+    "alt": "A Help Desk Assistant answer in dark mode: the steps, citation chips, the claims summary and the sources, in light text on a dark background."
+  },
+  "dark-agent-build": {
+    "files": [
+      "dark-agent-build"
+    ],
+    "alt": "The agent editor's Build tab in dark mode: the instructions, the collapsed sections and Try it."
+  },
+  "dark-phone-public-page": {
+    "files": [
+      "dark-phone-public-page"
+    ],
+    "alt": "A public agent's page on a phone in dark mode, following the device's setting."
+  },
+  "dark-admin-page": {
+    "files": [
+      "dark-admin-page"
+    ],
+    "alt": "An admin page in dark mode."
   }
 }
