@@ -9,7 +9,7 @@ Released 2026-10-11. v0.4.3 is a security patch for [v0.4.2](/docs/releases/v0-4
 
 - **13 Go advisories fixed** (GO-2026-6599, 6600, 6603, 6604, 6605, 6607 to 6613 and 6617). They cover HTTP/2 server memory and CPU exhaustion and a crash, HTTP/1 connection desynchronisation after a `CONNECT`, unbounded `Range` and MIME header parsing, `html/template` context tracking and `crypto/tls`. `govulncheck`, which runs on every push, flagged them against Go 1.26.7 and x/net v0.59.0, so all are treated as applying to Grounded. We haven't assessed each one's exposure in a typical deployment, and the patch makes that unnecessary.
 - **Where they are fixed.** All 13 are fixed in Go 1.26.9. Five of them (GO-2026-6603, 6610, 6611, 6612 and 6617) also affect `golang.org/x/net` and are fixed in v0.60.0. GO-2026-6604 affects Windows only. With both updates, `govulncheck` reports no vulnerabilities.
-- **Nothing else.** No new pages, settings or behaviour. The one other difference from v0.4.2 is wording in the API reference (below).
+- **Nothing else.** No new pages, settings or behaviour. The one other difference from v0.4.2 is a more precise description of the `thinking` chat status in the OpenAPI document (below).
 
 ## Requirements
 
@@ -23,7 +23,7 @@ A rolling upgrade with no downtime. Take a backup as for any upgrade, then chang
 
 ## API changes
 
-None. The [API reference](/docs/api) describes the `thinking` chat status more precisely: it applies whenever the model reasons, including after a tool call (the behaviour changed in [v0.4.2](/docs/releases/v0-4-2); only the description is new).
+None. The only difference is in Grounded's OpenAPI document (the source of this site's [API reference](/docs/api)), whose description of the `thinking` chat status now says it applies whenever the model reasons, including after a tool call. The behaviour changed in [v0.4.2](/docs/releases/v0-4-2) and is described on the [Native chat API](/docs/api/chat-api#the-event-stream) page; this site's generated reference does not display that description, so nothing on it changes.
 
 ## Known limitations
 
