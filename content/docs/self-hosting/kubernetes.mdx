@@ -46,17 +46,17 @@ namespace: grounded
 
 resources:
   - namespace.yaml   # your namespace, labelled for the restricted Pod Security Standard
-  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.4.3
+  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.4.4
 
 components:
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.4.3
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.4.3
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.4.3
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.4.3
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.4.4
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.4.4
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.4.4
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.4.4
 
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.4.3             # informational
+    newTag: v0.4.4             # informational
     digest: sha256:<digest>    # what is deployed
 
 configMapGenerator:

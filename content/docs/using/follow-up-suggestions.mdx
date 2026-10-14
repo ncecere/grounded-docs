@@ -67,7 +67,7 @@ The OpenAI-compatible endpoint, the MCP server's `ask`, chat requests with `stre
 ## For platform admins and operators
 
 <Callout type="warn" title="Set How to turn thinking off on reasoning chat models">
-  The call has a 10-second limit and at most 1,024 output tokens, reasoning included. It turns thinking off whenever the chat model can ([Models → Compatibility → **How to turn thinking off**](/docs/administration/models#compatibility)), whatever the answer's reasoning effort, and otherwise asks for low effort. A reasoning model without **How to turn thinking off** can reason past the limit, and then no suggestions show.
+  The call has a 10-second limit and at most 1,024 output tokens, reasoning included. It turns thinking off whenever the chat model can ([Models → Compatibility → **How to turn thinking off**](/docs/administration/models#compatibility)), whatever the answer's reasoning effort, and otherwise asks for low effort. A reasoning model without **How to turn thinking off** can reason past the limit, and then no suggestions show. Some models ignore every way of turning thinking off (the model's **Test** in Models says so: "Thinking off isn't honoured by this model"). Since v0.4.4, when such a model spends the whole budget reasoning and writes nothing, the call is retried once with a larger budget (what it reasoned plus 1,024 tokens when the gateway reports reasoning tokens, otherwise 4,096, never more) and a 20-second limit, so the stream's `done` can come about 30 seconds after the answer in that case. Both calls' usage is recorded; a second empty reply shows no chips.
 </Callout>
 
 - The call holds the person's concurrent-chat slot until it ends; the stream's `done` comes after it.

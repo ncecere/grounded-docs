@@ -42,7 +42,7 @@ Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/comp
 
 Reranking's status and settings are on their own page, **Admin → Models → Reranking**, since v0.4.2 (before, a notice and a **Reranking settings** dialog on this page). A model in use can't be deleted, and its record page says why, in words, beside the disabled **Delete** ("Reranking uses this model. To delete it, choose None or another model on Admin → Models → Reranking first.").
 
-**Test model** sends a tiny real request: a one-word chat completion, an embedding of a short string (it reports the dimensions the gateway actually returns), a benign and a harmful sample for moderation, two passages for a rerank model (one that answers a fixed question must score above one that doesn't), or the built-in sample page for a vision model.
+**Test model** sends a tiny real request: a one-word chat completion, an embedding of a short string (it reports the dimensions the gateway actually returns), a benign and a harmful sample for moderation, two passages for a rerank model (one that answers a fixed question must score above one that doesn't), or the built-in sample page for a vision model. For a chat model with **How to turn thinking off** set, Test also sends a second request the way an agent's Reasoning effort **Off** does and says whether the model still reasoned (since v0.4.4). A model that ignores every switch gets a warning, and the result stays on the model: **Thinking off: Works** or **Ignored**, with the date, on its page, and **Off (ignored by this model)** in Build → Advanced → Reasoning effort. It is kept until the model's compatibility settings or upstream model change, and it is not a health status: such a model is not counted as failing.
 
 ### Compatibility
 

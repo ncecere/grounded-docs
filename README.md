@@ -22,7 +22,7 @@ npm run dev          # http://localhost:3000
 | `npm run check:links` | Checks every internal link and anchor in `out/` (run after a build). |
 | `npm run typecheck` | TypeScript. |
 | `npm start` | Serves `out/` locally. |
-| `npm run sync:openapi` | Refreshes `openapi/grounded.yaml` from a Grounded checkout (`../golang/grounded`, or `$GROUNDED_REPO`), or from GitHub at a tag: `npm run sync:openapi -- v0.4.3`. |
+| `npm run sync:openapi` | Refreshes `openapi/grounded.yaml` from a Grounded checkout (`../golang/grounded`, or `$GROUNDED_REPO`), or from GitHub at a tag: `npm run sync:openapi -- v0.4.4`. |
 | `npm run screenshots` | Imports screenshots (below). |
 | `npm run screenshots:check` | Lists screenshot slots that are still placeholders. |
 

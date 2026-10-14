@@ -4755,7 +4755,7 @@ paths:
         default) the reply is Server-Sent Events: named events whose data is JSON
         (see ChatEvent* schemas), in this order: conversation, status (what the
         agent is doing before the answer's first words: rewriting, searching,
-        checking, answering; one event per step, and clients should ignore
+        checking, thinking, waiting, answering; one event per step, and clients should ignore
         steps they don't know), retrieval (always mode), message_start, then
         thinking_delta / text_delta / text_reset / tool_call /
         retrieval / tool_result as they happen, moderation (only when
@@ -9551,9 +9551,26 @@ components:
             (a timed-out check is retried once). Null uses the platform
             default, MODERATION_TIMEOUT, or 30 seconds for chat_classifier
             models if that is longer.
+        thinkingOffCheck:
+          nullable: true
+          description: >-
+            Chat models with a way to turn thinking off: what the last Test
+            found (v0.4.4). Null when never tested, or after the model's
+            compatibility settings or upstream model changed. A Test does not
+            change the revision.
+          allOf: [{ $ref: "#/components/schemas/ThinkingOffCheck" }]
         revision: { $ref: "#/components/schemas/Revision" }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+    ThinkingOffCheck:
+      type: object
+      required: [result, checkedAt]
+      properties:
+        result:
+          type: string
+          enum: [honoured, ignored]
+          description: "honoured: a reply with thinking asked to be off had no reasoning; ignored: the model reasoned anyway"
+        checkedAt: { type: string, format: date-time }
     ModerationProvider:
       type: string
       description: >-
@@ -9626,8 +9643,21 @@ components:
         moderation: { $ref: "#/components/schemas/ModerationModelTest" }
         systemOne: { $ref: "#/components/schemas/SystemOneModelTest" }
         rerank: { $ref: "#/components/schemas/RerankModelTest" }
+        thinkingOff: { $ref: "#/components/schemas/ThinkingOffModelTest" }
         error: { $ref: "#/components/schemas/ProxyError" }
         timings: { $ref: "#/components/schemas/RequestTimings" }
+    ThinkingOffModelTest:
+      type: object
+      description: >-
+        Chat models with a way to turn thinking off (Compatibility): a second request, made the way an agent's Reasoning
+        effort Off makes it, and whether the model still reasoned (v0.4.4, issue #7). Some models ignore every switch.
+      required: [setting, honoured, message]
+      properties:
+        setting: { type: string, description: "The configured way, for example reasoning_effort: none" }
+        honoured: { type: boolean, description: True when the reply had no reasoning; false when it still reasoned or the check could not run (see error) }
+        reasoningTokens: { type: integer, description: Reasoning tokens the gateway reported (absent when it reported none) }
+        error: { type: string, description: Set when the check itself could not run; the model's ordinary test is not affected }
+        message: { type: string, description: The result in a sentence }
     RerankModelTest:
       type: object
       description: Rerank models - the scores of a passage that answers a fixed question and one that doesn't (the first should be higher)
@@ -10087,6 +10117,11 @@ components:
         maxOutputTokens: { type: integer, format: int32, nullable: true }
         supportsTools: { type: boolean, description: "Required for retrieval mode tool" }
         supportsReasoningEffort: { type: boolean, description: "Reasoning effort low, medium and high can be chosen" }
+        thinkingOffCheck:
+          type: string
+          enum: [honoured, ignored]
+          nullable: true
+          description: "What an admin's Test found about turning thinking off for this model (null: not tested since it was configured). ignored means it reasoned anyway, so Reasoning effort Off may not stop it."
         supportsThinkingOff: { type: boolean, description: "Reasoning effort off can be chosen (the model's compatibility says how to turn thinking off)" }
         health: { $ref: "#/components/schemas/PickerHealth" }
     EmbeddingProfileOption:
@@ -12306,10 +12341,14 @@ components:
         thinking: the model is reasoning (v0.4.0; since v0.4.2 whenever it
         reasons, including after a tool call, as readers don't see the
         reasoning itself); answering follows once it starts writing.
+        waiting: a request waits for capacity (the connection's request limit
+        or SystemOne's busy slots) for about a second or more; it overlays
+        the step in progress, which is sent again when the wait is over, and
+        none is sent once the model has started to write (v0.4.4).
         Clients should ignore steps they don't know.
       required: [step]
       properties:
-        step: { type: string, enum: [rewriting, searching, checking, thinking, answering] }
+        step: { type: string, enum: [rewriting, searching, checking, thinking, waiting, answering] }
     ChatEventMessageStart:
       type: object
       description: "SSE event message_start"
