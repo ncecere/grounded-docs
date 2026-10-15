@@ -16,6 +16,7 @@ A profile defines:
 | **Output dimensions** | Optional: store fewer dimensions than the model's native size, for models trained to allow it (Matryoshka models such as Qwen3-Embedding). |
 | **Document prefix** and **query prefix** | Text some models expect before documents and questions. Adding a profile for a model with known prefixes fills them in (nomic-embed: `search_document: ` and `search_query: `; Qwen3-Embedding: its query instruction). |
 | **Chunk size** and **overlap** | Passage size in tokens. |
+| **Chunker** | How a page is cut into passages: **Standard** (version 1, a new passage at every heading) or **Merge short sections** (version 2, which also joins short neighbouring sections and drops passages that are only a heading). Chosen when the profile is created. |
 | **Default fusion weights** | Optional: the vector and keyword weights for knowledge bases on this profile that don't set their own. |
 
 Everything except the name, description, status, the default flag and the default fusion weights is **fixed** once the profile exists, because stored vectors depend on it. One profile is the platform default for new sources. A profile can be retired, or deleted once nothing uses it; the Profiles tab shows what uses each one, and since v0.4.2 the profile's own page has **Retire** and **Delete** too. Deleting a profile that past migrations refer to keeps their history. A new profile's key follows its name until you type one.
@@ -88,3 +89,21 @@ Repeat for every knowledge base on the old profile, then retire or delete it.
 | Progress pauses now and then | The gateway or the connection's limit is holding requests back. The job waits and continues. |
 | Switch back is no longer offered | The grace period is over, or the old vectors were deleted. Start a new migration back instead. |
 | Storage didn't shrink after the grace period | Cleanup runs every 10 minutes, in batches. A shared source keeps old vectors while another knowledge base still uses the old profile. |
+
+## Previewing new settings
+
+A migration switches by itself when its new index is ready. An **index preview** builds the new index **beside** the current one and waits, so you can see what it does before anything changes. Use it when you want evidence for a change: another passage size or overlap, a different embedding model, other prefixes, or the other chunker.
+
+**Migrations → Preview new settings…** (or **Preview new settings…** in a knowledge base's **…** menu). Pick the knowledge base and fill in **only what should change**; empty fields keep the current profile's. The knowledge base keeps answering from the current index the whole time.
+
+- **A hidden copy.** The preview makes a copy of the knowledge base's profile with your changes. It is in no list or picker and nothing can use it until you switch.
+- **Compared on its evaluation sets.** When the new index is built, the platform runs the knowledge base's [evaluation sets](/docs/using/editors/evaluations) on both indexes, retrieval only, at the same time. The preview's page shows, for each set and in all, **recall, MRR, the questions ranked first, and how many questions got better, got worse or stayed the same**. **Compare again** runs them once more, for example after documents changed.
+- **Numbers for you, questions for the team.** Evaluation sets belong to the team, so you see scores and counts, not the questions. The team's editors, admins and owners see each question that changed, with its rank on both indexes, on the knowledge base's own page. These runs are not in the team's run list, trend or regression checks.
+- **Then decide.** **Switch to the new index** does what a migration's switch does: it is atomic, the old vectors are kept for the grace period you chose so you can **Switch back**, and the team is told. **Discard preview** deletes the new index; the knowledge base never changed, and the preview's record stays.
+
+How to read a comparison:
+
+- It measures **retrieval**: whether the page a question expects comes back, and how high. It does not measure the quality of answers.
+- A difference of one or two questions is noise. With few questions, or questions that are all easy, the two indexes may not be told apart. A knowledge base with no evaluation sets has nothing to compare; ask the team to add some first.
+- Until you switch or discard, the knowledge base holds two sets of passages and vectors. Nothing expires a forgotten preview.
+- **Merge short sections** (chunker version 2) has not been measured on a real knowledge base. Preview it on one that has evaluation sets, and decide by the numbers.
