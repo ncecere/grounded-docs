@@ -1,0 +1,86 @@
+---
+title: Webhooks
+description: Turn webhooks on, approve the hosts they may send to, make platform webhooks, and what the address rules are.
+---
+
+Since v0.6.0, Grounded can tell another system when something happens: it sends an HTTPS `POST` with a small JSON event, **signed** so the receiver can tell it came from Grounded, and **retried** when the receiver is down. Webhooks are **off** until a platform admin turns them on, and nothing is sent until someone makes a webhook to an approved host.
+
+Who does what:
+
+| | Where | Who |
+|---|---|---|
+| Turn webhooks on or off | **Admin → Settings → Features → Webhooks** | Platform admins |
+| Approve the hosts webhooks may send to | **Admin → Webhooks → Approved destinations** | Platform admins |
+| Make webhooks for platform events | **Admin → Webhooks → Platform webhooks** | Platform admins |
+| Make webhooks for a team's events | **Team settings → Webhooks** ([Webhooks for teams](/docs/using/owners/webhooks)) | The team's admins and owners |
+
+Platform auditors see the destinations, the platform webhooks and their deliveries, read-only. A platform admin who isn't on a team doesn't see that team's webhooks: they are team content, like the team's agents.
+
+## Turning webhooks on
+
+On **Admin → Settings → Features**, **Allow webhooks** is the switch. It's off on a new install and after the upgrade to v0.6.0. See [Features overview](/docs/administration/features#the-webhooks-switch).
+
+Turning it off asks for confirmation and stops everything at once: no new webhooks, no events recorded, nothing sent, including by webhooks that exist. The **Webhooks** tab leaves Team settings. Webhooks and their delivery logs are kept, and turning the switch on again resumes them. While it's off, **Admin → Webhooks** still lets you read the delivery logs, rotate a secret and delete a webhook, and says "Webhooks are turned off". You can prepare destinations meanwhile.
+
+## Approved destinations
+
+A webhook can only send to a host that an approved destination covers. **Admin → Webhooks** (in the Operations group) has an **Approved destinations** card:
+
+1. Enter a **Host pattern**: a host name such as `hooks.example.edu`, or `*.example.edu` for that host and its subdomains. `*` alone is refused.
+2. Optionally add a **Note**, such as who asked for it.
+3. Choose **Approve destination**.
+
+The table lists each pattern, its note and when it was approved. **Remove…** in a row's menu withdraws it. Webhooks to hosts it covers stop at once: their deliveries fail as "no longer approved" and aren't retried. The webhooks stay, and you can approve the destination again.
+
+Team admins see the patterns when they choose an address, so approve only hosts you'd accept receiving events from every team. Until you approve one, no webhook can be made ("No destinations are approved yet").
+
+## What the address rules are
+
+- The address is `https`, on port **443**, with a **host name** that an approved destination covers. An IP address is refused.
+- It's checked **when the webhook is saved and again before every delivery**. Removing a destination, or a DNS change, takes effect on the next delivery.
+- Grounded never sends to private, loopback, link-local, carrier-grade NAT, multicast or cloud metadata addresses, whatever the host name resolves to and whatever you approve. It connects to the address it checked, follows **no redirects** (a `3xx` answer is a failure) and reads at most 4 KB of the receiver's answer.
+- This is the guard the crawler uses, applied to webhooks.
+
+The base NetworkPolicy already lets the api and worker pods reach TCP 443 anywhere, so the Kubernetes install needs no change. If you've restricted egress in your overlay, allow 443 to the hosts you approve. See [Security](/docs/self-hosting/security#threat-model-in-brief).
+
+<Callout type="warn" title="Not yet tested against a real external host">
+  Deliveries were exercised against a local TLS receiver. The address guard is unit-tested but wasn't run against real DNS. Try a **Send test event** to each new destination before relying on it.
+</Callout>
+
+## Platform webhooks
+
+The **Platform webhooks** card on the same page makes webhooks for the platform's own events:
+
+| Event | When |
+|---|---|
+| `team.created` | A team was created |
+| `team_request.created` | Someone asked for a team ([Team requests](/docs/administration/team-requests)) |
+
+**New webhook** asks for an **Address**, an optional **Description**, the **Events** to hear (at least one) and **Turned on**. After **Create webhook** the dialog shows the **Signing secret** once; copy it then. You can have up to 10 platform webhooks. A platform webhook never receives a team's events, and a team's webhooks never receive the platform's. The `webhook.test` event is sent on request from **Deliveries…**.
+
+A row's menu has **Deliveries…**, **Edit…**, **Rotate secret…** and **Delete…**. They work as described in [Webhooks for teams](/docs/using/owners/webhooks), which also covers the delivery log, **Send test event**, **Redeliver** and what to do when a webhook pauses. The payloads, headers and the signature check are in the [webhooks reference](/docs/api/webhooks).
+
+## When a webhook pauses
+
+After **five deliveries in a row** gave up, or when a receiver answers `410 Gone`, Grounded pauses the webhook. For a platform webhook, every platform admin gets a **Platform webhook paused** notification; for a team's, the team's admins and owners get **Webhook paused**. Both are in everyone's notification settings and on by default. Turning a paused webhook on again is an edit, made by whoever manages it.
+
+## What's recorded
+
+Everything is audited. A team's webhooks are in the team's audit log; destinations, platform webhooks and the switch are in the platform's:
+
+- `webhook.create`, `webhook.update` (what changed, never the secret), `webhook.rotate_secret`, `webhook.delete`, `webhook.test` and `webhook.redeliver`;
+- `webhook_destination.create` and `webhook_destination.delete`;
+- `platform.webhooks` for the switch.
+
+Secrets are encrypted with `ENCRYPTION_KEY`, never shown again, and re-encrypted by `grounded rotate-keys` ([Security](/docs/self-hosting/security#rotating-keys)). A webhook's delivery log keeps event type, status, attempts, the receiver's last HTTP status and a short error for 14 days, never the receiver's answer.
+
+## Limits to know
+
+- Delivery is **at least once and not ordered**. Receivers de-duplicate on the event's ID.
+- Rotating a secret takes effect at once. There's no overlap window.
+- Addresses are `https` on 443 only. There are no custom headers or batching, and no per-agent or per-source filters.
+- Events carry IDs and summaries only. A rating has no question, answer, comment or person; a team request has no purpose.
+
+## API
+
+Platform admins manage destinations with `POST /v1/admin/webhook-destinations` and `DELETE /v1/admin/webhook-destinations/{destinationId}`, and the switch with `GET` and `PUT /v1/admin/settings/webhooks`. People signing in read the patterns with `GET /v1/webhook-destinations`. API keys can't manage webhooks. See the [webhooks reference](/docs/api/webhooks).

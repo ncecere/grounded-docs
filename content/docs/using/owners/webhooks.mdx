@@ -1,0 +1,130 @@
+---
+title: Webhooks
+description: "Send your team's events to another system as signed HTTPS requests: create a webhook, keep its secret, read the delivery log, and what to do when one pauses."
+---
+
+Since v0.6.0, a team's admins and owners can have Grounded tell another system when something happens in the team: Grounded sends it a small JSON event as a signed HTTPS `POST`, and tries again when the receiver is down. Use it to post in a chat channel when an agent is published, to open a ticket when a web source stops syncing, or to count thumbs-down ratings in your own tools.
+
+Webhooks are under **Team settings → Webhooks**. The tab is for **admins and owners** only; editors and members don't see it. It also appears only while a platform admin has turned webhooks on ([Webhooks for administrators](/docs/administration/webhooks)). If you don't see it, ask them.
+
+## Events for a team
+
+A team webhook hears its own team's events and nothing else:
+
+| Event | When |
+|---|---|
+| `source.synced` | A web source finished syncing: how many pages were fetched, changed and removed |
+| `source.sync_failed` | A web source's sync failed: a short reason |
+| `agent.published` | An agent was published: the agent, the version and its audience |
+| `feedback.submitted` | Someone rated an answer: the agent, the message, the rating and the reason |
+
+Events carry **IDs and summaries, never transcripts or document text**. A rating has no question, answer, comment or person. A receiver that needs more fetches it through the [API](/docs/api) with a key, so classification and permissions still apply. Taking a rating back isn't an event. The exact payloads are in the [webhooks reference](/docs/api/webhooks#events).
+
+## Creating a webhook
+
+<Steps>
+<Step>
+
+### Choose New webhook
+
+On **Team settings → Webhooks**, choose **New webhook**. A team can have up to 10.
+
+</Step>
+<Step>
+
+### Fill in the form
+
+- **Address**: where Grounded sends the events. It must be `https` on port 443, to a host a platform admin has approved. The form lists the approved patterns under the field. If it says "No destinations are approved yet", a platform admin needs to approve one first.
+- **Description** (optional): what it's for, up to 200 characters.
+- **Events**: tick at least one.
+- **Turned on**: on by default.
+
+Choose **Create webhook**.
+
+</Step>
+<Step>
+
+### Copy the secret
+
+The **Webhook created** dialog shows the **Signing secret** (`whsec_…`) **once**. Copy it now and keep it where the receiver can read it, such as a secrets manager. Grounded keeps it encrypted but never shows it again, in the list, the audit log or an event. If you lose it, rotate the secret to get a new one.
+
+</Step>
+<Step>
+
+### Check the receiver
+
+The receiver should check each delivery's signature with the secret before it trusts it. The dialog shows the header format, and the [webhooks reference](/docs/api/webhooks#checking-the-signature) has the check in Python and Node. Then open **Deliveries…** and choose **Send test event** to see it arrive.
+
+</Step>
+</Steps>
+
+If the address is refused, the message appears on the field: it isn't `https`, isn't on port 443, is an IP address, or its host isn't approved. The same check runs again before every delivery.
+
+## The list
+
+The table shows each webhook's **Address** (with its description), **Events**, **Status** and **Secret**: `whsec_…` and the last four characters, enough to tell secrets apart. Status is **On**, **Off**, or **Paused: failing** or **Paused: gone**. A row's menu has:
+
+| Action | What it does |
+|---|---|
+| **Deliveries…** | Opens the delivery log (below). Clicking the row does the same. |
+| **Edit…** | Change the address, description, events and **Turned on**. |
+| **Rotate secret…** | Makes a new secret and shows it once. The old one **stops working at once**, so deliveries fail their signature check until the receiver uses the new one. Update the receiver right after. |
+| **Delete…** | Nothing more is sent, and the delivery log is deleted too. It can't be undone. |
+
+## The delivery log
+
+**Deliveries…** shows the last 50 deliveries of the webhook, kept for **14 days**. Each row has the **Event**, **Status** (**Pending**, **Delivered** or **Failed**), **Attempts**, what the **Receiver answered** (its HTTP status), a short **Error** and when it was **Sent**. It never shows your receiver's answer. **Refresh** reloads it.
+
+- **Send test event** sends a `webhook.test` event whatever the webhook is subscribed to. It's queued ("Test event queued") and appears in the log in a moment.
+- **Redeliver** on a row sends that delivery's event again: the same event ID and body, as a new delivery. Use it after you've fixed the receiver.
+
+## How delivery works
+
+- Any `2xx` answer is **delivered**. Anything else, or no answer within 10 seconds, is a failure and is retried: 8 attempts in all, over about a day.
+- Delivery is **at least once and not ordered**. The same event can arrive twice, and a later event can arrive first. The receiver should de-duplicate on the event's `id`, and use `createdAt` for order.
+- The event is recorded in the same step as the change that caused it, so a change that didn't happen sends nothing.
+
+The schedule, headers and payloads are in the [webhooks reference](/docs/api/webhooks#retries-and-pausing).
+
+## When a webhook pauses
+
+Grounded stops sending to a webhook, and shows it as **Paused**, when:
+
+- **failing**: five deliveries in a row gave up (each after all its attempts), or
+- **gone**: the receiver answered `410 Gone`, which ends that delivery at once.
+
+The team's admins and owners get a **Webhook paused** notification. A paused webhook is turned off, and the reason stays until it's turned on again.
+
+<Steps>
+<Step>
+
+### Find out why
+
+Open **Deliveries…** and read the **Receiver answered** and **Error** columns: a certificate problem, a timeout, a `404` or `500`, or "no longer approved" (a platform admin withdrew the destination, so ask them to approve it again).
+
+</Step>
+<Step>
+
+### Fix the receiver
+
+Make it answer `2xx` again (or, for "gone", decide whether the address should be used at all).
+
+</Step>
+<Step>
+
+### Turn it back on, then send a test event
+
+Choose **Edit…**. The dialog says "Paused: failing" or "Paused: gone". Make sure **Turned on** is checked and choose **Save webhook**. Then **Deliveries…** and **Send test event** to confirm it arrives: a paused webhook is turned off, so a test sent before this step fails with "the webhook is turned off". One successful delivery resets the failure count.
+
+</Step>
+</Steps>
+
+Events that happened while the webhook was paused or off aren't recorded for it, so they aren't sent later. **Redeliver** can send again a delivery that failed before it paused, as long as it's still in the log (14 days).
+
+## Limits to know
+
+- **Webhooks were not tested against a real external host** before release, only a local TLS receiver. Send a test event to each new address.
+- A secret's rotation has no overlap window. A receiver that needs one can accept both secrets for a few minutes while you change it.
+- Addresses are `https` on 443 only. There are no custom headers, per-agent or per-source filters, or batching.
+- Everything you do here is in the team's [audit log](/docs/using/owners/audit-log): `webhook.create`, `.update` (what changed, never the secret), `.rotate_secret`, `.delete`, `.test` and `.redeliver`.
+- API keys can't manage webhooks; only people signing in can.

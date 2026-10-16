@@ -1,0 +1,132 @@
+---
+title: Webhooks
+description: The events Grounded sends, their payloads and headers, how to verify the signature in Python and Node, retries and pausing, and the routes that manage webhooks.
+---
+
+Since v0.6.0, Grounded can send an HTTPS `POST` with a small JSON event to another system when something happens. The request is **signed**, so the receiver can tell it came from Grounded, and **retried** when the receiver is down. This page is for the people who write the receiver. To set webhooks up, see [Webhooks for teams](/docs/using/owners/webhooks) (team admins and owners) and [Webhooks for administrators](/docs/administration/webhooks) (turning them on and approving destinations).
+
+## Where they're sent
+
+- `https` only, on port **443**, to a **host name** that a platform admin approved (not an IP address).
+- The address is checked **when you save it and again before every delivery**. Grounded never sends to private, loopback, link-local or cloud metadata addresses, whatever the name resolves to. It connects to the address it checked, follows **no redirects** (a `3xx` is a failure) and reads at most 4 KB of your answer.
+
+## Events
+
+A webhook subscribes to at least one event. A team webhook receives its team's events only, and a platform webhook the platform's. `GET /v1/webhook-events` lists them.
+
+| Event | Scope | When | `data` |
+|---|---|---|---|
+| `source.synced` | team | A web source finished syncing | `sourceId`, `sourceName`, `crawlId`, `pagesFetched`, `pagesChanged`, `pagesUnchanged`, `pagesFailed`, `documentsDeleted`, `truncated` |
+| `source.sync_failed` | team | A web source's sync failed | `sourceId`, `sourceName`, `crawlId`, `error` (a short reason) |
+| `agent.published` | team | An agent was published | `agentId`, `agentName`, `agentSlug`, `version`, `audience` |
+| `feedback.submitted` | team | Someone rated an answer (taking a rating back is not an event) | `agentId`, `messageId`, `rating` (`up` or `down`), `reason` (when given) |
+| `team.created` | platform | A team was created | `teamId`, `slug`, `name`, `maxClassification` |
+| `team_request.created` | platform | Someone asked for a team | `requestId`, `name`, `classification` |
+| `webhook.test` | either | You asked for a test event | `message` |
+
+Events carry **IDs and summaries, never transcripts or document text**: a rating has no question, answer, comment or person, and a team request has no purpose. A receiver that needs more fetches it through the [API](/docs/api) with a key, so classification and permissions still apply.
+
+Every delivery's body is:
+
+```json
+{
+  "id": "0b3e0c1e-6b0d-4f0a-9d63-5a3c8f6f2f11",
+  "type": "agent.published",
+  "createdAt": "2026-10-16T10:15:00Z",
+  "team": { "id": "…", "slug": "registrar", "name": "Registrar" },
+  "data": { "agentId": "…", "agentName": "Parking help", "agentSlug": "parking-help", "version": 3, "audience": "team" }
+}
+```
+
+`team` is absent on platform events. **`id` is the event's ID: the same for every delivery of it, and for a redelivery**, so receivers de-duplicate on it. Delivery is **at least once and not ordered**: use `id` and `createdAt`.
+
+## Headers
+
+| Header | Value |
+|---|---|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Grounded-Webhooks/1` |
+| `Grounded-Signature` | `t=<unix seconds>,v1=<hex HMAC-SHA256>` |
+| `Grounded-Event` | The event type |
+| `Grounded-Delivery` | This delivery's ID (a retry has the same one; a redelivery is a new delivery) |
+| `Grounded-Webhook` | The webhook's ID |
+
+## Checking the signature
+
+Each webhook has a secret, `whsec_…`, **shown once**, when the webhook is made and when it's rotated. Grounded keeps it encrypted, because it must sign with it. It's never in a list, the audit log or an event.
+
+`v1` is the hex HMAC-SHA256, keyed with the secret, of the string `<t>.<raw request body>`. Check it over the **raw body bytes**, not a re-serialised copy, with a constant-time comparison, and refuse a `t` more than **five minutes** from your clock. Each attempt is signed with the time it's sent, so a retry passes this check.
+
+<Tabs items={['Python', 'Node']}>
+<Tab value="Python">
+
+```python
+import hmac, hashlib, time
+
+def verify(secret: str, header: str, body: bytes, tolerance: int = 300) -> bool:
+    parts = dict(p.split("=", 1) for p in header.split(","))
+    t, sig = parts.get("t", ""), parts.get("v1", "")
+    if not t.isdigit() or abs(time.time() - int(t)) > tolerance:
+        return False
+    expected = hmac.new(secret.encode(), t.encode() + b"." + body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, sig)
+```
+
+</Tab>
+<Tab value="Node">
+
+```js
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+export function verify(secret, header, body /* Buffer */, toleranceSeconds = 300) {
+  const parts = Object.fromEntries(header.split(",").map((p) => p.split("=", 2)));
+  const t = parts.t ?? "";
+  if (!/^\d+$/.test(t) || Math.abs(Date.now() / 1000 - Number(t)) > toleranceSeconds) return false;
+  const expected = createHmac("sha256", secret).update(`${t}.`).update(body).digest("hex");
+  const got = Buffer.from(parts.v1 ?? "", "hex");
+  const want = Buffer.from(expected, "hex");
+  return got.length === want.length && timingSafeEqual(got, want);
+}
+```
+
+</Tab>
+</Tabs>
+
+In a web framework, read the body as raw bytes before any JSON parsing; a parsed and re-encoded body won't match. Answer `2xx` once you've checked the signature and stored the event.
+
+**Rotating** a secret takes effect at once, and there's no overlap window. A receiver that needs one accepts both secrets while you change it.
+
+## Retries and pausing
+
+- Any `2xx` answer is **delivered**. Anything else, or no answer within 10 seconds, is a failure and is retried: **8 attempts** in all, after 15 seconds, 1 minute, 5 minutes, 30 minutes, 2 hours, 6 hours and 12 hours (about a day).
+- `410 Gone` ends the delivery at once and **pauses** the webhook (`pausedReason: "gone"`).
+- After **5 deliveries in a row** gave up, the webhook is **paused** (`pausedReason: "failing"`), and its team's admins and owners (platform admins for a platform webhook) are notified. One success resets the count. Turning a paused webhook back on is a deliberate edit (`enabled: true` in a `PATCH`).
+- A delivery isn't sent when webhooks are turned off, the webhook is off, or its host is no longer an approved destination. It fails, and isn't retried.
+- Each webhook keeps its deliveries for **14 days**: event type, status (`pending`, `delivered` or `failed`), attempts, the receiver's last HTTP status and a short error, never your answer.
+- A **test event** (`webhook.test`) is sent on request whatever the webhook subscribes to. **Redeliver** sends a delivery's event again: the same event ID and body, as a new delivery.
+
+<Callout type="warn" title="Not yet tested against a real external host">
+  Deliveries were exercised against a local TLS receiver in v0.6.0, and the address guard wasn't run against real DNS. Send a test event to a new receiver before you depend on it.
+</Callout>
+
+## Managing webhooks
+
+These routes are for **people signing in**: API keys can't manage webhooks. They're under the `webhooks` tag of the [API reference](/docs/api). Responses are `{"data": ...}`.
+
+| Route | What it does |
+|---|---|
+| `GET`, `POST /v1/teams/{team}/webhooks` | List a team's webhooks, or make one. The `201` answer has the webhook and its `secret`, shown only then. |
+| `GET`, `PATCH`, `DELETE /v1/teams/{team}/webhooks/{webhookId}` | Read (never the secret), change (with `If-Match`; turning it on again clears what paused it) or delete a webhook and its delivery log. |
+| `POST …/{webhookId}/rotate-secret` | Replace the secret at once; the new one is in the answer, shown only then. |
+| `POST …/{webhookId}/test` | Queue a `webhook.test` delivery (`202`). |
+| `GET …/{webhookId}/deliveries` | The last 50 deliveries, newest first. |
+| `POST …/{webhookId}/deliveries/{deliveryId}/redeliver` | Send a delivery's event again (`202`). |
+| `/v1/admin/webhooks…` | The same, for the platform's webhooks (platform admins; auditors read). |
+| `GET /v1/webhook-events` | The events a webhook can subscribe to, with their scope. |
+| `GET /v1/webhook-destinations` | The approved host patterns, so a team admin can choose an address. |
+| `POST /v1/admin/webhook-destinations`, `DELETE …/{destinationId}` | Approve or withdraw a destination (platform admins). |
+| `GET`, `PUT /v1/admin/settings/webhooks` | Whether webhooks are on (platform admins and auditors read; admins change, with `If-Match`). |
+
+A webhook's fields are `url`, `description`, `events`, `enabled`, `secretHint` (the secret's last four characters), `pausedReason` (`""`, `failing` or `gone`), `consecutiveFailures`, `revision`, and `teamId` for a team's. Making or changing one takes `url` (`https`, port 443, up to 2,048 characters), `events` (at least one of the scope's), `enabled`, and optionally a `description` of up to 200 characters.
+
+Useful error codes: `400 destination_not_approved` (the host isn't covered), `409 too_many_webhooks` (10 per team and 10 for the platform), and `409 webhooks_off` while a platform admin has webhooks turned off.
