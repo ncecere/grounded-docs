@@ -1,0 +1,109 @@
+---
+title: Routers
+description: "A front-door agent that sends each question to the best agent the person could chat with: making one, letting an agent be reached, and what a router can and can't do."
+---
+
+Since v0.6.0, an agent can be a **router**: a front door that **answers nothing itself**. Each question goes to the best other agent that the person asking could chat with on their own, and the router shows that agent's answer, says which agent gave it, and links to the conversation where the person can carry on. When no agent fits, it says so.
+
+A router is useful when several teams run agents and people shouldn't have to know which one to ask, such as a help desk's one page in front of the registrar's, the library's and IT's agents.
+
+Two things make it work, and they're in different hands:
+
+- Each team's editors decide which of their agents **can be reached through routers** (off by default).
+- An editor makes the router itself from the **Front door (router)** template.
+
+<Callout title="A router can never show anyone an answer they couldn't have asked for">
+  A router only considers agents the person asking could chat with themselves: the same audience check as everywhere, including the platform's public access switch. Who made the router makes no difference to that.
+</Callout>
+
+## Letting an agent be reached
+
+Open the agent's **Share** tab. The **Routers** card has one switch, **Can be reached through routers**: "A router may send people's questions to this agent, and show its answers." It's off by default. The card says it's part of the draft, so a change takes effect when you **publish** a version, like the knowledge bases. Routers read the published version.
+
+Turn it on for agents whose name and description make clear what they cover: a router chooses from those, as [how it chooses](#how-a-router-chooses) says. A router can't itself be reached through routers (there are no loops), so its Share tab has no Routers card.
+
+## Making a router
+
+<Steps>
+<Step>
+
+### Start from the template
+
+**Agents → New agent**, then under **Start from** choose **Front door (router)** ([Agents](/docs/using/editors/agents#starting-from-a-template)). The dialog says "A router has no knowledge bases: it sends each question to an agent that has. Teams choose which of their agents it can reach, under Share." Give it a **Name** and **Chat model**; the model writes the router's small-talk replies.
+
+</Step>
+<Step>
+
+### Check what it can reach
+
+A router's editor has no Knowledge, Tools or Answering sections. It has **Routing** instead (see below), plus Instructions, Model, Safety, SystemOne checks and Advanced.
+
+</Step>
+<Step>
+
+### Make sure the scope check is on
+
+A router needs the SystemOne scope check to choose. Without it, **Publish** reports "Routing needs the SystemOne scope check". See [SystemOne](/docs/administration/systemone#routing).
+
+</Step>
+<Step>
+
+### Publish and try it
+
+Choose an audience in **Share** and publish, as for any agent ([Sharing an agent](/docs/using/editors/sharing)). The editor's **Try it** panel says "A router sends each question to another agent, in the asker's own conversation with it, so it can't be tried here. Publish it, then use Chat to try it." Open the published router like any agent and ask it.
+
+</Step>
+</Steps>
+
+### The Routing section
+
+**Build → Routing** shows:
+
+- **Agents this router can reach**: the agents that opted in, from *your own* access, so it's what a router would reach for you, "It can reach 3 agents that you can chat with". Everyone is sent only to the ones they may chat with themselves, so a visitor or a colleague may reach fewer.
+- "No agent can be reached yet" when no agent has opted in. Until one does, every question gets the wording below.
+- **When nothing fits**: what the router says, word for word, when no agent covers the question. It's the router's refusal message, up to 500 characters. The default is "I couldn't find an assistant here that covers that. Try asking it another way, or ask the people who run this service."
+
+## How a router chooses
+
+For each question, Grounded asks the SystemOne model one question: which of the candidate agents covers this, or is it small talk, or none? The candidates are the agents that:
+
+- the person asking may chat with (their team's, everyone who signs in, or public ones while public access is on),
+- have a **published** version with **Can be reached through routers** on,
+- are active, aren't routers, and aren't the router itself.
+
+So a **public** router reaches only public agents, since an anonymous visitor could open nothing else; a router for everyone who signs in also reaches agents for everyone who signs in; and a team router reaches whatever its member may use.
+
+The model sees each candidate's **name, team, description and the start of its instructions**, not its documents. That keeps routing cheap and private, and it means a vague name or an empty description makes an agent hard to choose. Write the description for a stranger. A chosen agent needs at least 50% confidence; below that, the router treats the question as fitting none.
+
+A router considers **at most 25 candidates**, by name. If more are reachable, only the first 25 are considered, and the Routing section says so.
+
+## What a router can and can't do
+
+- **It routes one level.** The agent it sends to answers; it's never asked to route again.
+- **The target answers as an ordinary chat.** The target's own limits, budget, moderation, citations and audit apply, and they're the target team's. The question is in the target's analytics like any other.
+- **It answers small talk itself.** "Hi" and "thanks" get a short reply from the router's own model.
+- **It has no knowledge bases and no tools**, and publishing refuses them.
+- **Feedback on a routed answer is the router's.** The router's team sees it, not the target's.
+- **It can't be tried in the editor or called with a service key.** It answers in a person's or a visitor's conversation, so a service key and the OpenAI-compatible endpoint get an error (`router_needs_conversation`).
+- **Its conversations can't be shared.** A conversation holding routed answers contains answers from agents whose audience isn't the router's, so **Share…** refuses it and says to share the agent's own conversation (**Continue there**) instead.
+- **There's no list of targets on the router.** The agents' own opt-in is the only allow-list.
+
+The router's record of a turn holds the decision, the confidence, the number of candidates and the chosen agent, never the question.
+
+## What the person sees
+
+Under a routed answer the chat shows **Answered by *Agent* · *Team***, with a **Continue there** link. It opens the person's own conversation with that agent, where they can ask a follow-up. A later question to the router that goes to the same agent continues that conversation. If the agent has been removed since, the line says "(removed since)" and has no link.
+
+The router's conversation keeps the question and a copy of the answer with its citations, so it reloads, exports and opens sources like any answer.
+
+## When nothing fits
+
+The router replies with the **When nothing fits** wording, and the question counts in its [gap report](/docs/using/editors/gaps) as **No agent fits**. It's grouped under the platform's default embedding profile, since a router has no knowledge bases. Use those topics to see which subjects no agent covers, then add an agent or let an existing one be reached.
+
+If the router can't choose at all, because the scope check is off or the request failed, it says "I can't send your question to the right assistant just now. Please try again later." That isn't counted as a gap.
+
+## Limits to know
+
+- At most **25 reachable agents** are considered, by name.
+- **A public (anonymous) router was not walked in a browser** before release. An integration test covers it; try yours before you announce it.
+- No list of targets, no routing to several agents at once, and no hand-over to a person.

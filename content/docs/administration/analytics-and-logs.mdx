@@ -48,6 +48,7 @@ Every change on the platform, newest first, append-only:
 - legal holds, and retention runs (as the system, with counts only);
 - evaluation sets, questions and runs (since v0.4.0 a question's entry never carries its text);
 - since v0.4.0, actions on [gap topics](/docs/using/editors/gaps) (`gap_topic.*`, `gap_settings.update`: IDs, states and a dismissal's kind, never a label, a question or a reason), an agent's [saved answers](/docs/using/editors/saved-answers) settings and clearing (`agent.answer_cache_update`, `agent.answer_cache_clear`), the saved answers switch (`platform.answer_cache`) and [reranking settings](/docs/administration/reranking) ("Changed reranking settings");
+- since v0.6.0, the team requests and webhooks switches (`platform.team_requests`, `platform.webhooks`), [team requests](/docs/administration/team-requests) and their decisions, [webhooks](/docs/administration/webhooks) of the platform and approved destinations, saving an agent as a [template](/docs/administration/agent-templates) and renaming or deleting one, and a person making or revoking a conversation share (who, and whether it was open to anyone; never the agent, conversation or content);
 - the MCP switches (`platform.mcp`, `platform.mcp_oauth`), and every search or question from an AI tool over the [MCP server](/docs/self-hosting/mcp-server) (`mcp.search`, `mcp.ask`: the knowledge base or agent and the outcome, never the text);
 - OAuth sign-in: apps registering themselves, people connecting and disconnecting apps, and tokens issued (never a token);
 - [MCP servers](/docs/administration/mcp-servers) added, changed, refreshed and deleted, tools approved and withdrawn, and every call an agent makes to a tool (`mcp.tool_call`: the server, tool, outcome and result size, never the arguments or result).
@@ -62,7 +63,7 @@ The log is append-only in the database: only the retention job may delete entrie
 
 ### Access log
 
-Every use of an agent at the Sensitive level or above: who used which agent, and when. Platform auditors and admins can read it; it never contains message content. It's kept until you set its retention period.
+Every use of an agent at the Sensitive level or above: who used which agent, and when. Since v0.6.0 that includes reading a [shared conversation](/docs/using/chat#sharing-a-conversation) of such an agent (channel `shared`). Platform auditors and admins can read it; it never contains message content. It's kept until you set its retention period.
 
 ## Metrics and server logs
 

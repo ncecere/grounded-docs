@@ -13,6 +13,8 @@ Since v0.4.2 the switches themselves (evaluations, the MCP server, OAuth sign-in
 | **MCP server** | Off | The switch on Admin → Settings (**Allow MCP clients**); see [MCP server and OAuth](/docs/self-hosting/mcp-server) | API keys with the MCP scope |
 | **OAuth sign-in for MCP clients** (Experimental) | Off | The switch on Admin → Settings (**Allow OAuth sign-in**) | The MCP server on, and OIDC sign-in |
 | **Saved answers** | On (each agent decides; on by default for public agents) | The switch on Admin → Settings (**Allow saved answers**); each agent's Settings | Nothing extra; near-identical matching needs a SystemOne model |
+| **Team requests** | Off | The switch on Admin → Settings (**Allow team requests**, and **Who may ask…** for its limits); the queue is **Admin → Teams → Requests** (see [Team requests](/docs/administration/team-requests)) | Nothing extra |
+| **Webhooks** | Off | The switch on Admin → Settings (**Allow webhooks**); destinations and platform webhooks under **Admin → Webhooks** (see [Webhooks](/docs/administration/webhooks)) | At least one approved destination host |
 | **Cost tracking** | Off | [Costs](/docs/administration/costs): Off, Track only or Enforce | Prices for your models |
 | **OCR** | Off | [Parsing & OCR](/docs/administration/parsing-and-ocr) | A backend: the OCR sidecar, Apache Tika's full image, or a vision model |
 | **SSO groups** | No rules | [SSO groups](/docs/administration/sso-groups) | A groups claim from your identity provider |
@@ -28,6 +30,8 @@ The card says more than on or off where it matters:
 - **SSO groups** shows the number of rules.
 - **OCR** shows the chosen backend.
 - **Reranking** reads **Off** with **Set up**, which opens the Reranking page and its setup guide, or **On** with the rerank model's name.
+- **Team requests** says who may ask and how many open requests each person may have ("Anyone signed in can ask for a team, up to 2 open requests each"), with **Review requests**. Off, it reads that people ask a platform admin or the request link.
+- **Webhooks** reads **Off**, or what team admins and platform admins can send once on, with **Approved destinations**.
 - **MCP server**, when on, shows the address AI tools connect to; on Admin → Settings the row has a **Setup guide** link.
 - **OAuth sign-in for MCP clients** reads "On · MCP server off" when it's switched on but has no effect yet, because the MCP server is off.
 
@@ -48,6 +52,14 @@ It's on Admin → Settings → Features since v0.4.2 (on the Overview from v0.2.
 <Screenshot slot="admin-features-mcp" />
 
 Agents calling tools on *outside* MCP servers has no switch: nothing happens until an admin registers a server and approves a tool under [MCP servers](/docs/administration/mcp-servers).
+
+## The team requests switch
+
+**Team requests** (since v0.6.0) lets anyone signed in ask for a team in the app, for a platform admin to approve or decline. It's off by default. **Who may ask…** sets an optional SSO group and how many open requests one person may have. Turning it off asks for confirmation: the request page disappears and new requests are refused, API included, while requests already open stay in the queue. Auditors see it read-only. It's audited (`platform.team_requests`). See [Team requests](/docs/administration/team-requests).
+
+## The webhooks switch
+
+**Webhooks** (since v0.6.0) lets team admins and owners send their team's events, and platform admins the platform's, to approved HTTPS destinations. It's off by default. Turning it off asks for confirmation, since everything stops at once: no new webhooks, no events recorded and nothing sent. Existing webhooks and their delivery logs are kept, and turning it on again resumes them. Auditors see it read-only. It's audited (`platform.webhooks`). See [Webhooks](/docs/administration/webhooks).
 
 ## The saved answers switch
 

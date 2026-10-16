@@ -1,5 +1,5 @@
 {
   "title": "For editors",
   "defaultOpen": true,
-  "pages": ["data-sources", "knowledge-bases", "agents", "sharing", "versions", "saved-answers", "agent-analytics", "gaps", "evaluations"]
+  "pages": ["data-sources", "knowledge-bases", "agents", "sharing", "routers", "versions", "saved-answers", "agent-analytics", "gaps", "evaluations"]
 }

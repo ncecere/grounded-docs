@@ -16,7 +16,7 @@ The last active platform admin can't be demoted or suspended.
 
 ## Teams
 
-Only platform admins create teams. **People → Teams → Create team** asks for:
+Only platform admins create teams, though since v0.6.0 people can ask for one in the app and a platform admin approves it ([Team requests](#team-requests)). **People → Teams → Create team** asks for:
 
 - **Name** and **Slug**: the slug is used in the team's addresses, such as `/teams/admissions`, and can't change later.
 - **Description**.
@@ -43,4 +43,7 @@ Platform admins don't see a team's sources, knowledge bases, agents' settings or
 
 ## Team requests
 
-People can't create teams themselves. Set `TEAM_REQUEST_URL` to your own request form (a service-desk form, for example); Grounded links to it for people without a team. Without it, they're told to ask a platform admin, or pointed to `SUPPORT_URL` if it's set.
+People can't create teams themselves. There are two ways for them to ask:
+
+- **In the app** (since v0.6.0, off by default). Turn on **Allow team requests** under Admin → Settings → Features, and people ask on the [Request a team](/docs/using/request-a-team) page. The **Requests** tab on **People → Teams** is the queue: approving a request creates the team. See [Team requests](/docs/administration/team-requests).
+- **A form of your own.** Set `TEAM_REQUEST_URL` to your request form (a service-desk form, for example); Grounded links to it for people without a team while in-app requests are off. Without it, they're told to ask a platform admin, or pointed to `SUPPORT_URL` if it's set.

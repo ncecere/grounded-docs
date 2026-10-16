@@ -1,0 +1,75 @@
+---
+title: Agent templates
+description: "The starting points teams pick when they make an agent: the built-in ones, saving an agent as a template, and what a template carries and never carries."
+---
+
+Since v0.6.0, a new agent can start from a **template**: good instructions and settings that the person making the agent then changes. Templates are listed under **Admin → Agent templates** (Content group). Platform auditors can view them; platform admins can rename and delete the ones they saved.
+
+<Callout title="A template is how an agent answers, never what it answers from or who may use it">
+  A template never holds knowledge bases, tools or an audience. An agent made from one is for its team, as a new agent always is, until someone publishes it.
+</Callout>
+
+## Built-in templates
+
+Six ship with Grounded:
+
+- **Service desk FAQ**
+- **Policy explainer**
+- **Course helper**
+- **Public website assistant**
+- **Internal knowledge assistant**
+- **Front door (router)**, which starts a [router](/docs/using/editors/routers)
+
+Built-in templates are part of the release, not rows in the database. They follow each release, a platform admin can't edit or delete them, and the table marks them **Built in** and "Ships with Grounded". A saved one is "Saved from an agent".
+
+## What a template carries
+
+A template carries how an agent answers: its instructions, its chat model (used when the platform still offers it; a built-in names none), answering mode and refusal message, citations, safety and SystemOne settings, advanced settings, accent colour, welcome message and starter questions. A template for a router also carries that the agent is a router.
+
+It **never carries** the knowledge bases and their filters, the tools, the audience, or whether routers may reach the agent. The template's description describes the template, so it isn't copied to the agent either. **View…** on a template shows the instructions, welcome message, starter questions and these settings, read-only.
+
+An agent made from a template holds its own copy. Renaming or deleting a template, or changing it in a later release, doesn't change agents already made from it, and the template keeps no link to the agent it came from.
+
+## Saving an agent as a template
+
+<Steps>
+<Step>
+
+### Open the agent
+
+You need to be a **platform admin** and also an **editor, admin or owner of the agent's team**. Platform admins have no default access to a team's agent configuration, so there's no other way in. An admin who isn't on the team gets "not found", like any team content; one who is only a member of the team is refused. Letting admins template agents of teams they're not on would need a break-glass scope for agent configuration, which Grounded doesn't have.
+
+</Step>
+<Step>
+
+### Choose Save as template…
+
+It's in the agent editor's "…" menu, and only platform admins see it. The dialog warns that **everyone who makes an agent can read the instructions**, so read them first. Enter a **Template name** (up to 80 characters) and an optional **Description** (up to 500 characters), shown beside the name when a team picks a template.
+
+</Step>
+<Step>
+
+### Choose Save template
+
+The template is built from the agent as last saved (the draft), and offered to every team that makes an agent. Names are unique ignoring case and can't be a built-in's name.
+
+</Step>
+</Steps>
+
+Saving is recorded in **the source team's audit log** (`agent_template.create`, with the agent's ID), so a team can see its agent was copied. Renaming and deleting are platform audit entries.
+
+## Renaming and deleting
+
+**Rename…** changes a saved template's name and description; **Delete…** removes it, and teams can no longer start an agent from it. Agents already made from it keep their own copy.
+
+## Who sees templates
+
+People who can make an agent (an editor, admin or owner of an active team) see them in **New agent → Start from** ([Agents](/docs/using/editors/agents#starting-from-a-template)), and platform admins and auditors see them here. Plain members, visitors and API keys don't, because a saved template's instructions came from a team's agent.
+
+## Not in this release
+
+There are no team-level templates, no template versions, and no way to update agents made from a template when it changes.
+
+## API
+
+`GET /v1/agent-templates` lists them. `POST /v1/teams/{team}/agents/{agentId}/save-as-template` saves one, and `PATCH` and `DELETE /v1/admin/agent-templates/{templateId}` rename and delete. `POST /v1/teams/{team}/agents` takes `templateId`; every key of the request's `config` replaces the template's, and an unknown or deleted template is `404 template_not_found` and creates nothing. See the [API reference](/docs/api).

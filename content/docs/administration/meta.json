@@ -7,9 +7,11 @@
     "features",
     "---People---",
     "people-and-teams",
+    "team-requests",
     "sso-groups",
     "---Content---",
     "content",
+    "agent-templates",
     "parsing-and-ocr",
     "---Models---",
     "models",
@@ -29,6 +31,7 @@
     "retention",
     "break-glass",
     "---Operations---",
+    "webhooks",
     "maintenance",
     "settings"
   ]

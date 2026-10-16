@@ -63,6 +63,15 @@ Before the passages are used, the model decides whether the message is small tal
 
 The check runs at the same time as input moderation and, with "search before every answer", the search, so it adds little to the wait. When it answers small talk or out of scope, the search's results are discarded (its embedding tokens are still recorded) and nothing is judged. On an error or timeout the message is answered normally.
 
+### Routing
+
+Since v0.6.0, a [router agent](/docs/using/editors/routers) uses the scope check to choose where to send a question. It's one more question to the same SystemOne model, with the scope check's time limit (**Timeout (ms)**) and the connection's slots: a choice among the agents the person asking could chat with themselves that opted in to routers, described by name, team, description and the start of their instructions, plus **small talk** and **none**.
+
+- A chosen agent needs at least 50% confidence. Below that, the question counts as fitting none, and the router says so in its own words. It's a **No agent fits** question in the router's [gap report](/docs/using/editors/gaps).
+- At most 25 reachable agents, by name, are described to the model.
+- **A router can't be published unless the scope check is on for it**: there must be a SystemOne model, and the check on for every agent (**Check the scope for every agent** above) or for the router in Build → **SystemOne checks** → **Scope check**, which mustn't be turned off for it. Publishing says so. If the scope check is switched off later, or the request fails or times out, the router answers "I can't send your question to the right assistant just now. Please try again later." and the question isn't counted as a gap.
+- The router's turn records the decision (`routed`, `none`, `small_talk` or `unavailable`), the confidence, the number of candidates, the latency and the chosen agent's ID, never the question.
+
 ### Moderation
 
 A SystemOne model can also be a [moderation](/docs/administration/moderation-and-public-access) provider, with a severity score and a **support** action for self-harm: the reply is your configured support message (for example, crisis resources) instead of an answer or a refusal.

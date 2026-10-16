@@ -1,0 +1,46 @@
+---
+title: Request a team
+description: Ask for a team of your own in the app, what to put in the request, and what happens next.
+---
+
+Everything you build in Grounded (data sources, knowledge bases and agents) lives in a **team**, and when you first sign in you're in none. There are two ways onto one:
+
+- **Join an existing team.** Ask one of its owners or admins to add you ([Members and roles](/docs/using/owners/members)).
+- **Ask for a new team.** Since v0.6.0, if your platform admins have turned it on, you can do that in the app. A platform admin reviews the request and tells you the decision.
+
+If you have no team, Home says so: "To join a team, ask one of its owners to add you, or request a new team." The **Request a new team** link there, and in the workspace switcher, opens the **Request a team** page. If your organisation hasn't turned requests on, the link goes to its own request form instead, or you're pointed to help or told to ask a platform admin.
+
+## Asking
+
+On **Request a team**, choose **New request**. The form asks for:
+
+| Field | What to put |
+|---|---|
+| **Team name** | What people will call it. |
+| **What is it for?** | Who will use it and what it will answer questions about, up to 1,000 characters. The reviewer reads this, so be specific. |
+| **Highest classification of its data** | The most sensitive level of data the team will hold ([Classifications](/docs/administration/classifications)). The reviewer may change it. |
+| **Owner** (optional) | The email of the person who should own the team. Leave it empty to own it yourself. |
+
+Choose **Send request**. A platform admin is notified. The request has no address: the reviewer chooses the team's address when they approve it.
+
+## Following it
+
+The page lists your requests with their **Status**:
+
+| Status | Meaning |
+|---|---|
+| **Waiting for review** | A platform admin hasn't decided yet. |
+| **Approved** | The team exists. **Open *team*** in the **Outcome** column goes to it. |
+| **Declined** | No team was made. The reviewer's reason is in **Outcome**, and in the notification you were sent. |
+| **Withdrawn** | You took it back. |
+
+You get a **Team request decided** notification when it's decided (see [Your settings](/docs/using/personal-settings)). When it's approved, the team is made at that moment and its owner is you, or the person you named. Someone you named who has never signed in is invited by email. The reviewer may also start the team with a first agent, a draft for its owner to change and publish.
+
+**Withdraw…** is in a waiting request's menu. It removes the request from the platform admins' queue, and you can ask again afterwards.
+
+## What you can't do
+
+- **Edit a request.** Withdraw it and ask again.
+- **Ask for a change to a team you already have.** The request is for a new team only. To change a team's members, ask its owners; to change its limits or classification, ask a platform admin.
+- **Ask without limit.** There's a cap on how many requests you can have waiting at once, and your platform admins may allow only people in a certain SSO group to ask. The page says which applies: "You have as many open requests as allowed" with how many you have and the most allowed, or "Your account isn't allowed to request a team. Ask a platform admin."
+- **Ask while requests are off.** The page then says "Team requests aren't turned on here" and points to your organisation's form or help. Requests you already made stay on the page, and you can withdraw them.
