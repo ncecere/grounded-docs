@@ -47,6 +47,8 @@ export const tagLabels: Record<string, string> = {
   oauth: 'OAuth sign-in (MCP)',
   breakglass: 'Break-glass',
   public: 'Public agents and widget',
+  'team-requests': 'Team requests',
+  webhooks: 'Webhooks',
 };
 
 /**
