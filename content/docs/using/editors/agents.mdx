@@ -9,12 +9,27 @@ An agent answers questions from one or more knowledge bases with a chat model. E
 
 **Agents → New agent** asks for:
 
+- **Start from** (since v0.6.0): **A blank agent**, or a [template](#starting-from-a-template).
 - **Name** and **Address**: the address is part of the agent's link, `/a/<team>/<address>`.
 - **Description**: shown in the agent directory.
 - **Knowledge bases**: up to five. The agent searches each with its own settings.
 - **Chat model**: the models your platform allows for the knowledge bases' classification. If a model isn't approved for their level, the dialog says so. Since v0.4.2 the dialog starts on a model whose latest health check passed and that supports tools, never on a failing one; a model failing its health checks is marked **Failing** in the picker, which says so under it.
 
 You can change everything later. Nobody can chat with the agent until you [publish](/docs/using/editors/versions) it.
+
+### Starting from a template
+
+**Start from** lists the templates your platform offers: six that ship with Grounded (**Service desk FAQ**, **Policy explainer**, **Course helper**, **Public website assistant**, **Internal knowledge assistant** and **Front door (router)**) and any a platform admin saved from another agent. Choosing one shows what it's for under the field. The agent starts with the template's instructions, answering and safety settings, welcome message, starter questions and accent colour; you still choose its knowledge bases and model in the dialog, and everything can be changed later in the editor.
+
+A template is how an agent answers, never what it answers from or who may use it. It carries no knowledge bases, tools or audience, so an agent made from one is for your team until you publish it, and the template's description isn't copied to the agent. A saved template may name a chat model; the dialog picks it when your platform still offers it. The agent's audit entry names the template.
+
+**Front door (router)** makes a [router](/docs/using/editors/routers): the dialog has no knowledge bases, because a router sends each question to another agent.
+
+Only editors, admins and owners see **Start from**. Platform admins manage the saved templates ([Agent templates](/docs/administration/agent-templates)).
+
+### Saving an agent as a template
+
+A **platform admin** who is also an editor, admin or owner of the agent's team sees **Save as template…** in the agent's "…" menu. It asks for a name and an optional description. The template keeps the agent's instructions, model, answering mode, safety and SystemOne settings, advanced settings, appearance and starter questions, as last saved, and **never** its knowledge bases, tools or audience. Everyone who makes an agent can read the instructions, so the dialog warns you first. The copy is recorded in your team's audit log. Other editors don't see the menu item.
 
 ## The editor
 
@@ -26,7 +41,7 @@ Build edits the **draft**. People keep chatting with the published version until
 
 ## Build
 
-Build is a list of sections. A closed section shows a one-line summary of its settings, with its full text on hover. Beside them, the **Try it** panel chats with the draft. Since v0.4.2 the two fill the window and scroll on their own, so the page itself never scrolls past them; below 1100 px wide they stack. A field that needs fixing is highlighted, its section's header is marked, and the status beside **Publish** counts them ("Not saved: fix the 4 highlighted fields").
+Build is a list of sections. (A [router](/docs/using/editors/routers) shows **Routing** in place of Knowledge, Tools and Answering.) A closed section shows a one-line summary of its settings, with its full text on hover. Beside them, the **Try it** panel chats with the draft. Since v0.4.2 the two fill the window and scroll on their own, so the page itself never scrolls past them; below 1100 px wide they stack. A field that needs fixing is highlighted, its section's header is marked, and the status beside **Publish** counts them ("Not saved: fix the 4 highlighted fields").
 
 ### Instructions
 
