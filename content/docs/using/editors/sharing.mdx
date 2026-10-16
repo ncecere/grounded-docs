@@ -1,6 +1,6 @@
 ---
 title: Sharing an agent
-description: Choose an agent's audience, and reach it through its links, a public page, an embeddable widget or the OpenAI-compatible API.
+description: Choose an agent's audience, let routers send people to it, and reach it through its links, a public page, an embeddable widget or the OpenAI-compatible API.
 ---
 
 ## Audiences
@@ -23,6 +23,12 @@ A **public** audience also needs:
 "Everyone who signs in" means everyone your identity provider lets sign in to Grounded, which may include students, contractors or guests. Ask your platform admin who that is before you publish sensitive material to it. Publishing to everyone who signs in or to the public notifies the team's owners.
 
 <Screenshot slot="agent-share" />
+
+## Routers
+
+Since v0.6.0, the Share tab has a **Routers** card under the audience. Its one switch, **Can be reached through routers**, lets a [router agent](/docs/using/editors/routers) send people's questions to this agent and show its answers. It's off by default, and part of the draft like the audience, so a change takes effect when you publish.
+
+The switch doesn't widen who can use the agent. A router only sends someone to an agent they could chat with themselves, whoever made the router, and the agent still answers as an ordinary chat, with its own limits, moderation and analytics. The card isn't shown on a router agent, which can't be reached through routers.
 
 ## Links
 

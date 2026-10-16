@@ -57,6 +57,12 @@ If the safety check itself is unavailable, a public agent refuses with "The safe
 
 <Screenshot slot="public-agent-page-thinking" />
 
+### Routers
+
+Since v0.6.0, some agents are **routers**: front doors that answer nothing themselves and send your question to the agent that covers it, out of the agents you could chat with anyway. A routed answer says who gave it: **Answered by *Agent* · *Team***, with a **Continue there** link. It opens your own conversation with that agent, where you can ask a follow-up; a later question to the router that goes to the same agent continues that conversation. If the agent has been removed since, the line says "(removed since)" and has no link.
+
+If no agent fits, the router says so in its own words. If it can't choose just now, it says "I can't send your question to the right assistant just now. Please try again later." The answer's citations and sources work as in any answer. A conversation with a router can't be shared; share your conversation with the agent it sent you to. Editors: see [Routers](/docs/using/editors/routers).
+
 ## Citations
 
 Each factual sentence should end with a numbered citation chip such as **[1]**. Sources are numbered 1, 2, 3… in the order the answer first cites them, while it streams and after, so no number changes when the answer ends (v0.4.2). A chip stays on the same line as the word before it.
@@ -116,13 +122,64 @@ The sidebar lists your recent conversations. The **Conversations** page has all 
 
 - **Rename** it. Renaming doesn't change when it was last active.
 - **Export** it as Markdown or JSON, with its citations. Since v0.4.2 the export numbers sources as the chat shows them, and the Markdown gives times in your time zone.
-- **Delete** it. It disappears for you at once. The stored copy is removed later according to your organisation's retention rules, which may keep it longer.
+- **Share…** it as a read-only link ([Sharing a conversation](#sharing-a-conversation)).
+- **Delete** it. It disappears for you at once. The stored copy is removed later according to your organisation's retention rules, which may keep it longer. Deleting a conversation also ends every link you made to it.
 
-Nobody else can read your conversations: not your team's admins, not platform admins. The only exception is a platform admin in a time-limited, audited break-glass session with the conversations scope; your team's owners are told when one starts and ends. Your organisation's terms of use may say more.
+Nobody else can read your conversations unless you share one: not your team's admins, not platform admins. The other exception is a platform admin in a time-limited, audited break-glass session with the conversations scope; your team's owners are told when one starts and ends. Your organisation's terms of use may say more.
 
 If an agent is deleted, its conversations stay readable for you, read-only. A link to a conversation that was deleted, or isn't yours, says "This conversation isn't available." with **Start a new chat**; a question typed there starts a new conversation.
 
 The last answer's follow-up chips come back when you reload the page in the same browser tab (v0.4.2); another tab or browser shows the answer without them.
+
+## Sharing a conversation
+
+Since v0.6.0, **Share…** in a conversation's "…" menu (on the chat page and on **Conversations**) makes a link to a **read-only snapshot** of your own conversation: your questions, the answers and their citations, up to the last finished answer at that moment. It's your own deliberate act, and nothing else about who can read your conversations changes.
+
+<Steps>
+<Step>
+
+### Choose who can open it
+
+In **Share this conversation**, pick under **Who can open the link**:
+
+- **People who can use *agent*** (the default): whoever the agent's audience lets chat with it, after they sign in. For a team agent that's the team's members; for an agent shared with everyone who signs in, anyone who is signed in.
+- **Anyone with the link**: no sign-in. This is offered only for a **public** agent, and it's checked again every time the link is opened, so turning public access off, or making the agent less open, stops it working for people outside the agent's audience without touching the link.
+
+Tick **Show my name** to put your display name (never your email) on the shared view. It's off by default.
+
+</Step>
+<Step>
+
+### Create the link and copy it
+
+Choose **Create link**. **Your link** is shown **once**: copy it now. Grounded keeps only a hash of it, so a later look at **Links you made** shows when it was made, how many messages it covers, who it was for and whether your name is shown, but never the link. To get a link again, make a new one.
+
+</Step>
+</Steps>
+
+The dialog warns first: **anyone who opens the link can read this conversation**. You can't take back what someone has already read, so share it only with people you trust with what it says.
+
+### What a viewer sees
+
+The link opens a page outside the app, `/shared/<secret>`, that reads the same signed in or not: the conversation's title, "With *agent*", who shared it if you ticked **Show my name**, and the thread, with a notice that it's a read-only copy as it was when it was shared. Sources open beside the conversation, as in the chat, but only the passages the answers cited, never the whole document. **Ask *agent*** takes them to the agent. Someone the link isn't for, or who isn't signed in, is asked to **Sign in to open this conversation**; a link that never existed gets the same prompt, so nobody can tell valid links from invalid ones. Once signed in without access, they see "This conversation isn't available".
+
+A viewer **never** sees your feedback, the model's reasoning, what the agent did to answer (its steps and searches), SystemOne's checks, or tokens and timings. A tool's result is named but its text isn't shown. A viewer sees no more than they would by asking the agent the same question.
+
+### Revoking and when a link ends
+
+In **Links you made**, the Revoke button (a bin icon) beside a link asks "Revoke this link?"; **Revoke link** stops it at once for everyone who has it. A link also ends when:
+
+- you delete the conversation, or your organisation's retention removes it;
+- the agent is disabled, unpublished or deleted;
+- for **Anyone with the link**, public access is turned off or the agent stops being public.
+
+### Limits to know
+
+- A link covers the conversation **up to the last finished answer when you made it**. Later messages aren't in it; make a new link to share more. A stopped answer doesn't count, and a conversation with no finished answer can't be shared.
+- At most 10 links per conversation. A conversation with a deleted agent, or one holding a [router's](#routers) answers, can't be shared.
+- **Links don't expire** before the conversation's own retention does, and there are no view counts. A link is made and revoked, not edited.
+- It needs you signed in; an API key can't make one.
+- The platform's audit log records that a link was made or revoked and whether it was open to anyone, without the agent, the conversation or any content, and never in a team's log. For an agent at the Sensitive level or above, reading a shared answer is written to the [access log](/docs/administration/analytics-and-logs#access-log) like using the agent.
 
 ## Public pages and the widget
 
