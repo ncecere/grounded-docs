@@ -1,0 +1,66 @@
+---
+title: Team requests
+description: "Let people ask for a team in the app, narrow who may ask, and review the queue: approve a request to create the team, or decline it with a reason."
+---
+
+By default only platform admins create teams. Since v0.6.0 you can let anyone who is signed in **ask** for one in the app: they give a name, what it's for and the highest classification of its data, and a platform admin approves or declines. Approving creates the team in the same step. Team requests are **off** until you turn them on.
+
+People see this as [Request a team](/docs/using/request-a-team).
+
+## Turning it on
+
+On **Admin → Settings → Features**, **Allow team requests** is the switch ([Features overview](/docs/administration/features#the-team-requests-switch)). Next to it, **Who may ask…** sets two limits that apply while requests are on:
+
+| Setting | What it does |
+|---|---|
+| **Open requests per person** | How many requests one person may have waiting at a time, from 1 to 20. The default is 2. |
+| **SSO group** (optional) | Only people whose last sign-in carried this group may ask. Empty lets anyone signed in ask. Group names ignore case. |
+
+The group is matched against the groups the person's identity provider sent at their last sign-in ([SSO groups](/docs/administration/sso-groups)). Someone whose sign-in carried no groups can't pass a group limit.
+
+A request is refused, in this order, when the switch is off (`403 team_requests_off`), when the person may not ask (`403 not_allowed_to_request`), or when they already have as many open requests as allowed (`409 too_many_open_requests`). The request page tells the person which. Only people signing in can ask; API keys can't. A platform admin may ask like anyone else.
+
+Turning the switch off asks for confirmation. The **Request a team** page and its links disappear and new requests are refused, API included. **Requests already open stay in the queue** until a platform admin decides them, and people can still withdraw theirs. Only platform admins create teams again, as before.
+
+## The `TEAM_REQUEST_URL` fallback
+
+While team requests are off, `TEAM_REQUEST_URL` stays the fallback: if you set it, Home and the workspace switcher link to your own form (a service-desk form, for example) as **Request a new team**. While they're on, that link goes to the in-app page instead. See [Configuration](/docs/self-hosting/configuration).
+
+## The review queue
+
+**Admin → Teams → Requests** is the queue. The tab shows the number waiting, the sidebar shows it beside **Teams**, and the Overview's **Needs attention** lists "N team requests waiting for review". Each new request also notifies platform admins (**New team request**, in their notification settings).
+
+The table has the request's name with who asked, **Status** (Waiting for review, Approved, Declined or Withdrawn, with a filter), **Classification**, **Purpose** and when it was **Requested**; **Owner** can be shown too. A row's menu has **Approve…**, **Decline…** and **View…**, which opens everything about the request, including the reason it was declined and who decided. Platform auditors can read the queue and decide nothing.
+
+A request holds a name (up to 80 characters), a purpose (required, up to 1,000), the classification, and optionally an owner's email. It has **no address**: you choose one when you approve it. The purpose is the requester's own text, not team content.
+
+### Approving
+
+**Approve…** opens a dialog with:
+
+- **Team name** and **Address**, filled in from the request and yours to change. The address is the team's `/teams/<address>` and can't change later.
+- **Highest classification**, set to the level asked for, which is marked "(requested)". Change it if the team should hold less or more.
+- **First agent** (optional): start the team with one draft agent made from an [agent template](/docs/administration/agent-templates). It's named after the template, for the team only, and never published. The team's owner changes it and publishes it when ready.
+- The owner, shown under the fields: the person named in the request, or the requester. Someone who has never signed in is invited by email, as for any team.
+
+**Approve and create the team** does it all in one step. If something fails, for example the address is taken (`slug_taken`), the request stays pending and no team is left behind. The request's purpose becomes the team's description. The requester is told in either case, and the owner hears through the team invitation or the "you were added" notice.
+
+### Declining
+
+**Decline…** needs a **Reason** of up to 500 characters. The person who asked reads it on their Request a team page and in the **Team request decided** notification, so write it for them. A declined request is closed: they ask again if they want to. No team is created.
+
+If another admin decides a request first, your dialog closes and the queue shows the current state.
+
+## What's recorded
+
+`team_request.create`, `.withdraw`, `.approve` and `.decline` are in the platform audit log, and `platform.team_requests` for the switch and the limits. An approval is also in **the new team's own audit log**, so the team can see how it came to be. A team created this way is also a `team.created` event for [platform webhooks](/docs/administration/webhooks#platform-webhooks), and a new request is a `team_request.created` event.
+
+## Limits to know
+
+- A request can't be edited. The person withdraws it and asks again.
+- A request is for a new team only, not a change to an existing one (limits, classification or membership still go through the team's owners and platform admins).
+- There's no email to the requester beyond the ordinary notification channel, and no per-group limits.
+
+## API
+
+`GET` and `POST /v1/team-requests` and `POST /v1/team-requests/{id}/withdraw` are for the person; `GET /v1/admin/team-requests` (and `/{id}`), `POST …/approve` and `POST …/decline` (with `If-Match`) for admins; and `GET` and `PUT /v1/admin/settings/team-requests` for the switch and limits. See the [API reference](/docs/api).
