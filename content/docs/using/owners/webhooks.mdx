@@ -18,7 +18,7 @@ A team webhook hears its own team's events and nothing else:
 | `agent.published` | An agent was published: the agent, the version and its audience |
 | `feedback.submitted` | Someone rated an answer: the agent, the message, the rating and the reason |
 
-Events carry **IDs and summaries, never transcripts or document text**. A rating has no question, answer, comment or person. A receiver that needs more fetches it through the [API](/docs/api) with a key, so classification and permissions still apply. Taking a rating back isn't an event. The exact payloads are in the [webhooks reference](/docs/api/webhooks#events).
+Events carry **IDs and summaries, never transcripts or document text**. A rating has no question, answer, comment or person. A receiver that needs more fetches it through the [API](/docs/api) with a key, so classification and permissions still apply. Taking a rating back isn't an event, and since v0.6.1 neither is sending the same rating again (a different rating or reason is). The exact payloads are in the [webhooks reference](/docs/api/webhooks#events).
 
 ## Creating a webhook
 
@@ -119,7 +119,7 @@ Choose **Edit…**. The dialog says "Paused: failing" or "Paused: gone". Make su
 </Step>
 </Steps>
 
-Events that happened while the webhook was paused or off aren't recorded for it, so they aren't sent later. **Redeliver** can send again a delivery that failed before it paused, as long as it's still in the log (14 days).
+Events that happened while the webhook was paused or off aren't recorded for it, so they aren't sent later. If a platform admin switches webhooks off for the whole install, nothing is recorded or sent while it's off; a delivery that was waiting to be retried waits, and since v0.6.1 goes on within five minutes of the switch being turned on again instead of failing for good. **Redeliver** can send again a delivery that failed before it paused, as long as it's still in the log (14 days).
 
 ## Limits to know
 
@@ -127,4 +127,5 @@ Events that happened while the webhook was paused or off aren't recorded for it,
 - A secret's rotation has no overlap window. A receiver that needs one can accept both secrets for a few minutes while you change it.
 - Addresses are `https` on 443 only. There are no custom headers, per-agent or per-source filters, or batching.
 - Everything you do here is in the team's [audit log](/docs/using/owners/audit-log): `webhook.create`, `.update` (what changed, never the secret), `.rotate_secret`, `.delete`, `.test` and `.redeliver`.
+- If your team is **archived**, its webhooks are read-only (since v0.6.1): you can read them and their delivery logs, but creating, editing, rotating the secret, sending a test event, redelivering and deleting are refused (`team_archived`).
 - API keys can't manage webhooks; only people signing in can.

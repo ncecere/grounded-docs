@@ -19,7 +19,7 @@ A webhook subscribes to at least one event. A team webhook receives its team's e
 | `source.synced` | team | A web source finished syncing | `sourceId`, `sourceName`, `crawlId`, `pagesFetched`, `pagesChanged`, `pagesUnchanged`, `pagesFailed`, `documentsDeleted`, `truncated` |
 | `source.sync_failed` | team | A web source's sync failed | `sourceId`, `sourceName`, `crawlId`, `error` (a short reason) |
 | `agent.published` | team | An agent was published | `agentId`, `agentName`, `agentSlug`, `version`, `audience` |
-| `feedback.submitted` | team | Someone rated an answer (taking a rating back is not an event) | `agentId`, `messageId`, `rating` (`up` or `down`), `reason` (when given) |
+| `feedback.submitted` | team | Someone rated an answer (taking a rating back is not an event, and since v0.6.1 neither is sending the same rating again; a different rating or reason is) | `agentId`, `messageId`, `rating` (`up` or `down`), `reason` (when given) |
 | `team.created` | platform | A team was created | `teamId`, `slug`, `name`, `maxClassification` |
 | `team_request.created` | platform | Someone asked for a team | `requestId`, `name`, `classification` |
 | `webhook.test` | either | You asked for a test event | `message` |
@@ -101,7 +101,8 @@ In a web framework, read the body as raw bytes before any JSON parsing; a parsed
 - Any `2xx` answer is **delivered**. Anything else, or no answer within 10 seconds, is a failure and is retried: **8 attempts** in all, after 15 seconds, 1 minute, 5 minutes, 30 minutes, 2 hours, 6 hours and 12 hours (about a day).
 - `410 Gone` ends the delivery at once and **pauses** the webhook (`pausedReason: "gone"`).
 - After **5 deliveries in a row** gave up, the webhook is **paused** (`pausedReason: "failing"`), and its team's admins and owners (platform admins for a platform webhook) are notified. One success resets the count. Turning a paused webhook back on is a deliberate edit (`enabled: true` in a `PATCH`).
-- A delivery isn't sent when webhooks are turned off, the webhook is off, or its host is no longer an approved destination. It fails, and isn't retried.
+- A delivery isn't sent when the webhook is off or its host is no longer an approved destination. It fails, and isn't retried.
+- While a platform admin has webhooks switched off for the install, nothing is recorded and nothing is sent. Since v0.6.1 a delivery that was waiting to be retried **waits** and goes on within five minutes of the switch being turned on again, instead of failing for good.
 - Each webhook keeps its deliveries for **14 days**: event type, status (`pending`, `delivered` or `failed`), attempts, the receiver's last HTTP status and a short error, never your answer.
 - A **test event** (`webhook.test`) is sent on request whatever the webhook subscribes to. **Redeliver** sends a delivery's event again: the same event ID and body, as a new delivery.
 
@@ -127,6 +128,8 @@ These routes are for **people signing in**: API keys can't manage webhooks. They
 | `POST /v1/admin/webhook-destinations`, `DELETE …/{destinationId}` | Approve or withdraw a destination (platform admins). |
 | `GET`, `PUT /v1/admin/settings/webhooks` | Whether webhooks are on (platform admins and auditors read; admins change, with `If-Match`). |
 
-A webhook's fields are `url`, `description`, `events`, `enabled`, `secretHint` (the secret's last four characters), `pausedReason` (`""`, `failing` or `gone`), `consecutiveFailures`, `revision`, and `teamId` for a team's. Making or changing one takes `url` (`https`, port 443, up to 2,048 characters), `events` (at least one of the scope's), `enabled`, and optionally a `description` of up to 200 characters.
+A webhook's fields are `url`, `description`, `events`, `enabled`, `secretHint` (the secret's last four characters), `pausedReason` (`""`, `failing` or `gone`), `consecutiveFailures`, `revision`, and `teamId` for a team's. Making or changing one takes `url` (`https`, port 443, up to 2,048 characters), `events` (at least one of the scope's), `enabled`, and optionally a `description` of up to 200 characters. Since v0.6.1 `url`, `events` and `enabled` are all required on `POST` and `PATCH`: a missing `url` or `enabled` is `400 invalid_webhook` and the message names it (`missing: enabled`), and missing `events` is `400 no_events`. Before, a `PATCH` without `enabled` switched the webhook off. A `description` you leave out is kept on a `PATCH`; send `""` to clear it.
 
-Useful error codes: `400 destination_not_approved` (the host isn't covered), `409 too_many_webhooks` (10 per team and 10 for the platform), and `409 webhooks_off` while a platform admin has webhooks turned off.
+An **archived** team's webhooks are read-only: reads work, and creating, changing, rotating the secret, testing, redelivering and deleting answer `409 team_archived`. `GET /v1/webhook-destinations` returns each destination's `note` empty unless the caller is platform staff (an admin or auditor).
+
+Useful error codes: `400 invalid_webhook`, `400 no_events`, `409 team_archived`, `400 destination_not_approved` (the host isn't covered), `409 too_many_webhooks` (10 per team and 10 for the platform), and `409 webhooks_off` while a platform admin has webhooks turned off.

@@ -59,7 +59,7 @@ Agents calling tools on *outside* MCP servers has no switch: nothing happens unt
 
 ## The webhooks switch
 
-**Webhooks** (since v0.6.0) lets team admins and owners send their team's events, and platform admins the platform's, to approved HTTPS destinations. It's off by default. Turning it off asks for confirmation, since everything stops at once: no new webhooks, no events recorded and nothing sent. Existing webhooks and their delivery logs are kept, and turning it on again resumes them. Auditors see it read-only. It's audited (`platform.webhooks`). See [Webhooks](/docs/administration/webhooks).
+**Webhooks** (since v0.6.0) lets team admins and owners send their team's events, and platform admins the platform's, to approved HTTPS destinations. It's off by default. Turning it off asks for confirmation, since everything stops at once: no new webhooks, no events recorded and nothing sent. Existing webhooks and their delivery logs are kept, and turning it on again resumes them. Deliveries waiting to be retried wait (since v0.6.1) and go on within five minutes of turning it on again. Auditors see it read-only. It's audited (`platform.webhooks`). See [Webhooks](/docs/administration/webhooks).
 
 ## The saved answers switch
 
