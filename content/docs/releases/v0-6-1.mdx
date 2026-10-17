@@ -1,0 +1,110 @@
+---
+title: v0.6.1
+description: "Fixes from a QA pass of v0.6.0. API keys now act within what they were given, team members no longer get agents' drafts, and a shared link ends with its owner's standing. No migrations and no new settings."
+---
+
+Released 2026-10-17. v0.6.1 is a patch release made of the fixes from a QA pass of v0.6.0 (2026-10-16 and 17). It has **no migrations** (the schema stays at 53), **no new environment variables** and no new features. It does change some behaviour that people and integrators will notice, and for one kind of API key it **narrows what the key can reach**. Read "What changed", then "Upgrading from v0.6.0".
+
+## What changed
+
+### API keys act within what they were given
+
+An API key could do more than it was given. Four things change, and the first two can make an existing key reach less than before. See [API keys](/docs/using/owners/api-keys) and [Authentication](/docs/api/authentication).
+
+| | Before | Now |
+|---|---|---|
+| A key with only the `mcp` scope | Could read the team's sources, documents, knowledge bases and agents over the REST API, although it is for `/mcp` only | `403 missing_scope` on the REST API. It still works on `/mcp`. |
+| A key restricted to some **agents** | Limited which agents it could use, but could search every knowledge base of the team (and read its sources and documents) | Reaches only the knowledge bases those agents' **published** versions answer from, and follows them if an agent is published again. With a knowledge-base restriction too, only the knowledge bases both allow. Its sources and documents follow the same rule. |
+| A key restricted to some **knowledge bases** | Could read the sources and documents of the other knowledge bases, and list or open agents that use them | Outside its knowledge bases a source doesn't exist for it, and with no agent restriction it no longer lists or opens an agent whose draft or published configuration uses any other knowledge base. |
+| A **personal** key | Kept its ingest or manage power after its owner was made a plain member | Never acts above its owner's **current** team role: made a plain member, its ingest stops working at once. |
+
+**Who is affected:** owners and admins whose keys are restricted to agents or to knowledge bases, and programs that use `mcp`-only keys on the REST API. A key with no restrictions reaches what it did, unless it has only the `mcp` scope or is a personal key above its owner's role.
+
+### Team members get an agent's published version, not its draft
+
+The agents list and an agent used to return the draft to every member of the team and to a member's key: instructions, knowledge bases, settings, the unpublished-changes flag and the problems of publishing. The app already showed members only the published version. Now the API does too: a member, and a key with only the `query` scope (or a personal key whose owner is a member), gets the agent's profile and its published version. Editors, admins and owners, and a key with the `ingest` or `manage` scope, still get the draft.
+
+**Who is affected:** integrations that read agents with a member's or a query key and relied on the draft fields.
+
+### A shared link ends with its owner's standing
+
+A [shared link](/docs/using/chat#sharing-a-conversation) used to keep working, and to open for the person who made it, whatever had happened to them. It now works only while its owner is an active person who may still chat with the agent, **for everybody including them**, and that includes links open to anyone. If the owner leaves the team, is suspended or loses access to the agent, the link stops. If they come back, it works again. Nothing is deleted.
+
+**Who is affected:** anyone who opens a link made by a person who has left. People who made links and later lost access.
+
+### Webhooks
+
+Five fixes. See [Webhooks for administrators](/docs/administration/webhooks), [Webhooks for teams](/docs/using/owners/webhooks) and the [reference](/docs/api/webhooks).
+
+- **Updates need the whole picture.** `url` and `enabled` are required on `POST` and `PATCH`; a missing one is named in a `400 invalid_webhook`. Missing `events` is `400 no_events`. A `description` you don't mention is kept. Before, a `PATCH` without `enabled` switched the webhook off and cleared its description.
+- **An archived team's webhooks are read-only,** like its agents: creating, changing, rotating the secret, sending a test event, redelivering and deleting answer `409 team_archived`. Reading works.
+- **Switching webhooks off no longer loses deliveries.** A delivery waiting to be retried when a platform admin turned webhooks off now waits, and goes on within five minutes of turning them on again. Before, it failed for good.
+- **The destinations list hides the note** (written for platform staff) from everyone else.
+- **The same rating again is not a new event.** Sending a rating that was already given doesn't send another `feedback.submitted`. A different rating or reason does.
+
+**Who is affected:** integrators who `PATCH` webhooks and left `enabled` out; admins of archived teams.
+
+### Team requests
+
+When a request named someone else as owner, the person who asked is not a member of the new team. The approval notice used to say "The team is ready" and link to a team they couldn't open ("Team not found", and the same from **Open *team*** on Request a team). The notice now says who owns the team and links to the requests page, and the page shows "Owned by" and the address instead of the link. See [Team requests](/docs/administration/team-requests) and [Request a team](/docs/using/request-a-team).
+
+### Web sources
+
+See [Data sources](/docs/using/editors/data-sources#keeping-a-website-current).
+
+- **A sync that fetched nothing says why.** It used to finish as plain "completed" with no reason. The **Crawls** tab now shows "Nothing was fetched: …" with the cause: the site's robots.txt doesn't allow it, the site couldn't be reached, the address isn't a public website, the host isn't on the crawl allowlist, or the pages aren't a kind Grounded can read.
+- **A robots.txt that can't be reached is its own cause.** It used to be reported like a robots.txt that forbids crawling.
+- **A source at an address the crawler never fetches is refused as such.** Creating a source at `127.0.0.1`, `10.x`, `169.254.169.254` or `::1` answers `400 blocked_address`, and no longer invites a domain request that could never be approved.
+
+### API errors
+
+See the [API overview](/docs/api#conventions).
+
+- **A NUL character (U+0000) in text is `400 invalid_text`,** not `500`. A message, name, search or address containing one failed at the database, from about twenty endpoints. JSON bodies, paths and query strings now answer before anything runs.
+- **A JSON body that doesn't fit names the field.** `Unknown field "x"`, `Field "limit" must be a whole number`, nested fields with their path. The code is still `invalid_json`; before, the message said the body wasn't valid JSON even when it was.
+- **The OpenAI-compatible endpoints answer every error in OpenAI's shape.** A request with no API key at all and an internal failure used to get the app's own `{code, message}` body.
+- **A JSON body has 30 seconds to arrive.** After that the answer is `408 request_timeout` and the connection closes. A client that stopped halfway used to hold a connection open for as long as it liked. File uploads aren't covered.
+- **The API description says members can read their team's document passages.** `GET …/documents/{id}/passages` was already readable by any member of the team; only the description changes. See [Known limitations](#known-limitations).
+
+### Fixed
+
+- Citation markers after an unclosed backtick are recognised: an answer could show plain "[1]" and "[2]" beside a chip that was really source 3.
+- The public team address no longer loops on "Loading…" while public chat is off, and a session that ends while the app is open shows the sign-in page instead of "Something went wrong".
+- The composer counts characters, not UTF-16 units; a long question is cut short in the retrieval header; the source viewer's header stays in view; the chat page's conversation list has **Load more**; a refused web-source save shows where you are looking; the agent editor warns before losing a value held back as invalid.
+- The audit and access log CSV exports neutralise spreadsheet formulas, a long unbroken name wraps instead of scrolling the page sideways, and **Open invites** refreshes after **Assign owner**.
+- A refused sign-in no longer moves **Last sign-in**: a suspended account's attempt (`403 user_suspended`) used to record one.
+
+The [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md) has the full list, with the issue numbers.
+
+## Requirements
+
+Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements).
+
+## Upgrading from v0.6.0
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade ([Upgrades](/docs/self-hosting/upgrades)), then change every `?ref=v0.6.0` in your overlay to `?ref=v0.6.1` and pin the new digests of `ghcr.io/ncecere/grounded` and, if you run it, `ghcr.io/ncecere/grounded-ocr`.
+
+- **No migrations.** The schema stays at 53.
+- **No new environment variables,** and nothing changed in `deploy/kubernetes` or `deploy/observability`.
+- **One thing to check: API keys and shared links.**
+  - **Keys restricted to agents or to knowledge bases can reach less.** Look at the restricted keys in each team (**Team settings → API keys**), and at the programs that use them. A key restricted to agents now reaches only the knowledge bases those agents' published versions answer from: if a program stops finding something, add the agent that answers from it, or tick the knowledge base too. A key restricted to knowledge bases no longer lists agents that use others. A key with only the `mcp` scope now gets `403 missing_scope` on the REST API.
+  - **Links made by people who have left** (or been suspended, or lost access to the agent) stop working, for everybody. Nothing is deleted, so they work again if the person's access returns.
+- **Rolling back** is pinning the previous image. There is nothing to undo in the database. Rolling back to v0.6.0 also brings back the old behaviours, including the wider reach of keys restricted to agents.
+- **API:** no new route or field. Error codes and messages change as listed above (`invalid_text`, `request_timeout`, `blocked_address`, `invalid_webhook`, `no_events`, `team_archived` and `missing_scope`).
+
+## Known limitations
+
+The [v0.6.0 limitations](/docs/releases/v0-6-0#known-limitations) still apply, and:
+
+- **Members can read their team's document passages.** `GET …/documents/{id}/passages` is open to any member, because the data-source pages use it and a team's documents are the team's own content. What is kept for editors, admins and owners is a document's whole text in order, and the chat only serves the passages an answer cited. This release changes the API description to say so, not the behaviour. See [Source viewer](/docs/using/source-viewer#who-can-open-what).
+- **A key with the `query` scope can still read passages through that route** where a classification has turned direct retrieval off for team keys. That setting guards `/retrieve`, and this release didn't change it.
+- **A shared link stands or falls with the person who made it.** It can't be handed to someone else; make a new link. A link whose owner returns works again.
+- **The web layout fixes** were measured against a mock and walked in a browser, not on every browser.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.6.1`.
+
+## Reporting problems
+
+Open an issue at https://github.com/ncecere/grounded/issues. Report security problems privately as [`SECURITY.md`](https://github.com/ncecere/grounded/blob/main/SECURITY.md) describes.

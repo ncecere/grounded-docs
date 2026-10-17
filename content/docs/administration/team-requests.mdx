@@ -45,6 +45,8 @@ A request holds a name (up to 80 characters), a purpose (required, up to 1,000),
 
 **Approve and create the team** does it all in one step. If something fails, for example the address is taken (`slug_taken`), the request stays pending and no team is left behind. The request's purpose becomes the team's description. The requester is told in either case, and the owner hears through the team invitation or the "you were added" notice.
 
+When the request named **someone else** as owner, the requester is not a member of the new team and can't open it. Since v0.6.1 their approval notice says who owns the team ("… is its owner (you are not a member of it)") and links to their **Request a team** page, not to the team. Before, it said "The team is ready" and linked to a team the requester got "Team not found" for. When the owner is the requester, the notice links to the team as before.
+
 ### Declining
 
 **Decline…** needs a **Reason** of up to 500 characters. The person who asked reads it on their Request a team page and in the **Team request decided** notification, so write it for them. A declined request is closed: they ask again if they want to. No team is created.

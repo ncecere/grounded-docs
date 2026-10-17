@@ -51,6 +51,7 @@ The crawler always respects robots.txt, spaces its requests to each site, and do
 - Pages that are missing from a completed full crawl are removed from the source, and from search at once.
 - A single page can be fetched again from its row on the **Pages** tab.
 - The **Crawls** tab shows the 20 most recent crawls with their results.
+- A sync that **fetched nothing** says why (since v0.6.1). It still finishes as **Completed**, but the **Crawls** tab shows a line under the status that starts "Nothing was fetched:" and gives the cause that skipped most pages: "the site's robots.txt doesn't allow it", "the site couldn't be reached (its robots.txt could not be read)", "the address isn't a public website (only public sites on ports 80 and 443 can be crawled)", "the host isn't on the crawl allowlist", "the pages aren't a kind Grounded can read", or, if none of those fits, "every page was skipped". A robots.txt that can't be reached is its own cause: before, it was reported like a robots.txt that forbids crawling. Pages that failed count as fetched, so a sync with failures has no such line; its failures are in the counts.
 
 <Screenshot slot="data-source-web" />
 
@@ -62,7 +63,7 @@ Websites can only be crawled if their host is on the platform's **crawl allowlis
 2. Request the domain, with a reason.
 3. A platform admin approves or declines it. You get a notification with the decision, and the tab shows each request's status.
 
-Approved domains apply to your team only. Private, loopback and link-local addresses are always refused, whatever the allowlist says, so internal sites can't be crawled.
+Approved domains apply to your team only. Private, loopback and link-local addresses are always refused, whatever the allowlist says, so internal sites can't be crawled. Since v0.6.1, creating a source at such an address (`127.0.0.1`, `10.x`, `169.254.169.254`, `::1`) is refused as `400 blocked_address` with a message that says the crawler never fetches it and a domain request can't change that. Before, it answered as if the host were only missing from the allowlist and invited a domain request that could never be approved.
 
 <Screenshot slot="crawl-domains" />
 

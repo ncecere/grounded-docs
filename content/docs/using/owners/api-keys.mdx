@@ -24,11 +24,27 @@ A service key has a **responsible contact**, a team member to ask about it, show
 | Scope | Allows | Who can grant it on a personal key |
 |---|---|---|
 | **Query** | Chat with agents and search knowledge bases | Everyone |
-| **Ingest** | Upload and manage documents | Editors, admins, owners |
-| **Manage** | Change sources and knowledge bases | Admins, owners |
+| **Ingest** | Upload documents to a data source, start and cancel a crawl, preview a site map, and read sources, documents and agents | Editors, admins, owners |
+| **Manage** | Today the same calls as Ingest | Admins, owners |
 | **MCP** | Search knowledge bases and ask agents from AI tools, over the [MCP server](/docs/using/mcp). Nothing on the REST API | Everyone |
 
-A key can also be **restricted** to some knowledge bases and some agents. Leave them unchecked to allow every knowledge base, or every agent, of the team. A key can have an **expiry date**; it stops working at the end of that day.
+Neither Ingest nor Manage can create, change or delete data sources, knowledge bases, agents or members, or publish an agent: those need a person signed in to the app (a key gets `401` there).
+
+A key can also be **restricted** to some knowledge bases and some agents. Leave them unchecked to allow every knowledge base, or every agent, of the team.
+
+- A **knowledge-base** restriction limits the knowledge bases the key can search, the data sources it can reach (only the sources the chosen knowledge bases use) and those sources' documents. Any other source, and its documents, don't exist for that key. A key restricted to knowledge bases, and to no agents, also doesn't list or open an agent whose draft or published configuration uses any other knowledge base.
+- An **agent** restriction limits which agents the key may use and see, and (since v0.6.1) the knowledge bases it reaches: only those the chosen agents' **published** versions answer from. The key follows them: publish a different version of an agent and the key's reach changes with it. An agent that isn't published, or answers from no knowledge base, adds none. Its sources and documents follow the same rule.
+- With **both** restrictions, the key reaches only the knowledge bases that both allow: those the chosen agents answer from, and among them only the ones you ticked.
+
+<Callout type="warn" title="Keys restricted to agents reach less since v0.6.1">
+  Before v0.6.1 an agent restriction did not limit knowledge bases, so such a key could search every knowledge base of the team. It now reaches only what its agents' published versions answer from, and a restriction to knowledge bases alone now hides agents that use others. If a program stopped finding something after the upgrade, look at the key's restrictions on its page: add the agent that answers from the knowledge base, or tick the knowledge base too.
+</Callout>
+
+A key can have an **expiry date**; it stops working at the end of that day.
+
+A personal key acts as you and never does more than your role in the team allows now: if you are made a plain member, its Ingest scope stops working at once (it does not have to be revoked). If you leave the team, it is revoked.
+
+A key with only the Query scope, or one whose owner is a plain member, sees the team's agents as a member does: each agent's profile and published version, not its draft (see [Authentication](/docs/api/authentication#api-keys)).
 
 Keys always belong to one team, and can never administer the platform.
 
