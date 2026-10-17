@@ -44,13 +44,13 @@ Stopping pods drain: they fail readiness, wait `SHUTDOWN_DELAY` for load balance
 Images are published for linux/amd64 and linux/arm64. Release tags are `vX.Y.Z`, `vX.Y` and `latest-release`; release candidates get only their own tag, such as `v0.4.3-rc.1`. There's no `latest` tag. **Tags can move, so deploy by digest**:
 
 ```sh
-docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.6.0   # prints the index digest
+docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.6.1   # prints the index digest
 ```
 
 ```yaml
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.6.0             # informational
+    newTag: v0.6.1             # informational
     digest: sha256:<digest>    # what is deployed
 ```
 
@@ -64,11 +64,11 @@ cosign verify ghcr.io/ncecere/grounded@sha256:<digest> \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-For a stricter check, use `--certificate-identity https://github.com/ncecere/grounded/.github/workflows/image.yml@refs/tags/v0.6.0`. The same works for `grounded-ocr`. Then:
+For a stricter check, use `--certificate-identity https://github.com/ncecere/grounded/.github/workflows/image.yml@refs/tags/v0.6.1`. The same works for `grounded-ocr`. Then:
 
 ```sh
 docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version
-# grounded v0.6.0 (<commit>)
+# grounded v0.6.1 (<commit>)
 ```
 
 Each image carries an SPDX SBOM and SLSA provenance as attestations, covered by the signature:
@@ -85,6 +85,7 @@ Since v0.2.0, each GitHub release also attaches the SBOMs per platform, the dige
 
 | From → to | Migrations | What to do |
 |---|---|---|
+| v0.6.0 → [v0.6.1](/docs/releases/v0-6-1) | None (schema stays at 53) | A rolling upgrade: bump `?ref=` and the digests. No new environment variables, and nothing changed in `deploy/kubernetes` or `deploy/observability`. **Check your API keys and shared links:** a key restricted to agents now reaches only the knowledge bases those agents' published versions answer from, a key restricted to knowledge bases no longer lists agents that use others, a key with only the `mcp` scope gets `403 missing_scope` on the REST API, and a personal key never acts above its owner's current role. Team members (and query keys) get an agent's published version, not its draft. A shared link works only while the person who made it can still chat with the agent. Rolling back is pinning the previous image; it also brings back the old behaviours. |
 | v0.5.0 → [v0.6.0](/docs/releases/v0-6-0) | `00049` to `00053`, all additive (schema 48 → 53): `agent_templates`, `team_request_settings` and `team_requests`, `conversation_shares`, `message_events.routing`, and the webhook tables | A rolling upgrade: bump `?ref=` and the digests. No new environment variables, and nothing changed in `deploy/kubernetes` or `deploy/observability`. **Webhooks and team requests are off** until a platform admin turns them on in Admin → Settings → Features, and no agent is reachable through routers until its team opts in. `grounded rotate-keys` also re-encrypts the webhooks' signing secrets (`webhooks.secret_cipher`). Four new notification types appear in notification settings, on by default for the people they reach. **Before rolling back to v0.5.0, switch routers off** (unpublish or disable them): v0.5.0 would run one as an ordinary agent with no knowledge bases, which only refuses; the new tables stay and are ignored, and webhooks stop sending. Routers need the SystemOne scope check. |
 | v0.4.4 → [v0.5.0](/docs/releases/v0-5-0) | `00046` to `00048` (schema 45 → 48), all additive | A rolling upgrade: bump `?ref=` and the digests. No new environment variables. Before rolling back to an earlier release, switch or discard any index preview. |
 | v0.4.3 → [v0.4.4](/docs/releases/v0-4-4) | `00045` (schema 44 → 45), expand-only: two nullable columns on `models`. River's own schema moves to version 8 at startup (a no-op migration) | A rolling upgrade: bump `?ref=` and the digests. No new environment variables, and nothing changed in `deploy/kubernetes` or `deploy/observability`. **If you derive from the OCR image**, its base is now Debian 13: check the `apt-get install` of any extra `tesseract-ocr-*` package against Debian 13's names and re-check OCR output on a few of your own scans (Tesseract 5.5 instead of 5.3). People get a Profile page and an API keys page in the account menu, and the model **Test** now checks "How to turn thinking off". |
