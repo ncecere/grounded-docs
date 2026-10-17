@@ -171,13 +171,14 @@ In **Links you made**, the Revoke button (a bin icon) beside a link asks "Revoke
 
 - you delete the conversation, or your organisation's retention removes it;
 - the agent is disabled, unpublished or deleted;
-- for **Anyone with the link**, public access is turned off or the agent stops being public.
+- for **Anyone with the link**, public access is turned off or the agent stops being public;
+- **you** stop being someone who can chat with the agent (since v0.6.1). A link works only while the person who made it is an active person who may still chat with the agent, and then for everybody, you included. If you leave the team, are suspended or lose access to the agent, the link stops for everyone, including links open to anyone. Nothing is deleted: if your standing comes back, so does the link.
 
 ### Limits to know
 
 - A link covers the conversation **up to the last finished answer when you made it**. Later messages aren't in it; make a new link to share more. A stopped answer doesn't count, and a conversation with no finished answer can't be shared.
 - At most 10 links per conversation. A conversation with a deleted agent, or one holding a [router's](#routers) answers, can't be shared.
-- **Links don't expire** before the conversation's own retention does, and there are no view counts. A link is made and revoked, not edited.
+- **Links don't expire** by time: they last until you revoke them, the conversation's own retention removes it, or one of the reasons above applies (a link that has stopped because its owner lost access isn't gone, and works again when that is put right). There are no view counts. A link is made and revoked, not edited.
 - It needs you signed in; an API key can't make one.
 - The platform's audit log records that a link was made or revoked and whether it was open to anyone, without the agent, the conversation or any content, and never in a team's log. For an agent at the Sensitive level or above, reading a shared answer is written to the [access log](/docs/administration/analytics-and-logs#access-log) like using the agent.
 
