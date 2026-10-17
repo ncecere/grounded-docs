@@ -64,7 +64,7 @@ console.log(reply.citations); // Grounded's extension field
 - **System messages from the client are dropped**: the agent's own instructions win. The other messages are the history.
 - `tools` and `n` greater than 1 are refused (400).
 - Temperature, output length and other generation settings come from the agent, not the request.
-- Errors use OpenAI's shape: `{"error": {"message", "type", "code", "param"}}`.
+- Errors use OpenAI's shape: `{"error": {"message", "type", "code", "param"}}`. Since v0.6.1 that includes a request with no API key at all (`type` `authentication_error`) and an internal failure (`type` `api_error`); before, those two got the app's own `{code, message}` body.
 
 ## The response
 
@@ -150,7 +150,8 @@ curl -N https://grounded.example.org/v1/chat/completions \
 
 | Status | When |
 |---|---|
-| 400 | A malformed request, `tools`, or `n` > 1. |
+| 400 | A malformed request, `tools`, or `n` > 1, or a NUL character in the text (`invalid_text`). |
+| 408 | The JSON body took longer than 30 seconds to arrive (`request_timeout`); the connection closes. |
 | 401 | A missing, unknown, revoked or expired key. |
 | 403 | The key's scope or restrictions don't allow this agent, or the agent is disabled (`agent_disabled`). |
 | 404 | No such agent for this key, or it isn't published. |
