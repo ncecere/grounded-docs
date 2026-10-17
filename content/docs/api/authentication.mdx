@@ -14,8 +14,8 @@ curl -H "Authorization: Bearer rag_<id>_<secret>" https://grounded.example.org/v
 Keys are created in the app under **Team settings → API keys** ([API keys](/docs/using/owners/api-keys)); the secret is shown once. A key:
 
 - belongs to **one team**, and reaches only that team's agents and knowledge bases;
-- has **scopes**: `query` (chat and search), `ingest` (upload and manage documents), `manage` (change sources and knowledge bases), `mcp` (search and ask from AI tools over [`/mcp`](/docs/using/mcp); it grants nothing on the REST API);
-- may be **restricted** to some knowledge bases and some agents;
+- has **scopes**: `query` (chat and search), `ingest` (upload documents, start and cancel crawls, preview a site map, and read sources, documents and agents), `manage` (today the same calls as `ingest`), `mcp` (search and ask from AI tools over [`/mcp`](/docs/using/mcp); it grants nothing on the REST API: a key with only `mcp` gets `403 missing_scope` there);
+- may be **restricted** to some knowledge bases and some agents: a knowledge-base restriction also limits the data sources it can reach, an agent restriction limits which agents it may use (and does not limit which knowledge bases it can search);
 - may **expire**;
 - can never administer the platform.
 
@@ -24,6 +24,7 @@ Keys are created in the app under **Team settings → API keys** ([API keys](/do
 | Acts as | You, within the team | The team |
 | Scopes | By your role: members `query`, `mcp`; editors `query`, `ingest`, `mcp`; admins and owners all | Any (created by admins and owners) |
 | Conversations | Stored for you; send `conversationId` to continue one | Stateless: send earlier turns in `history`; `conversationId` is refused |
+| When the owner's role changes | Never above the owner's role now (made a plain member, `ingest` stops working) | Unchanged |
 | When the owner leaves the team | Revoked | Keeps working |
 
 Keys are stored only as HMAC digests. Per-key rate limits apply (300 queries per minute by default), as do the team's and the agent's limits. A revoked, expired or unknown key gets 401.

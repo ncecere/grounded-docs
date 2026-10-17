@@ -24,11 +24,20 @@ A service key has a **responsible contact**, a team member to ask about it, show
 | Scope | Allows | Who can grant it on a personal key |
 |---|---|---|
 | **Query** | Chat with agents and search knowledge bases | Everyone |
-| **Ingest** | Upload and manage documents | Editors, admins, owners |
-| **Manage** | Change sources and knowledge bases | Admins, owners |
+| **Ingest** | Upload documents to a data source, start and cancel a crawl, preview a site map, and read sources, documents and agents | Editors, admins, owners |
+| **Manage** | Today the same calls as Ingest | Admins, owners |
 | **MCP** | Search knowledge bases and ask agents from AI tools, over the [MCP server](/docs/using/mcp). Nothing on the REST API | Everyone |
 
-A key can also be **restricted** to some knowledge bases and some agents. Leave them unchecked to allow every knowledge base, or every agent, of the team. A key can have an **expiry date**; it stops working at the end of that day.
+Neither Ingest nor Manage can create, change or delete data sources, knowledge bases, agents or members, or publish an agent: those need a person signed in to the app (a key gets `401` there).
+
+A key can also be **restricted** to some knowledge bases and some agents. Leave them unchecked to allow every knowledge base, or every agent, of the team.
+
+- A **knowledge-base** restriction also limits the data sources a key can reach: only the sources the chosen knowledge bases use. Any other source, and its documents, don't exist for that key.
+- An **agent** restriction limits which agents the key may use and see. It does not limit which knowledge bases the key can search, so to confine a key to what one agent answers from, restrict its knowledge bases as well.
+
+A key can have an **expiry date**; it stops working at the end of that day.
+
+A personal key acts as you and never does more than your role in the team allows now: if you are made a plain member, its Ingest scope stops working at once (it does not have to be revoked). If you leave the team, it is revoked.
 
 Keys always belong to one team, and can never administer the platform.
 
