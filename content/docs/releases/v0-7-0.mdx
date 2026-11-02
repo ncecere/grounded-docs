@@ -1,0 +1,106 @@
+---
+title: v0.7.0
+description: "Better knowledge in, continued: near-duplicate repeated blocks, tables kept whole, structural boundaries, parent sections, contextual chunks and a content health report. Every one is off by default, and none has been measured on a real knowledge base."
+---
+
+Released 2026-11-01. v0.7.0 adds six opt-in changes to what is indexed and how, each meant to be judged with the [index preview](/docs/administration/embedding-profiles#previewing-new-settings) before anything switches. **Every one is off by default**: an install that turns nothing on indexes, retrieves and answers as v0.6.3 did. None has been measured on a real knowledge base with a real embedding model, so this release doesn't say retrieval improves. Preview each on your own knowledge base and decide by the comparison.
+
+It has **four migrations**, all additive (the schema moves from 55 to 59), and **four new optional environment variables** that leave behaviour as it was.
+
+<Screenshot slot="admin-index-preview-comparison" />
+
+## What changed
+
+### Near-duplicate repeated blocks
+
+Repeated-block removal used to match blocks by exact text, so a menu with a different item highlighted on each page, or a footer with a different date, was kept on every page. With **Also remove near-duplicate blocks** on for a source, blocks of eight words or more that mostly agree count as one repeated block, and one copy stays in the page with the shortest address. The source's **Repeated blocks** card shows each group once with its variants. Exact matching is unchanged while it's off.
+
+The platform default is `BOILERPLATE_FUZZY=false`; a source can override it. To try it first, choose **Repeated blocks → Treat near-duplicate blocks as one** in **Preview new settings**: switching to that index turns the setting on for the sources it serves. See [Repeated blocks](/docs/using/editors/data-sources#repeated-blocks).
+
+**Who is affected:** editors of web sources whose menus or footers vary from page to page.
+
+### Tables kept whole (chunker version 3)
+
+A profile's chunker can be **Keep tables whole**. It does what **Merge short sections** does, and a table that fits a passage stays whole, with a one-line caption above it. A longer table is cut between rows, and every piece repeats the caption, the header row and the separator row, so a passage with rows always has their column names. No row is lost or repeated. PDF tables are read as text, so every chunker cuts them as paragraphs. See [Embedding profiles](/docs/administration/embedding-profiles).
+
+### Structural boundaries (chunker version 4)
+
+**Structural boundaries** is for sections that mix several procedures. It keeps version 3's table and size rules, never merges across a heading of any level (1 to 6), and treats a standalone bold label directly above a list (such as **Renewing a permit:** followed by steps) as the start of a new passage. It reads formatting, not meaning.
+
+### Parent sections
+
+A profile can set **Parent sections**, a size in tokens (0, off, by default; at least twice the passage size and at most 8,192). Search still ranks small passages, and the agent's model is given the section around each match: consecutive passages of one document under the same heading. Passages of one section count as one source, so they no longer crowd out other matches. Citations still point at the matched passage, and the [source viewer](/docs/using/source-viewer) still shows the passage in context.
+
+`RETRIEVAL_PARENT_EXPANSION=false` turns parent sections off for every profile without re-indexing. `/retrieve`, the MCP `search` tool and evaluation retrieval checks are unchanged.
+
+### Contextual chunks
+
+For a source a platform admin opts in, a chat model writes a short description of where each section sits in its document, and that text is put in front of the passage **only in what is embedded**. Passages, keyword search, citations and viewers don't change, and the generated text never appears in an answer or an API response.
+
+- It's off at two levels: for the installation (`CONTEXTUAL_CHUNKS=false`) and for each source. A platform admin configures a source on its **Contextual chunks** card; team members see its state, read-only.
+- Each source needs explicit per-build and per-day limits on calls, tokens and configured price. At a limit, a budget or a quota, documents wait instead of failing.
+- An estimate makes no model call. Contextual inputs are built only through an index preview (**Contextual embedding inputs → Build contextual inputs for opted-in sources**) and used only after you switch.
+- Configured prices are local accounting, not a provider's invoice. The calls count as chat spend and against the team's daily chat-token quota.
+
+See [Contextual chunks](/docs/administration/contextual-chunks).
+
+**Who is affected:** platform admins who choose to try it. Nothing is sent to a model until both switches are on and an index preview is built.
+
+### Content health report
+
+A team's editors, admins and owners can ask for a read-only report (**Content health** in the team's sidebar) of:
+
+- documents not processed for a chosen number of days,
+- links the latest completed crawl saw fail,
+- byte-identical files in two of the team's sources,
+- documents with no retained citation evidence,
+- documents that failed to parse or ingest.
+
+Each signal says what it doesn't mean, and one that can't be measured is shown as unavailable, not as zero. A report fetches nothing and calls no model; it reads what Grounded already stores. It's off until a platform admin turns on **Allow content health reports** (**Admin → Settings → Features**). Members, API keys and people outside the team can't see reports, and platform roles and break-glass give no access. Shared sources aren't included.
+
+<Screenshot slot="content-health-report" />
+
+See [Content health](/docs/using/editors/content-health) for teams and [Content health reports](/docs/administration/content-health) for platform admins.
+
+### Fixed
+
+- **Merged table cells keep their columns** in HTML (`rowspan`) and Word (`gridSpan`, `vMerge`) documents: rows below or beside a merged cell no longer slide into the wrong columns. This applies to every chunker version and changes the parsed text of such tables, and so their passages, the next time a document is processed. See [Parsing and OCR](/docs/administration/parsing-and-ocr).
+
+The [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md) has the full entries, with the issue numbers.
+
+## Requirements
+
+As for [v0.6.3](/docs/releases/v0-6-3#requirements), including PostgreSQL with ICU. Contextual chunks also need a chat model that is enabled on an enabled connection, has a declared context window, may be used for the sources' classification, and has input and output prices in the installation's currency.
+
+## Upgrading from v0.6.3
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade ([Upgrades](/docs/self-hosting/upgrades)), then change every `?ref=v0.6.3` in your overlay to `?ref=v0.7.0` and pin both `ghcr.io/ncecere/grounded` and `ghcr.io/ncecere/grounded-ocr` to the digests [below](#verifying-the-images).
+
+- **Four migrations** (the schema moves from 55 to 59), all additive: `00056` near-duplicate block sketches and the source setting (off); `00057` the profile's parent size (0) and passage ranges; `00058` the content health tables; `00059` the contextual-chunks flag (off) and its settings, cache and accounting tables. Old and new code run together on schema 59 while the new features stay unused.
+- **New optional environment variables,** all leaving behaviour as before: `RETRIEVAL_PARENT_EXPANSION` (`true`), `BOILERPLATE_FUZZY` (`false`), `CONTEXTUAL_CHUNKS` (`false`) and `CONTEXTUAL_CONCURRENCY` (`2`, from 1 to 16). See [Configuration](/docs/self-hosting/configuration). Nothing changed in `deploy/kubernetes` or `deploy/observability`.
+- **Upgrade every API and worker before turning on any new feature.** Older binaries can't build chunker 3 or 4, parent-section or contextual indexes.
+- **Merged table cells** change the parsed text of HTML and Word tables with merged cells when those documents are next processed. This isn't opt-in.
+- **New background work:** content health reports run on their own worker queue, `content_health`, with no setting. A new metric, `grounded_content_health_reports_total{status}`, isn't on the dashboards.
+- **Rolling back** to an older image: first switch affected knowledge bases back to their previous index (**Switch back**, or preview the previous settings and switch), then turn source and installation opt-ins off. A kill switch alone doesn't rewrite vectors.
+- **API (all additive):** `/v1/teams/{team}/content-health/reports…`, `/v1/admin/settings/content-health`, `/v1/admin/sources/{sourceId}/contextual…`, `/v1/admin/profile-migrations/contextual-estimate` and `GET /v1/teams/{team}/sources/{sourceId}/contextual`; `chunkerVersion` 3 and 4 and `parentTokens` on profiles and previews; `boilerplateFuzzy` and `contextualChunks` on previews; `parent` on citations.
+
+## Known limitations
+
+The [v0.6.3 limitations](/docs/releases/v0-6-3#known-limitations) still apply, and:
+
+- **No quality measurement.** Every feature was checked with stand-in models and test sites. Contextual chunks were also tried in two small runs with a real model on a tiny synthetic set: the mechanics worked, and retrieval didn't improve.
+- **Chunker 4 reads formatting.** A change of procedure without a heading or bold label isn't detected, and a misleading bold line before a list makes an extra passage.
+- **A preview that changes only the parent size shows no difference** in recall or rank, because the passages are the same. Preview a smaller passage size together with a parent size to see search differences.
+- **Contextual chunks spend money.** Limits are enforced on locally counted tokens and configured prices, and a call whose usage is unknown keeps its reservation. Nothing here checks a provider's invoice.
+- **Large sources and near-duplicate blocks.** Beyond 100,000 candidate blocks or 20 million comparisons, a source is classified by exact blocks alone and a warning is logged.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.7.0`. The binary reports `grounded v0.7.0 (…)`.
+
+- `ghcr.io/ncecere/grounded@sha256:d961dd8cc60016a67f4323e766b8ced2a0992bda7f399a9330ab01dd53b3f2db`
+- `ghcr.io/ncecere/grounded-ocr@sha256:b5f1c6dc695e29dac4aa9d7308fa8ad2b0467656e7a94bc73541a2789466f66e`
+
+## Reporting problems
+
+Open an issue at https://github.com/ncecere/grounded/issues. Report security problems privately as [`SECURITY.md`](https://github.com/ncecere/grounded/blob/main/SECURITY.md) describes.

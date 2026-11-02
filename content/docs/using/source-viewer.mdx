@@ -20,18 +20,25 @@ Where the source opens depends on the room you have:
 | Try it in the agent editor, and other narrow chats | Under the conversation. |
 | A phone, and the chat widget on a website | As a full-screen sheet. **Close the source** (the arrow at the start of its header) takes you back. |
 
-The conversation stays where it was. **Escape** or **Close the source** closes the viewer, and focus goes back to what opened it. The cited passage scrolls into view when the source opens; on a phone the sheet's title gets focus, and a long sheet can be scrolled with the keyboard.
+The conversation stays where it was. The viewer's header stays in view while you scroll the source (v0.6.1). **Escape** or **Close the source** closes the viewer, and focus goes back to what opened it. The cited passage scrolls into view when the source opens; on a phone the sheet's title gets focus, and a long sheet can be scrolled with the keyboard.
 
 <Screenshot slot="phone-source-viewer" />
 
 ## What it shows
 
-- **The document's title**, "Source 2 of 3", and the passage's heading path (and pages, for a PDF).
+- **The document's title**, "Source 2 of 3", and the passage's heading path (and pages, for a PDF). Since v0.6.3 the heading path reads as words, without Markdown marks.
 - **The answer's other sources** as numbered buttons, so each one is a click away.
 - **The claims that cite this source**, each with this source's verdict on it: **Supported**, **Not supported**, **Contradicted** or **Not checked**. They appear when the agent checks citations ([Claims and verdicts](/docs/using/chat#claims-and-verdicts)).
 - **The cited passage, highlighted** with a coloured bar and the words "Cited passage", among its neighbours: about a page of the document. Text the document repeats at the start of the next passage is left out, so it reads like the document.
 - **Open the page**, for web pages when the agent links its sources: the live page, with a [text fragment](https://developer.mozilla.org/en-US/docs/Web/URI/Reference/Fragment/Text_fragments) built from the passage's first and last words, so browsers that support them scroll to and highlight the passage.
 - **Open full document**, for the team's editors, admins and owners only: the whole document, starting a little before the cited passage, with **Show earlier passages** and **Show later passages**.
+
+### When the model used a larger section
+
+Since v0.7.0 an embedding profile can use **parent sections**: search still finds a small passage, but the agent's model is given the section around it, such as the passages under one heading. The citation still points at the passage that matched.
+
+- In a signed-in chat, on a public page or in the widget, and through a shared link, the viewer shows the matched passage and the text around it, as always, with a note: "The model used a larger section (*N* passages). This view shows the matched passage and nearby context." It doesn't show more of the document than before.
+- In an agent's **Try it** panel, the team's editors, admins and owners see the whole section, marked **Cited section**, with the passage that matched the question marked **Matched passage**: "The model was given these *N* passages together. The passage that matched the question is marked."
 
 ### When the passage is gone
 
@@ -39,8 +46,9 @@ Documents change after an answer is written. The viewer says so rather than show
 
 - "This document was deleted after the answer was written."
 - "This passage is no longer in the document. The document changed after the answer was written." For example, a web page whose text changed when it was fetched again.
+- "This section is no longer in the document. The document changed after the answer was written." The same, for an answer whose model was given a [larger section](#when-the-model-used-a-larger-section).
 
-A passage that's still there word for word, such as a web page fetched again without changes, is found again.
+A passage that's still there word for word, such as a web page fetched again without changes, is found again. A section is checked as a whole: if any of its text changed, or the document was cut into passages again so that the matched passage was replaced, it counts as changed, even when the words are the same.
 
 ## Source cards
 
@@ -56,6 +64,7 @@ Before v0.4.0 a card said "Supports 2 of 3 claims that cite it". Answers checked
 |---|---|
 | You, in your own conversations | The passages your answers cited, in context. |
 | A visitor on a public page or in the widget | The passages cited in their own anonymous session's conversations. |
+| Someone who opens a [shared conversation](/docs/using/chat#sharing-a-conversation) | The passages cited in that snapshot. |
 | The source's team editors, admins and owners | Also the whole document, as they can in Data sources. |
 | Anyone else | Nothing. Team admins and platform admins can't open passages from other people's conversations. |
 

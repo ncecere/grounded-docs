@@ -7,16 +7,18 @@ description: Every change made in the team, who made it and what changed.
 
 ## What's recorded
 
-- Members, invites and roles, including changes made by SSO group rules (the actor reads "System (group mapping: *group* → *team*)").
+- Members, invites and roles, including renewed invites ("Renewed invite", since v0.6.3) and changes made by SSO group rules (the actor reads "System (group mapping: *group* → *team*)").
 - API keys created and revoked, and publishable widget keys.
-- Data sources, uploads and deletions, classification changes with their reasons, and domain requests.
-- Knowledge bases, including profile migrations started by platform admins.
-- Agents: versions published, audience changes, disabling, and a platform admin's kill switch.
+- Data sources, uploads and deletions, classification changes with their reasons, and domain requests. Since v0.6.3 a source change that changes nothing writes no entry.
+- A platform admin's change to a source's [contextual chunks](/docs/using/editors/data-sources#contextual-chunks) setting (`source.contextual_update`, v0.7.0): IDs, switches and limits only.
+- Knowledge bases, including profile migrations started by platform admins, and [index previews](/docs/using/editors/knowledge-bases#when-a-platform-admin-previews-new-settings) becoming ready and being compared (`kb.profile_preview_ready`, `kb.profile_preview_evaluate`).
+- Agents: versions published, audience changes, disabling, and a platform admin's kill switch. When a platform admin saves one of your agents as a template, "Saved an agent as a template" (`agent_template.create`).
 - [Webhooks](/docs/using/owners/webhooks) your admins made, changed, tested and deleted (`webhook.*`), and rotated secrets. Never a secret.
 - For a team created from a [team request](/docs/administration/team-requests), the approval (`team_request.approve`), so the team can see how it came to be.
 - Evaluation sets, questions, imports and runs. Since v0.4.0 a question's entry never carries its text, only its expected documents and what changed.
 - [Gap topics](/docs/using/editors/gaps): Add a source, Mark fixed, Dismiss (with its kind, and whether a reason was given), Reopen and Add to evaluations, and the Gaps settings. Never a topic's label, a question or a reason: platform staff can read team audit logs.
 - An agent's [saved answers](/docs/using/editors/saved-answers) settings, and clearing them (with how many were cleared).
+- [Content health](/docs/using/editors/content-health) reports asked for, cancelled and deleted (`content_health.generate`, `.cancel`, `.delete`, v0.7.0), with IDs and thresholds only, never a document title, an address or a count.
 - Searches and questions from AI tools over the [MCP server](/docs/using/mcp) ("Searched over MCP", "Asked an agent over MCP"), and each call an agent makes to a [tool on an MCP server](/docs/administration/mcp-servers) ("An agent called an MCP tool"). They name the key or person, the knowledge base, agent or tool and the outcome, never the query, question, answer, arguments or result. The team Overview's recent changes leave them out.
 - Limits and budgets set for the team by platform admins (owners and admins only).
 - Break-glass sessions on the team, and every read made under them: the kind of thing and which one, never its content.

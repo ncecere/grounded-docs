@@ -14,7 +14,7 @@ Grounded has no built-in model provider. Platform admins connect it to one or mo
 | **Name** | Shown in model lists and used as the `connection` label in metrics. |
 | **Base URL** | The gateway's API root, including `/v1`, for example `https://gateway.example.org/v1`. Admins may point it at private addresses; the crawler's address rules don't apply here. |
 | **API key** | Stored encrypted with `ENCRYPTION_KEY` (AES-256-GCM). The API never returns it; the page only shows that one is set. |
-| **Timeout** | Per request, 1 to 600 seconds. |
+| **Timeout** | Per request, 1 to 600 seconds; 60 seconds when left empty. Since v0.6.3 an explicit 0 is refused. |
 | **Requests per minute** | Optional. Enforced across every Grounded process. Set it just below your gateway key's limit (for example 110 for a key allowed 120). Without it, bulk work sends requests as fast as the gateway answers. |
 | **Maximum concurrent requests** | Default 8 (1–256), per Grounded process. Applies to SystemOne calls, since a GPU serves few at once: set it to what the SystemOne service serves at once, divided by the Grounded pods calling it. Since v0.4.1, answers get a free slot first, and evaluation runs and the gap job hold at most half ([SystemOne → Capacity](/docs/administration/systemone#capacity)). |
 
@@ -35,7 +35,7 @@ Grounded uses only the OpenAI API surface (`/models`, `/embeddings`, `/chat/comp
 - **Upstream model ID**: what the gateway calls it. **Display name**: what people see.
 - **Kind**: **Chat**, **Embedding**, **Rerank**, **Moderation**, **SystemOne** or **Vision (OCR)**. A rerank model is used once it's chosen on **Admin → Models → Reranking** ([Reranking](/docs/administration/reranking)), whose setup guide opens Add model with kind Rerank chosen.
 - **Maximum classification**: the most sensitive level this model may process. Which models may take Restricted data is your organisation's policy, commonly self-hosted models or services under a data agreement. Tag each model as you add it.
-- Kind-specific capabilities: for chat, the context window, maximum output tokens, tool calling and vision; for embeddings, the dimensions and maximum input tokens; for rerank, an optional maximum input length (longer passages are shortened to fit with the question).
+- Kind-specific capabilities: for chat, the context window, maximum output tokens (since v0.6.3, no more than a known context window), tool calling and vision; for embeddings, the dimensions and maximum input tokens; for rerank, an optional maximum input length (longer passages are shortened to fit with the question).
 - **Enabled**: a disabled model stops being offered and used.
 
 <Screenshot slot="admin-models" />
@@ -66,6 +66,10 @@ A model's record page shows its compatibility settings, for auditors too. The fo
 
 [Model gateways](/docs/self-hosting/model-gateways) has recipes for self-hosted servers.
 
+### Models that write contextual chunks
+
+A chat model chosen to write [contextual chunks](/docs/administration/contextual-chunks) (since v0.7.0) must be enabled, on an enabled connection, with a **declared context window** large enough for the bounded prompt, a maximum classification at least the source's, and both chat prices. A model with no declared context window blocks the opt-in, estimates and previews. Its calls go through the same path as agent chat, so the connection's rate limit, timeout, extra request fields and compatibility settings apply, at background priority. The gateway sees a `user` tag of `grounded-contextual-<team>` on each call.
+
 ### Pricing
 
 A model's **Pricing** section holds its dated prices, used by [cost tracking](/docs/administration/costs). Prices are never edited: a change adds a row effective from a date. You can enter prices before turning cost tracking on.
@@ -78,6 +82,7 @@ The maximum classification is enforced everywhere, when anything changes and aga
 - An agent's chat model must be approved for its most sensitive knowledge base.
 - A moderation or SystemOne model sees the question, and for citation checks the passages; its ceiling applies too.
 - A vision model only reads scans from sources at or below its ceiling.
+- A model that writes [contextual chunks](/docs/administration/contextual-chunks) is checked against the source's classification when the setting is saved, when a build starts and before each document.
 - A rerank model reads the question and the passages found: a search over a knowledge base above its ceiling isn't reranked.
 
 Every question checks the published agent's model and data against the current ceilings. If you lower a model's ceiling below data it already serves, the agents affected are refused at their next question rather than quietly degraded, so check what uses a model before you lower it. An embedding model that a profile uses can't change its upstream model or dimensions: add a new model and profile instead.

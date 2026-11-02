@@ -59,7 +59,7 @@ URL:     https://grounded.example.edu/mcp
 Header:  Authorization: Bearer rag_XXXXXXXXXXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-Keep the key out of files you share or commit. Most clients can read it from an environment variable, as in the examples below. They follow each client's documented format at the time of writing. Clients change their configuration formats often, so if one doesn't work, check your client's documentation.
+Since v0.6.3 the word `Bearer` can be written in any case (`bearer` works); the key itself is case-sensitive. Keep the key out of files you share or commit. Most clients can read it from an environment variable, as in the examples below. They follow each client's documented format at the time of writing. Clients change their configuration formats often, so if one doesn't work, check your client's documentation.
 
 <Tabs items={['Any client', 'Claude Code', 'OpenCode', 'VS Code']}>
 <Tab value="Any client">
@@ -168,7 +168,7 @@ It returns the passages as text for the model to read, and the same as structure
 }
 ```
 
-Knowledge bases whose classification level keeps API keys to agents aren't offered, just as the REST API's search refuses them. With a platform [rerank model](/docs/administration/reranking) (since v0.4.0), `search` reranks its passages like every search; its output is unchanged.
+Knowledge bases whose classification level keeps API keys to agents aren't offered, just as the REST API's search refuses them. With a platform [rerank model](/docs/administration/reranking) (since v0.4.0), `search` reranks its passages like every search; its output is unchanged. When the knowledge base's embedding profile uses parent sections (v0.7.0), `search` still returns the ordinary passages; only agent answers, including `ask`, are given the larger sections.
 
 ### `ask`: an agent's answer
 

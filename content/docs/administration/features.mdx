@@ -5,7 +5,7 @@ description: The optional features on the admin Overview's Features card, their 
 
 Several of Grounded's features are optional. Every one of them except evaluations and saved answers is **off** on a new install, and nothing changes for anyone until an admin sets it up. The admin **Overview** has a **Features** card with each feature's state and a link to where it's configured. Auditors see the states.
 
-Since v0.4.2 the switches themselves (evaluations, the MCP server, OAuth sign-in for MCP clients and saved answers) are on **[Admin → Settings](/docs/administration/settings)**; their rows on the Overview say whether each is on and link there ("Settings for Evaluations"). Before, the switches were on the Overview.
+Since v0.4.2 the switches themselves are on **[Admin → Settings](/docs/administration/settings#features)**: evaluations, team requests, webhooks, content health reports, the MCP server, OAuth sign-in for MCP clients and saved answers. The Overview's card has rows for evaluations, the MCP server, OAuth sign-in and saved answers that say whether each is on and link there ("Settings for Evaluations"); team requests, webhooks and content health reports are only on Admin → Settings. Before v0.4.2, the switches were on the Overview.
 
 | Feature | Default | Where it's set up | What it needs |
 |---|---|---|---|
@@ -15,6 +15,7 @@ Since v0.4.2 the switches themselves (evaluations, the MCP server, OAuth sign-in
 | **Saved answers** | On (each agent decides; on by default for public agents) | The switch on Admin → Settings (**Allow saved answers**); each agent's Settings | Nothing extra; near-identical matching needs a SystemOne model |
 | **Team requests** | Off | The switch on Admin → Settings (**Allow team requests**, and **Who may ask…** for its limits); the queue is **Admin → Teams → Requests** (see [Team requests](/docs/administration/team-requests)) | Nothing extra |
 | **Webhooks** | Off | The switch on Admin → Settings (**Allow webhooks**); destinations and platform webhooks under **Admin → Webhooks** (see [Webhooks](/docs/administration/webhooks)) | At least one approved destination host |
+| **Content health reports** | Off | The switch on Admin → Settings (**Allow content health reports**); teams ask for reports under **Team → Content health** (see [Content health reports](/docs/administration/content-health)) | Nothing extra: no model and no fetch |
 | **Cost tracking** | Off | [Costs](/docs/administration/costs): Off, Track only or Enforce | Prices for your models |
 | **OCR** | Off | [Parsing & OCR](/docs/administration/parsing-and-ocr) | A backend: the OCR sidecar, Apache Tika's full image, or a vision model |
 | **SSO groups** | No rules | [SSO groups](/docs/administration/sso-groups) | A groups claim from your identity provider |
@@ -30,14 +31,19 @@ The card says more than on or off where it matters:
 - **SSO groups** shows the number of rules.
 - **OCR** shows the chosen backend.
 - **Reranking** reads **Off** with **Set up**, which opens the Reranking page and its setup guide, or **On** with the rerank model's name.
-- **Team requests** says who may ask and how many open requests each person may have ("Anyone signed in can ask for a team, up to 2 open requests each"), with **Review requests**. Off, it reads that people ask a platform admin or the request link.
-- **Webhooks** reads **Off**, or what team admins and platform admins can send once on, with **Approved destinations**.
-- **MCP server**, when on, shows the address AI tools connect to; on Admin → Settings the row has a **Setup guide** link.
+- **MCP server**, when on, shows the address AI tools connect to.
 - **OAuth sign-in for MCP clients** reads "On · MCP server off" when it's switched on but has no effect yet, because the MCP server is off.
 
 <Screenshot slot="admin-overview-features" />
 
 The card reads everything in one request (`GET /v1/admin/features`, since v0.4.2) instead of about 17.
+
+On Admin → Settings → Features, the rows say more too:
+
+- **Team requests** says who may ask and how many open requests each person may have ("Anyone signed in can ask for a team, up to 2 open requests each"), with **Review requests**. Off, it reads that people ask a platform admin or the request link.
+- **Webhooks** reads **Off**, or what team admins and platform admins can send once on, with **Approved destinations**.
+- **Content health reports** says what teams can ask for while it's on, or that no report can be made while it's off.
+- **MCP server** has a **Setup guide** link.
 
 ## The evaluations switch
 
@@ -61,6 +67,25 @@ Agents calling tools on *outside* MCP servers has no switch: nothing happens unt
 
 **Webhooks** (since v0.6.0) lets team admins and owners send their team's events, and platform admins the platform's, to approved HTTPS destinations. It's off by default. Turning it off asks for confirmation, since everything stops at once: no new webhooks, no events recorded and nothing sent. Existing webhooks and their delivery logs are kept, and turning it on again resumes them. Deliveries waiting to be retried wait (since v0.6.1) and go on within five minutes of turning it on again. Auditors see it read-only. It's audited (`platform.webhooks`). See [Webhooks](/docs/administration/webhooks).
 
+## The content health reports switch
+
+**Content health reports** (since v0.7.0) lets a team's editors, admins and owners ask for a read-only report of documents worth a look: not processed in a long time, links a crawl saw fail, identical files in two sources, documents with no retained citation evidence, and documents that failed. Reports are made in the background, fetch nothing and call no model, and platform staff never see what a team's report holds. It's off by default.
+
+Turning it off asks first ("Turn content health reports off?", **Turn reports off**): no new report can be made (`409 content_health_off`), one waiting to start ends as failed, and one being made stops at its next step. Teams can't open their reports while it's off, but can still cancel or delete them; stored reports are kept for their usual 30 days and come back when it's turned on again. Auditors see it read-only. It's audited (`platform.content_health`). See [Content health reports](/docs/administration/content-health).
+
+<Screenshot slot="admin-features-content-health" />
+
 ## The saved answers switch
 
 **Saved answers** (since v0.4.0) lets agents reuse a recent answer to the same first question, at once and at no model cost. It's on, and each agent has its own setting, on by default for public agents. Turning it off stops every agent from reusing or saving answers; answers already saved stay until they expire. Auditors see it read-only. It's audited (`platform.answer_cache`). See [Saved answers](/docs/using/editors/saved-answers).
+
+## Indexing options
+
+Some v0.7.0 changes to what is indexed have no row on the card or on Admin → Settings. Each is off until chosen, and each is meant to be tried with an [index preview](/docs/administration/embedding-profiles#previewing-new-settings) first:
+
+| Option | Default | Where it's set |
+|---|---|---|
+| **Keep tables whole** and **Structural boundaries** (chunker versions 3 and 4) | Standard (version 1) | A profile's **Chunker**, or **Chunker** in Preview new settings. See [Chunkers](/docs/administration/embedding-profiles#chunkers). |
+| **Parent sections** | Off | A profile's **Parent sections**, or the same field in Preview new settings; `RETRIEVAL_PARENT_EXPANSION` turns it off for every profile. See [Parent sections](/docs/administration/embedding-profiles#parent-sections). |
+| **Near-duplicate repeated blocks** | Off (`BOILERPLATE_FUZZY`) | A source's **Also remove near-duplicate blocks**, or **Repeated blocks** in Preview new settings. See [Near-duplicate repeated blocks](/docs/administration/embedding-profiles#near-duplicate-repeated-blocks). |
+| **Contextual chunks** | Off (`CONTEXTUAL_CHUNKS`) | The installation switch in the environment, then per source by a platform admin. See [Contextual chunks](/docs/administration/contextual-chunks). |

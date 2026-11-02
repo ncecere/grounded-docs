@@ -22,6 +22,8 @@ Six ship with Grounded:
 
 Built-in templates are part of the release, not rows in the database. They follow each release, a platform admin can't edit or delete them, and the table marks them **Built in** and "Ships with Grounded". A saved one is "Saved from an agent".
 
+<Screenshot slot="admin-agent-templates" />
+
 ## What a template carries
 
 A template carries how an agent answers: its instructions, its chat model (used when the platform still offers it; a built-in names none), answering mode and refusal message, citations, safety and SystemOne settings, advanced settings, accent colour, welcome message and starter questions. A template for a router also carries that the agent is a router.
@@ -51,7 +53,7 @@ It's in the agent editor's "…" menu, and only platform admins see it. The dial
 
 ### Choose Save template
 
-The template is built from the agent as last saved (the draft), and offered to every team that makes an agent. Names are unique ignoring case and can't be a built-in's name.
+The template is built from the agent as last saved (the draft), and offered to every team that makes an agent. Names are unique ignoring case and can't be a built-in's name (`409 template_name_taken`). Since v0.6.3 case is compared in every script, not only in ASCII, whatever the database's locale. The upgrade to v0.6.3 renamed existing templates whose names differed only that way to "Name (2)", "Name (3)" and so on; the oldest kept its name and nothing was deleted.
 
 </Step>
 </Steps>

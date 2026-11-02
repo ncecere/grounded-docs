@@ -26,6 +26,9 @@ The platform's switches. Each applies at once and is audited; turning one off as
 | Feature | Default | What it does |
 |---|---|---|
 | **Evaluations** | On | Evaluation sets for knowledge bases and agents. Off hides every team's Evaluations tabs and stops automatic runs; sets and runs are kept. **Evaluation limits** links to [Limits](/docs/administration/limits). See [Evaluations](/docs/using/editors/evaluations). |
+| **Team requests** | Off | Anyone signed in may ask for a team in the app, for a platform admin to approve (**Allow team requests**); **Who may ask…** sets an optional SSO group and how many open requests each person may have. **Review requests** opens the queue under Admin → Teams. See [Team requests](/docs/administration/team-requests). Since v0.6.0. |
+| **Webhooks** | Off | Team admins and owners send their team's events, and platform admins the platform's, to approved HTTPS destinations (**Allow webhooks**). **Approved destinations** opens Admin → Webhooks. See [Webhooks](/docs/administration/webhooks). Since v0.6.0. |
+| **Content health reports** | Off | A team's editors, admins and owners may ask for a read-only report of their own sources (**Allow content health reports**). Reports fetch nothing, use no model, and platform staff never see what they hold. See [Content health reports](/docs/administration/content-health). Since v0.7.0. |
 | **MCP server** | Off | AI tools search knowledge bases and ask agents at `/mcp` (**Allow MCP clients**). When on, the row shows the address; **Setup guide** opens [Connect AI tools](/docs/using/mcp). See [MCP server and OAuth](/docs/self-hosting/mcp-server). |
 | **OAuth sign-in for MCP clients** (Experimental) | Off | AI tools connect by signing in as the person using them (**Allow OAuth sign-in**); only while the MCP server is on. People manage their apps under **Connected apps**. |
 | **Saved answers** | On | Agents may reuse a recent answer to the same first question (**Allow saved answers**); each agent has its own setting. See [Saved answers](/docs/using/editors/saved-answers). |
@@ -63,4 +66,4 @@ Areas that keep their own pages are linked at the end, with what each holds:
 
 ## API
 
-The money-and-time settings are part of `GET` and `PUT /v1/admin/costs/settings`; the switches keep their own endpoints (`/v1/admin/settings/evaluations`, `/v1/admin/settings/mcp`, `/v1/admin/settings/answer-cache`). `GET /v1/admin/features` (since v0.4.2) returns what the Overview's Features card shows in one request. See the [API reference](/docs/api).
+The money-and-time settings are part of `GET` and `PUT /v1/admin/costs/settings`; the switches keep their own endpoints (`/v1/admin/settings/evaluations`, `/v1/admin/settings/team-requests`, `/v1/admin/settings/webhooks`, `/v1/admin/settings/content-health`, `/v1/admin/settings/mcp`, `/v1/admin/settings/answer-cache`). `GET /v1/admin/features` (since v0.4.2) returns what the Overview's Features card shows in one request. See the [API reference](/docs/api).

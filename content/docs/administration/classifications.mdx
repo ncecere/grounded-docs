@@ -42,7 +42,7 @@ Grounded checks these when anything changes, and again on every question:
 
 1. **Team ceiling.** Each team is approved up to a level. Its sources can't be classified above it, and it can only attach shared sources within it.
 2. **Computed levels.** A knowledge base is as sensitive as its most sensitive source; an agent as the knowledge bases in its published version. Nobody sets these by hand.
-3. **Model ceilings.** A source's embedding model, an agent's chat model, and the moderation, SystemOne and vision models involved must each be approved for the data they process.
+3. **Model ceilings.** A source's embedding model, an agent's chat model, and the moderation, SystemOne and vision models involved must each be approved for the data they process. So must the chat model that writes a source's [contextual chunks](/docs/administration/contextual-chunks) (since v0.7.0): raising the source's classification above that model's ceiling stops further calls instead of sending the text.
 4. **Audience ceiling.** An agent's audience must be allowed for its level.
 5. **Raising is checked downstream.** Raising a source's level is refused if it would break a rule for any knowledge base or agent that depends on it; the error names them. For a shared source, an impact preview shows admins every affected team. Nothing is ever unpublished silently.
 6. **Lowering needs a reason.** Lowering a source's level needs a team admin or owner and a written reason. The team's owners are notified, and it's audited.

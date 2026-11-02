@@ -1,0 +1,48 @@
+---
+title: v0.6.2
+description: "A security patch for dependencies: Go 1.26.10, golang.org/x/net v0.62.0, go-jose v4.1.6 and seroval 1.7.3. No migrations, no new settings and no new features."
+---
+
+Released 2026-10-29. v0.6.2 is a security patch for dependencies that fresh source and image scans found. It has **no migrations** (the schema stays at 53), **no new environment variables** and no new features, and nothing changes for the people who use Grounded.
+
+## What changed
+
+- **Go 1.26.10** fixes GO-2026-6809 in `crypto/x509`: certificate verification rejects known intermediate certificates that are no longer trusted, even where the system trust store hasn't been updated. Grounded reaches it when it reads an outbound [MCP server's](/docs/administration/mcp-servers) response.
+- **golang.org/x/net v0.62.0** fixes GO-2026-6860, quadratic work while parsing HTML. Grounded's HTML ingestion reaches the affected parser.
+- **go-jose v4.1.6** fixes CVE-2026-116587, a denial of service while parsing RSA JWKs.
+- **seroval 1.7.3**, shipped in the web app through TanStack Router, fixes two serialization injection advisories (GHSA-f86p-h4j2-7qgj, GHSA-9wx9-5pv9-3349). This is preventative; no exploitable Grounded feature is known.
+- **undici 8.12.3** is development-only (through jsdom) and isn't in the application.
+
+**Who is affected:** every install. There is nothing to change in how you use or configure Grounded.
+
+The [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md) has the entry, with the issue number.
+
+## Requirements
+
+Unchanged from [v0.2.0](/docs/releases/v0-2-0#requirements). To build from source you need Go 1.26.10 or later: the fixes are in compiled dependencies, so a build with the old toolchain or the old dependency pins doesn't include them. Use the updated pins or the published images.
+
+## Upgrading from v0.6.1
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade ([Upgrades](/docs/self-hosting/upgrades)), then change every `?ref=v0.6.1` in your overlay to `?ref=v0.6.2` and pin both `ghcr.io/ncecere/grounded` and `ghcr.io/ncecere/grounded-ocr` to the digests [below](#verifying-the-images).
+
+- **No migrations.** The schema stays at 53.
+- **No new environment variables,** and nothing changed in `deploy/kubernetes` or `deploy/observability`.
+- **Rolling back** is pinning the previous image. There is nothing to undo in the database.
+- **API:** no change.
+
+## Known limitations
+
+The [v0.6.1 limitations](/docs/releases/v0-6-1#known-limitations) still apply. This patch doesn't include the remaining v0.6.0 QA fixes (they're in [v0.6.3](/docs/releases/v0-6-3)) or the OCR sidecar's network isolation (also in v0.6.3).
+
+The images have no Go findings and no fixable high or critical findings. The OCR image still has Debian findings with no published fix: it isn't free of known vulnerabilities.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.6.2`. The binary reports `grounded v0.6.2 (…)`.
+
+- `ghcr.io/ncecere/grounded@sha256:09921dbc29f81942ab17734cab9b98ae0086ebfffc7aa11504f530a699e41143`
+- `ghcr.io/ncecere/grounded-ocr@sha256:8dec51c4424af91d5faac0785590c373f5bc6b0523676bd813d1561eb12ce9cc`
+
+## Reporting problems
+
+Open an issue at https://github.com/ncecere/grounded/issues. Report security problems privately as [`SECURITY.md`](https://github.com/ncecere/grounded/blob/main/SECURITY.md) describes.

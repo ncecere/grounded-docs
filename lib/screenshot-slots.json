@@ -4,13 +4,13 @@
       "home-agents",
       "home"
     ],
-    "alt": "Home in the Grounded app for a team member: cards for the agents they can use (Go docs, Help Desk Assistant, HR Answers and Library Guide), each with its team and audience, and their latest conversations below."
+    "alt": "Home for a team member: agent cards for Front door, Go docs (signed-in), Help Desk Assistant, HR Answers and Library Guide, each with its team and audience, and \"Continue where you left off\" with their latest conversations below."
   },
   "discover-agents": {
     "files": [
       "discover-agents"
     ],
-    "alt": "Discover agents: the agents a signed-in person can use, grouped by their own teams, the organisation and public."
+    "alt": "Discover agents for a signed-in member: the Show filter (All, Your teams, Signed-in users, Public) and the Team filter, \"From your teams\" with Front door, Help Desk Assistant, HR Answers and Library Guide, and \"Shared with signed-in users\" with Go docs (signed-in)."
   },
   "chat-answer-with-claims": {
     "files": [
@@ -23,52 +23,52 @@
       "chat-citation-card",
       "chat-answer-with-claims"
     ],
-    "alt": "The same answer with a citation chip's card open below it: \"Claim supported by this source (98% confidence)\", the claim's text, the cited passage, and \"Show source 1\"."
+    "alt": "The same answer with a citation chip's card open over it: \"Claim supported by this source (98% confidence)\", the claim's text, the cited passage, and \"Show source 1\"."
   },
   "public-agent-page": {
     "files": [
       "public-agent-page-answer"
     ],
-    "alt": "A public agent's page, used without signing in: the Library Guide answering \"How do I book a study room?\" with citations."
+    "alt": "A public agent's page, used without signing in: the Library Guide answering \"How do I book a study room?\" after searching its knowledge base, with numbered citations and \"Used 3 sources\"."
   },
   "team-overview": {
     "files": [
       "team-overview",
       "team-overview-quality-and-spend"
     ],
-    "alt": "An IT Help Desk team's Overview for its owner: counts of data sources, knowledge bases, agents and documents; evaluation scores with one set down 17 points; spend this month against a $50 budget, not enforced; and recent changes."
+    "alt": "IT Help Desk's Overview for its owner: counts of data sources, knowledge bases, agents and documents ready (35 of 36); evaluation scores with \"1 set scored lower than the run before\" (Top help desk questions 83%, −17 pts); \"$0.02 of $50.00 this month · Within budget · not enforced\"; and Needs attention with a failed document and a domain request."
   },
   "data-source-web": {
     "files": [
       "data-source-web",
       "web-source"
     ],
-    "alt": "A web data source's Overview: pages crawled, passages indexed, repeated blocks removed and the next scheduled sync."
+    "alt": "A web data source's Overview, Go documentation from go.dev: 97 pages, 944 passages, 2.7 MiB, used by one knowledge base, synced weekly with the next sync next week; under Repeated blocks, \"1 repeated block found, kept: it's the only text on the pages that have it.\", Remove repeated blocks on and near-duplicate blocks off."
   },
   "source-documents-ocr": {
     "files": [
       "source-documents-with-ocr"
     ],
-    "alt": "An upload source's Documents tab: status filters including Needs OCR, and its documents with kind, size, status and passages, among them a scanned PDF."
+    "alt": "An upload source's Documents tab (IT help articles), scrolled to the end of its 15 documents: Markdown articles and PDFs with kind, size, status, passages and when they were updated, including computer-lab-hours-scan.pdf (PDF, Ready, 1 passage, read with OCR) and network-diagram-2019.pdf, Failed: \"This PDF appears to be damaged or passw…\"."
   },
   "source-document-ocr": {
     "files": [
       "source-document-ocr-detail"
     ],
-    "alt": "The scanned PDF's record page, saying it was read with OCR (Tesseract), with the passage its text produced."
+    "alt": "The scanned PDF's record page, \"computer lab hours scan\": Ready, a one-page PDF, \"It was read with OCR (Tesseract).\", 1 passage of 205 tokens, and the start of the passage its text produced."
   },
   "crawl-domains": {
     "files": [
       "crawl-domains"
     ],
-    "alt": "Data sources, Crawl domains tab: the team's domain requests with their status."
+    "alt": "Data sources, Crawl domains tab: status.example.edu Pending review and kb.example.edu Approved, both requested by Priya Shah, with the status filters and Request a domain."
   },
   "kb-try-it": {
     "files": [
       "kb-try-it",
       "kb-try-it-with-systemone"
     ],
-    "alt": "A knowledge base's Try it tab with Judge with SystemOne on: the question \"What are the computer lab hours?\", ten results, SystemOne keeping 1 of the 10 passages, and the top passage, from a scanned PDF, with its scores."
+    "alt": "A knowledge base's Try it tab with Judge with SystemOne and Rerank on, for \"What are the computer lab hours?\": 10 results, the best 40 passages reranked, SystemOne keeping all 10 passages it checked, and the top passage, from the OCR'd scan, with its rerank, fusion, vector and keyword ranks and its SystemOne scores, marked Evidence."
   },
   "agent-build": {
     "files": [
@@ -82,114 +82,114 @@
       "agent-share",
       "agent-share-widget-preview"
     ],
-    "alt": "An agent's Share tab: a widget key with its allowed origins, the embed code with the launcher position, and a live preview of the widget with the agent's welcome and starter questions."
+    "alt": "Library Guide's Share tab, Widget card: the widget key \"Library website\" with its allowed origins, the embed code with the Bottom right or Bottom left position, and a live preview of the draft with the agent's welcome and starter questions."
   },
   "agent-versions": {
     "files": [
       "agent-versions"
     ],
-    "alt": "The agent's version menu in the editor header, with Version history, Compare versions and Revert draft."
+    "alt": "Help Desk Assistant's editor with the version menu open from \"v3 live\": Version history, Compare versions, and \"Revert draft to v3…\" greyed out with \"The draft already matches v3\"; Try it is empty, showing the agent's welcome and starter questions."
   },
   "agent-analytics": {
     "files": [
       "agent-analytics"
     ],
-    "alt": "An agent's Analytics tab, Usage view: conversations, answers, satisfaction, citations supported and refusals over the last 30 days, and answers per day."
+    "alt": "An agent's Analytics tab, Usage view, last 30 days: 12 conversations from 3 people, 12 answers, satisfaction 66.7% (\"From 3 ratings: too few to rely on\"), citations supported \"—\" (SystemOne checked none), refusals 41.7%, and answers per day."
   },
   "evaluations-runs": {
     "files": [
       "evaluations-runs",
       "evaluation-runs-chart"
     ],
-    "alt": "An evaluation set's Runs tab: three completed retrieval runs scoring 100%, 100% and 83%, and the score-over-time chart with markers where results per search changed."
+    "alt": "An evaluation set's Runs tab: three completed retrieval runs scoring 83%, 100% and 100%, and the score-over-time chart with markers where results per search changed (8 → 5, then 5 → 4)."
   },
   "evaluations-result": {
     "files": [
       "evaluations-result",
       "evaluation-result-expected-vs-came-back"
     ],
-    "alt": "A failed retrieval result: the expected document, found at #4 beyond the top 3, beside the two documents that came back, with Try this search, Open expected document and Edit question."
+    "alt": "A failed retrieval result for \"I lost my phone and cannot approve sign-in prompts\": the expected document, found at #4 beyond the top 3, beside the two documents that came back, with Try this search, Open expected document and Edit question."
   },
   "evaluations-answer-result": {
     "files": [
       "evaluation-answer-result"
     ],
-    "alt": "A full-answer result: the agent's answer with its citations, citing the expected document, mentioning the required phrase, with all its claims supported."
+    "alt": "A full-answer result, \"What does it cost to print in colour?\", Pass: the expected document, and the agent's answer tagged \"Cites an expected document\", \"Mentions \"$0.35\"\" and \"100% of claims supported\"."
   },
   "team-evaluations": {
     "files": [
       "team-evaluations",
       "evaluations-team-page"
     ],
-    "alt": "The team's Evaluations page: two sets with what they test, their questions, latest score and trend (one down 17 points), and the Regressions filter."
+    "alt": "The team's Evaluations page: Help Desk Assistant answers (2 questions, 50%) and Top help desk questions (6 questions, 83%, −17 pts), with what each tests, and the Regressions filter."
   },
   "team-members": {
     "files": [
       "team-members",
       "team-settings-members-sso-managed"
     ],
-    "alt": "Team settings, Members: the team's only owner, an editor marked \"Managed by SSO group it-staff\", and two members whose roles can be changed."
+    "alt": "Team settings, Members: Priya Shah (you), the only owner; Avery Nguyen, Editor, marked \"Managed by SSO group it-staff\"; and Sam Ortiz and Jordan Kim, whose roles can be changed."
   },
   "team-usage-spend": {
     "files": [
       "team-usage-spend",
       "team-settings-usage-and-spend"
     ],
-    "alt": "Team settings, Usage & spend tab: \"$0.03 of $50.00 this month · Within budget · not enforced · resets Oct 1\" with a meter, and the spend breakdown by agent and by model."
+    "alt": "Team settings › Usage & spend for IT Help Desk: this month's spend against the $50.00 budget, and the Spend breakdown open: spend, tokens and requests by agent (Help Desk Assistant, Front door, not from an agent) and by model (Chat model, Reranker)."
   },
   "team-api-keys": {
     "files": [
       "team-api-keys"
     ],
-    "alt": "Team settings, API keys tab for a team owner: personal keys (one with only the MCP scope) and a service key with their scopes, restrictions, expiry and last use, and the Connected apps card below."
+    "alt": "Team settings, API keys tab for a team owner: Jordan's AI assistant (personal, mcp), Service desk integration (service, query, only the IT help articles knowledge base, contact Priya Shah) and Priya's scripts (personal, ingest and query), with their prefixes, last use and expiry, and the Connected apps card below."
   },
   "admin-overview-features": {
     "files": [
       "admin-overview-features"
     ],
-    "alt": "Admin Overview: the platform at a glance, Needs attention (all clear), and the Features card listing each optional feature's state with a link to where it's set: Settings for Evaluations, the MCP server, OAuth sign-in and Saved answers, then Cost tracking, OCR, SSO groups, SystemOne, Reranking \"On · Reranker\", Public access and Maintenance; Recent changes below."
+    "alt": "Admin Overview, the whole page: the platform at a glance, Needs attention (a team request and a failed document), and the Features card listing each optional feature's state with a link to where it's set: Settings for Evaluations, the MCP server, OAuth sign-in and Saved answers, then Cost tracking \"Track only\", OCR, SSO groups, SystemOne, Reranking \"On · Reranker\", Public access and Maintenance; Recent changes below."
   },
   "admin-teams": {
     "files": [
       "admin-teams"
     ],
-    "alt": "Admin, Teams: every team with its approved classification, members and status."
+    "alt": "Admin, Teams: Demo, Human Resources, IT Help Desk, Library and Research Computing with their classification, members, agents, sources, storage and status, and the Requests tab with one waiting."
   },
   "admin-sso-groups": {
     "files": [
       "admin-sso-groups"
     ],
-    "alt": "Admin, SSO groups: one rule mapping the it-staff group to the Editor role in the IT Help Desk team, the claim read at sign-in, and how many people's last sign-in carried it."
+    "alt": "Admin, SSO groups: one rule mapping the it-staff group to the Editor role in the IT Help Desk team, the claim read at sign-in (groups), and \"People whose last sign-in carried it: 7 of 7\"."
   },
   "admin-sso-groups-dry-run": {
     "files": [
       "admin-sso-groups-dry-run"
     ],
-    "alt": "The Add rule dialog with its dry run: one person would be added to the team when the rule is saved."
+    "alt": "The Add SSO group rule dialog (group security, IT Help Desk, Member) with its dry run: \"1 added\", Taylor Brooks, before the rule is saved."
   },
   "admin-connections": {
     "files": [
       "admin-connections"
     ],
-    "alt": "Admin, Connections filtered to healthy ones: a model gateway, an embedding service and a SystemOne service with their base URLs, API key hints, status and health."
+    "alt": "Admin, Connections filtered to healthy ones: Embedding service, Model gateway and SystemOne service with their base URLs, API key hints, models, status and \"Healthy · 1 minute ago\"."
   },
   "admin-models": {
     "files": [
       "admin-models"
     ],
-    "alt": "Admin, Models: the Kind filter and a chat model, an embedding model, a rerank model (used by Reranking) and a SystemOne model, each Enabled and Healthy."
+    "alt": "Admin, Models: the Kind filter and Chat model, Embedding model, Reranker (used by Reranking) and SystemOne (used by Public moderation), each Enabled and Healthy."
   },
   "admin-embedding-migrations": {
     "files": [
       "admin-embedding-migrations"
     ],
-    "alt": "Admin, Embedding profiles, Migrations tab: a knowledge base moving to a new profile, with per-source progress."
+    "alt": "Admin, Embedding profiles, Migrations tab: IT help articles moving from Help articles (sections) to Help articles (1,024-token passages), Ready to switch, and Library guides from Standard to Standard (v2), Switched, \"Old vectors are kept for 7 more days.\""
   },
   "admin-classifications": {
     "files": [
       "admin-classifications"
     ],
-    "alt": "Admin, Classifications: the levels Open, Sensitive and Restricted with their maximum audience and retention."
+    "alt": "Admin, Classifications: the levels Open, Sensitive and Restricted with their widest audience, retention, source types, API retrieval, models allowed and teams approved."
   },
   "admin-moderation": {
     "files": [
@@ -209,73 +209,73 @@
     "files": [
       "admin-costs-budgets"
     ],
-    "alt": "Admin, Costs, Budgets tab: each team's mode, monthly budget, spend this month and projection."
+    "alt": "Admin, Costs, Budgets tab: Human Resources, IT Help Desk and Library with monthly budgets of $25, $50 and $20, Within budget and not enforced, Demo and Research Computing with no budget, each with spend this month and projection."
   },
   "admin-parsing-ocr": {
     "files": [
       "admin-parsing-ocr"
     ],
-    "alt": "Admin, Parsing & OCR: OCR turned on with the Tesseract backend and its languages."
+    "alt": "Admin, Parsing & OCR: OCR on, with the Tesseract backend chosen (Apache Tika and Vision model not configured) and its languages, and the start of the Limits card."
   },
   "admin-retention": {
     "files": [
       "admin-retention"
     ],
-    "alt": "Admin, Retention: the retention period for each kind of data, with the Dry run, Runs and Legal holds tabs."
+    "alt": "Admin, Retention, Periods tab (beside Dry run, Runs and Legal holds): the records-management notice and how long conversations are kept for each classification level (365, 180 and 90 days; anonymous ones 24 hours)."
   },
   "admin-break-glass": {
     "files": [
       "admin-break-glass"
     ],
-    "alt": "Admin, Break-glass: sessions with their team, scope, reason, status and read counts."
+    "alt": "Admin, Break-glass, Sessions tab: no open sessions, and one ended Library session (documents) by Morgan Lee, with Start a session."
   },
   "admin-analytics": {
     "files": [
       "admin-analytics"
     ],
-    "alt": "Admin, Analytics: platform answers per day and usage totals, without message content."
+    "alt": "Admin, Analytics, Overview tab: platform answers and conversations started per day over the last 30 days, the day's counts in a table, and usage totals, without message content."
   },
   "audit-log": {
     "files": [
       "audit-log"
     ],
-    "alt": "Admin, Logs, Audit log: recent changes with who made them, the area and the target."
+    "alt": "Admin, Logs, Audit log: recent changes with who made them, the action, the target and the team, with the Area, Target type, Person and Date filters and Hide sign-ins."
   },
   "mcp-key-created": {
     "files": [
       "mcp-key-created"
     ],
-    "alt": "Team settings, API keys: the dialog after creating a personal key with only the scope \"MCP: search and ask from AI tools\": the secret, shown once, and the MCP server address to give AI tools."
+    "alt": "Team settings, API keys: the API key created dialog for a personal key with only the MCP scope: \"Copy this key now.\", the secret, shown once, and the MCP server address to give AI tools as a Bearer token."
   },
   "oauth-consent": {
     "files": [
       "oauth-consent"
     ],
-    "alt": "The consent page an AI tool opens: \"Research Assistant wants to use Grounded as you\", marked Unverified because it registered itself, with the host it says it's from and the address its answer goes to; it may search knowledge bases and ask agents in the person's teams, as them; Allow and Deny."
+    "alt": "The consent page an AI tool opens: \"Research Assistant wants to use Grounded as you\", marked Unverified because it registered itself, with the host it says it's from and the address its answer goes to; it may search knowledge bases and ask agents in the person's teams, as them; Deny and Allow."
   },
   "connected-apps": {
     "files": [
       "connected-apps"
     ],
-    "alt": "Team settings, API keys: a member's MCP key and, under Connected apps, one AI tool with its host, when it was connected and last used, and Disconnect."
+    "alt": "Team settings, API keys for a member: their MCP key and, under Connected apps, one AI tool, Research Assistant (Unverified), with its host, when it was connected and last used, and Disconnect."
   },
   "admin-features-mcp": {
     "files": [
       "admin-features-mcp"
     ],
-    "alt": "Admin, Settings, the Features card: Evaluations with Evaluation limits; MCP server on, with the address clients use, Setup guide and Allow MCP clients; OAuth sign-in for MCP clients on and marked Experimental, with How it works; and Saved answers on."
+    "alt": "Admin, Settings, the Features card: Evaluations with Evaluation limits, Team requests, Webhooks and Content health reports; MCP server on, with the address clients use, Setup guide and Allow MCP clients; OAuth sign-in for MCP clients on and marked Experimental, with How it works; and Saved answers on."
   },
   "admin-user-connected-apps": {
     "files": [
       "admin-user-connected-apps"
     ],
-    "alt": "Admin, a person's page: their teams, the Connected apps card listing the AI tool they connected with OAuth sign-in, with Disconnect for platform admins, and their activity, including a search over MCP and the app signing in."
+    "alt": "Admin, a person's page: their teams, the Connected apps card listing the AI tool they connected with OAuth sign-in, with Disconnect for platform admins, and their activity, including searches over MCP and a link made to a conversation."
   },
   "admin-mcp-servers": {
     "files": [
       "admin-mcp-servers"
     ],
-    "alt": "Admin, Models, MCP servers: a Service status server with its approved tools (1 of 5), its data ceiling (Sensitive), status and health (Healthy · 8 minutes ago), with the Health filter."
+    "alt": "Admin, Models, MCP servers: a Service status server with its approved tools (1 of 5), its data ceiling (Sensitive), status and health (Healthy · 1 minute ago), with the Health filter."
   },
   "admin-mcp-server-tools": {
     "files": [
@@ -287,25 +287,25 @@
     "files": [
       "agent-build-tools"
     ],
-    "alt": "The agent editor Build tab, Tools section open: the approved tool Check outage (check_outage), ticked, from Service status, approved for data up to Sensitive, with its description."
+    "alt": "The agent editor Build tab, Tools section open: the approved tool Check outage (check_outage), ticked, from Service status, approved for data up to Sensitive, with its description; Try it is empty."
   },
   "chat-tool-source": {
     "files": [
       "chat-tool-source"
     ],
-    "alt": "A chat answer about connecting to eduroam that cites a tool result: the sources list shows \"From Service status · check_outage\", a tool result, beside three passages from a Wi-Fi help article."
+    "alt": "A chat answer about connecting to eduroam that cites a tool result: \"7 of 8 claims supported · 1 uncited\", and the sources list shows \"From Service status · check_outage\", a tool result, beside three passages from a Wi-Fi help article."
   },
   "admin-connections-health": {
     "files": [
       "admin-connections-health"
     ],
-    "alt": "Admin, Connections with the Health column: three connections \"Healthy\" a few minutes ago and a backup gateway \"Failing · since 8 minutes ago\", with the Health filter."
+    "alt": "Admin, Connections with the Health column: a backup gateway \"Failing · since 6 seconds ago\" and three connections \"Healthy\" a few minutes ago, with the Health filter."
   },
   "admin-needs-attention-health": {
     "files": [
       "admin-needs-attention-health"
     ],
-    "alt": "Admin Overview, Needs attention: a domain request, \"1 connection is failing\" and \"1 MCP server is failing\", each linking to its list filtered to the failing ones."
+    "alt": "Admin Overview, Needs attention: a team request waiting for review, \"1 connection is failing\", \"1 MCP server is failing\" and a document that failed to index, each linking to where to fix it."
   },
   "tracing-answer-trace": {
     "files": [
@@ -335,19 +335,19 @@
     "files": [
       "gaps-topics"
     ],
-    "alt": "A team's Gaps page, Open tab: one topic, \"Campus parking permits\" for Help Desk Assistant, failed as Refused · 3 and Thumbs-down · 1, with its 8-week trend, 3 questions from 3 people, last asked 2 minutes ago."
+    "alt": "A team's Gaps page, Open tab: a notice that 2 failed questions aren't shown (fewer than 3 people asked about them), and one topic, \"Campus parking permits\" for Help Desk Assistant, failed as Nothing found · 3, Refused · 3 and one more reason, with its 8-week trend, 3 questions from 3 people, last asked 17 minutes ago."
   },
   "gaps-topic": {
     "files": [
       "gaps-topic"
     ],
-    "alt": "The \"Campus parking permits\" topic's page, Open, with Dismiss, Mark fixed and Add a source: its agent, 3 questions from 3 people, 1 shared, first and last asked, the trend; why they failed, with the thumbs-down reason Missing sources; and the shared question \"How do I get a parking permit for my car on campus?\" with Add to evaluations."
+    "alt": "The \"Campus parking permits\" topic's page, Open, with Dismiss, Mark fixed and Add a source: its agent, 3 questions from 3 people, 1 shared, first and last asked, the trend; why they failed (Nothing found · 3, Refused · 3, Thumbs-down · 1, with the reason Missing sources); and the shared question \"How do I get a campus parking permit for my car?\" with Add to evaluations."
   },
   "gaps-dismiss": {
     "files": [
       "gaps-dismiss"
     ],
-    "alt": "The Dismiss dialog for a topic: How long, Dismiss for now (it reopens when new questions about it fail) or Not for this agent (it stays closed; new questions are still counted), and an optional reason, \"Kept in the topic's history. Only your team's editors, admins and owners see it.\""
+    "alt": "The \"Dismiss this topic?\" dialog: How long, Dismiss for now (selected; it reopens when new questions about it fail) or Not for this agent (it stays closed; new questions are still counted), and an optional reason, \"Kept in the topic's history. Only your team's editors, admins and owners see it.\""
   },
   "chat-feedback-share": {
     "files": [
@@ -359,37 +359,37 @@
     "files": [
       "agent-settings-saved-answers"
     ],
-    "alt": "A public agent's Settings, Saved answers: Reuse answers on (\"On by default for public agents. Answers that used a tool, failed or were refused are never saved.\"), Also reuse answers to near-identical questions off, Reuse an answer for 24 hours, \"1 saved answer now, reused once so far\", and Clear saved answers."
+    "alt": "A public agent's Settings, Saved answers: Reuse answers on (\"On by default for public agents. Answers that used a tool, failed or were refused are never saved.\"), Also reuse answers to near-identical questions off, Reuse an answer for 24 hours, \"2 saved answers now, reused once between them\", and Clear saved answers."
   },
   "admin-features-saved-answers": {
     "files": [
       "admin-features-saved-answers"
     ],
-    "alt": "Admin, Settings, the Features card: Saved answers On, \"Agents reuse a recent answer to the same question: at once, at no model cost. On by default for public agents; each agent has its own setting.\", with the Allow saved answers switch, below the evaluations and MCP switches."
+    "alt": "Admin, Settings, the Features card with every switch on, ending with Saved answers: \"Agents reuse a recent answer to the same question: at once, at no model cost. On by default for public agents; each agent has its own setting.\", with the Allow saved answers switch."
   },
   "admin-reranking-settings": {
     "files": [
       "admin-reranking-settings"
     ],
-    "alt": "Admin, Models, Reranking, scrolled to Settings: Rerank model \"Reranker · Healthy\", Candidates 40 (5 to 50), Time limit 2,000 ms (200 to 10,000; a slower or failed call keeps the usual order), and the Test card below with its team and knowledge base."
+    "alt": "Admin, Models, Reranking, scrolled to Settings: Rerank model \"Reranker (reranker) · Healthy\", Candidates 40 (5 to 50), Time limit 2,000 ms (200 to 10,000; a slower or failed call keeps the usual order), and the Test card below with its team, knowledge base and question."
   },
   "agent-build-advanced-rerank": {
     "files": [
       "agent-build-advanced-rerank"
     ],
-    "alt": "An agent's Build, Advanced section: Reasoning effort (Default, disabled, with the Admin → Models settings Off and Low to High need), Source token budget, Minimum similarity, Rewrite follow-up questions on, Rerank passages on and Passages kept after reranking 6."
+    "alt": "An agent's Build, Advanced section scrolled to Minimum similarity 0.4, Rewrite follow-up questions and Suggest follow-up questions on, and Rerank passages on with Passages kept after reranking 6; Try it is empty."
   },
   "kb-try-it-rerank": {
     "files": [
       "kb-try-it-rerank"
     ],
-    "alt": "A knowledge base's Try it with Rerank on, for \"How do I connect to the VPN from home?\": \"Reranked the best 40 passages in 452 ms\", and results each with their rerank score, fusion score and vector and keyword ranks, the first being the second-ranked passage by vector search."
+    "alt": "A knowledge base's Try it with Rerank on, for \"How do I connect to the VPN from home?\": \"8 results\", \"Reranked the best 40 passages in 4 ms\", and results each with their rerank score, fusion score and vector and keyword ranks, the first being vector #5 and keyword #3."
   },
   "admin-moderation-reasoning": {
     "files": [
       "admin-moderation-reasoning"
     ],
-    "alt": "Admin, Moderation, Public tab: the three Answers modes with Buffer selected, Fail closed, the block threshold and the notice, and below them the Reasoning card with Reasoning effort Low and its explanation."
+    "alt": "Admin, Moderation, Public tab, scrolled: Fail closed, the block threshold and the notice, and below them the Reasoning card with Reasoning effort Low, its explanation and the warning \"This setting has no effect yet\" (no enabled chat model accepts reasoning effort)."
   },
   "admin-model-compat-thinking-off": {
     "files": [
@@ -401,13 +401,13 @@
     "files": [
       "admin-analytics-failed-questions"
     ],
-    "alt": "Admin, Analytics, Top agents & teams: Top agents and Top teams, and the Failed questions card, counts only: IT Help Desk, 4 failed questions, main reasons Refused (3), Thumbs-down (1), Unsupported claims (1)."
+    "alt": "Admin, Analytics, Top agents & teams: Top agents and Top teams by answers, and the Failed questions card, counts only: IT Help Desk, 5 failed questions, main reasons Nothing found (5), Refused (5), Thumbs-down (1)."
   },
   "public-agent-page-thinking": {
     "files": [
       "public-agent-page-thinking"
     ],
-    "alt": "A public agent's page while the model reasons: the question, \"Searched the knowledge base… Completed, 6 results\", then \"Thinking about your question…\", with Stop; the footer says questions the assistant can't answer may be grouped, without the visitor's details."
+    "alt": "A public agent's page while the model works: the question, \"Searched the knowledge base… Completed, 6 results\", then \"Thinking about your question…\", with Stop; the footer says questions the assistant can't answer may be grouped, without the visitor's details."
   },
   "public-agent-page-feedback": {
     "files": [
@@ -431,7 +431,7 @@
     "files": [
       "agent-build-advanced-follow-ups"
     ],
-    "alt": "An agent's Build, Advanced section: Reasoning effort, Minimum similarity, Rewrite follow-up questions on, Suggest follow-up questions on (\"After an answer with sources, offer up to 3 questions its sources can answer. Adds a short model call after the answer.\"), Rerank passages on and Passages kept after reranking 6."
+    "alt": "An agent's Build, Advanced section: Reasoning effort, Minimum similarity, Rewrite follow-up questions on, Suggest follow-up questions on (\"After an answer with sources, offer up to 3 questions its sources can answer. Adds a short model call after the answer.\"), Rerank passages on and Passages kept after reranking 6; Try it is empty."
   },
   "evaluation-set-needs-attention": {
     "files": [
@@ -449,13 +449,13 @@
     "files": [
       "agent-build-systemone-added-time"
     ],
-    "alt": "An agent's Build, SystemOne checks section: Passage judging and Scope check at the platform default (off), Citation checks On with \"Adds about 0.7 s per answer (platform median, last 14 days).\" under it, and Citation mode Annotate."
+    "alt": "An agent's Build, SystemOne checks section: Passage judging and Scope check at the platform default (off), Passages to check blank, Citation checks On and Citation mode Annotate; no added time is shown yet, as this platform has checked no answers."
   },
   "admin-reranking": {
     "files": [
       "admin-reranking"
     ],
-    "alt": "Admin, Models, Reranking: the Status card reading On, \"Every search reranks: agents, Try it, the retrieval API and MCP search.\", the model Reranker marked Healthy, 40 passages per search, a 2 s time limit, 5 published agents rerank, and no published agent turns it off; the Settings card starts below."
+    "alt": "Admin, Models, Reranking: the Status card reading On, \"Every search reranks: agents, Try it, the retrieval API and MCP search.\", the model Reranker marked Healthy, 40 passages per search, a 2 s time limit, 6 published agents rerank, and no published agent turns it off; the Settings card starts below."
   },
   "admin-settings": {
     "files": [
@@ -467,7 +467,7 @@
     "files": [
       "account-menu-theme"
     ],
-    "alt": "The account menu opened from the person's name at the bottom of the sidebar: their name and email, Notification settings, Connected apps, the Theme group with System (selected), Light and Dark, and Sign out."
+    "alt": "The account menu opened from the person's name at the bottom of the sidebar: their name and email, Profile, API keys, Notification settings, Connected apps, the Theme group with System (selected), Light and Dark, Help and Sign out."
   },
   "dark-chat-answer": {
     "files": [
@@ -479,7 +479,7 @@
     "files": [
       "dark-agent-build"
     ],
-    "alt": "The agent editor's Build tab in dark mode: the instructions, the collapsed sections and Try it with the answer that used Check outage."
+    "alt": "The agent editor's Build tab in dark mode: the instructions, the collapsed sections and an empty Try it with the agent's welcome and starter questions."
   },
   "dark-phone-public-page": {
     "files": [
@@ -492,5 +492,165 @@
       "dark-admin-page"
     ],
     "alt": "Admin, Models, Reranking in dark mode: the Status card and the start of Settings."
+  },
+  "content-health-report": {
+    "files": [
+      "content-health-report"
+    ],
+    "alt": "A team's Content health page with a completed report of all its sources: Not processed in a long time (4 found), Links that failed in the last crawl (3 found), The same file in two sources (1 group) and Failed to parse or ingest (1 found) Measured, No retained citation evidence Unavailable, and the failed links open: two 404s and a 500."
+  },
+  "content-health-make-report": {
+    "files": [
+      "content-health-make-report"
+    ],
+    "alt": "Content health for a team with no report yet: How the report works, and the Make a report card with What to look at open (All of the team's sources, One source, One knowledge base's sources, with HR handbook chosen), Not processed for 365 days and Look for citations over 90 days."
+  },
+  "source-repeated-blocks-fuzzy": {
+    "files": [
+      "source-repeated-blocks-fuzzy"
+    ],
+    "alt": "A web source's Repeated blocks card: \"5 repeated blocks removed from 15 pages\", the most repeated blocks open (among them a \"last reviewed\" footer in 16 pages with 16 variants and a \"Browse the knowledge base\" line in 8 pages with 3 variants), with Remove repeated blocks and Also remove near-duplicate blocks both on."
+  },
+  "source-contextual-card": {
+    "files": [
+      "source-contextual-card"
+    ],
+    "alt": "A source's Overview as a team owner sees it: the document and passage counts, Repeated blocks off, and the read-only Contextual chunks card: \"Off for this source. No contextual model work is authorized.\", its attempt counts, and \"Only platform admins can configure this opt-in and its spending limits.\""
+  },
+  "source-contextual-dialog": {
+    "files": [
+      "source-contextual-dialog"
+    ],
+    "alt": "The platform admin's Configure contextual chunks dialog for a web source: Allow contextual index previews for this source on, the context-writing chat model, the unusable-reply policy, and build and UTC-day limits for calls, tokens and price."
+  },
+  "kb-index-preview-ready": {
+    "files": [
+      "kb-index-preview-ready"
+    ],
+    "alt": "A knowledge base with the notice \"A platform admin is trying new index settings on this knowledge base\": for Top help desk questions, recall 100% now and with the new index, MRR 0.70 and 0.76, 2 better, 1 worse, 3 the same, and the questions that changed with their rank on each index."
+  },
+  "chat-source-viewer-parent-section": {
+    "files": [
+      "chat-source-viewer-parent-section"
+    ],
+    "alt": "A chat answer's source viewer on a knowledge base with parent sections: the note about the whole section being used.",
+    "hold": "Needs a capture with real models: the fake gateway's answer is a passage heading. Captured in grounded-assets/capture once ~/.config/grounded-capture/models.env exists; then remove this hold and place the slot."
+  },
+  "agent-try-it-cited-section": {
+    "files": [
+      "agent-try-it-cited-section"
+    ],
+    "alt": "An agent's Try it answer with the source viewer showing the cited section.",
+    "hold": "Needs a capture with real models: the fake gateway's answer is a passage heading. Captured in grounded-assets/capture once ~/.config/grounded-capture/models.env exists; then remove this hold and place the slot."
+  },
+  "agent-share-routers": {
+    "files": [
+      "agent-share-routers"
+    ],
+    "alt": "An agent's Share tab: the Audience card with Who can chat set to Team members, the Routers card with \"Can be reached through routers\" on, and the Links card with its stable and team addresses."
+  },
+  "agent-build-routing": {
+    "files": [
+      "agent-build-routing"
+    ],
+    "alt": "A router agent's Build tab, Routing: \"It can reach 3 agents that you can chat with\" (Help Desk Assistant, HR Answers and Library Guide) and the When nothing fits reply; Try it says a router can't be tried here."
+  },
+  "new-agent-start-from": {
+    "files": [
+      "new-agent-start-from"
+    ],
+    "alt": "The New agent dialog with Start from open on the template list: A blank agent, six built-in templates and a saved one, with Service desk FAQ chosen and its description, above Name, Knowledge bases and Chat model."
+  },
+  "chat-routed-answer": {
+    "files": [
+      "chat-routed-answer"
+    ],
+    "alt": "A routed chat answer showing which agent and team answered, with Continue there.",
+    "hold": "Needs a capture with real models: the fake gateway's answer is a passage heading. Captured in grounded-assets/capture once ~/.config/grounded-capture/models.env exists; then remove this hold and place the slot."
+  },
+  "chat-share-dialog": {
+    "files": [
+      "chat-share-dialog"
+    ],
+    "alt": "The Share this conversation dialog: the link, shown once, the warning \"Anyone who opens the link can read this conversation\", Who can open the link (People who can use Help Desk Assistant), Show my name ticked, and Links you made."
+  },
+  "shared-conversation-page": {
+    "files": [
+      "shared-conversation-page"
+    ],
+    "alt": "A shared conversation as a viewer sees it: read-only, with the agent's name and the shared-conversation notice.",
+    "hold": "Needs a capture with real models: the fake gateway's answer is a passage heading. Captured in grounded-assets/capture once ~/.config/grounded-capture/models.env exists; then remove this hold and place the slot."
+  },
+  "team-requests-page": {
+    "files": [
+      "team-requests-page"
+    ],
+    "alt": "Team requests: a person's two requests, Digital Scholarship Lab Waiting for review (Open) and Research Computing Approved (Restricted, asked for Sensitive) with a link to the team, and New request."
+  },
+  "team-request-new": {
+    "files": [
+      "team-request-new"
+    ],
+    "alt": "The Request a team dialog, filled in: team name, what it is for, highest classification of its data (Sensitive) and an optional owner, with Send request."
+  },
+  "team-webhooks": {
+    "files": [
+      "team-webhooks"
+    ],
+    "alt": "Team settings, Webhooks: a team's two webhooks with their events and secret hints, Service desk tickets On and the On-call relay \"Paused: failing\"."
+  },
+  "webhook-deliveries": {
+    "files": [
+      "webhook-deliveries"
+    ],
+    "alt": "A webhook's Deliveries: a test event Pending after 4 attempts (503), one Failed after 8 attempts (500), and agent.published and feedback.submitted events Delivered, with Send test event and Redeliver."
+  },
+  "account-profile": {
+    "files": [
+      "account-profile"
+    ],
+    "alt": "The Profile page: the person's name, email, member since and last sign-in, their teams and roles, and links to API keys, Notification settings and Connected apps."
+  },
+  "account-api-keys": {
+    "files": [
+      "account-api-keys"
+    ],
+    "alt": "The API keys page: a person's personal keys per team, none in one team and one in the other, each with Create a key."
+  },
+  "admin-team-requests": {
+    "files": [
+      "admin-team-requests"
+    ],
+    "alt": "Admin → Teams, Requests: Digital Scholarship Lab Waiting for review (Open) and Research Computing Approved (Restricted), each with who asked and why, and the status filters."
+  },
+  "admin-agent-templates": {
+    "files": [
+      "admin-agent-templates"
+    ],
+    "alt": "Admin → Agent templates: how to add a template (Save as template… in an agent's menu), six built-in templates that ship with Grounded, and Documentation site assistant, saved from an agent."
+  },
+  "admin-webhooks": {
+    "files": [
+      "admin-webhooks"
+    ],
+    "alt": "Admin → Webhooks: Approved destinations (hooks.example.edu and servicedesk.example.edu, with notes) with the form to approve another, and Platform webhooks with one webhook for team.created and team_request.created, On."
+  },
+  "admin-profile-add-chunker": {
+    "files": [
+      "admin-profile-add-chunker"
+    ],
+    "alt": "Admin → Embedding profiles, Add embedding profile: Passage overlap 64 and the Chunker set to \"Keep tables whole\", with what each chunker version does, and Parent sections below."
+  },
+  "admin-index-preview-comparison": {
+    "files": [
+      "admin-index-preview-comparison"
+    ],
+    "alt": "Admin → Embedding profiles, an index preview of IT help articles, Ready to switch, with Discard preview and Switch to the new index, and \"Compared with the current index\": recall 100% → 100%, MRR 0.70 → 0.76, ranked first 3 → 4, 2 better, 1 worse, 3 same."
+  },
+  "admin-features-content-health": {
+    "files": [
+      "admin-features-content-health"
+    ],
+    "alt": "Admin → Settings, Features: Content health reports On, with what a report looks at and Allow content health reports, between Webhooks and the MCP server."
   }
 }

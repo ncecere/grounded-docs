@@ -26,6 +26,8 @@ Grounded deletes data only when a retention period says so, and never what a leg
 | Anonymous and browser sessions | Removed when they expire | Not configurable |
 | Failed questions of the [gap report](/docs/using/editors/gaps) (since v0.4.0) | As their conversation | Follows the conversation: deleted with it (by retention, or after a user's delete and its grace period), so legal holds on the conversation, its user, agent or team keep them |
 | [Saved answers](/docs/using/editors/saved-answers) (since v0.4.0) | Removed at expiry (the agent's setting, 24 hours by default) | Not configurable (kind **Saved answers**, `answer_cache`). Also removed once past the conversation retention of the agent's level (the anonymous retention for public agents). Legal holds on the team or agent keep them, never reused once expired. |
+| [Content health reports](/docs/administration/content-health) (since v0.7.0) | 30 days after the report ended; only the latest 5 per team are kept | Not configurable. Reports hold IDs, counts and times. Findings go at once with their document, source, scoped knowledge base or team, and teams can delete a report any time. No legal-hold handling is needed. |
+| Accounting of [contextual chunks](/docs/administration/contextual-chunks) model calls (since v0.7.0) | **Keep** | Not a retention kind. Each attempt's IDs, token counts, price snapshot and outcome stay after its source or index is deleted, so spend and daily limits stay correct; no source text or names. The generated context itself is deleted with its document and isn't restored. |
 
 Everything is kept until a period is set, except anonymous conversations, evaluation runs, saved answers, and expired sessions.
 
@@ -51,7 +53,7 @@ Saving a period that deletes more (shorter, or a period where there was none) as
 
 ### What deletion means
 
-- **Conversations** are deleted with their messages. Analytics events keep their metadata and lose only the link.
+- **Conversations** are deleted with their messages. Analytics events keep their metadata and lose only the link. That is why a team's content health report still counts citations from deleted conversations until the **Analytics events** period removes those events.
 - **User deletes**: a conversation disappears for its user at once; the stored copy goes after the grace period, or earlier if its level's period passes. The delete dialog tells users that records rules may keep it longer, never whether a hold exists.
 - **Usage ledger**: events are added to daily totals (UTC day, kind, team, agent, model, channel; no user or key) before deletion, so analytics totals stay the same.
 - **Deleted documents and sources** leave search at once (passages and vectors are deleted immediately); their stored files wait for the files period.

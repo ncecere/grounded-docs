@@ -16,12 +16,37 @@ A profile defines:
 | **Output dimensions** | Optional: store fewer dimensions than the model's native size, for models trained to allow it (Matryoshka models such as Qwen3-Embedding). |
 | **Document prefix** and **query prefix** | Text some models expect before documents and questions. Adding a profile for a model with known prefixes fills them in (nomic-embed: `search_document: ` and `search_query: `; Qwen3-Embedding: its query instruction). |
 | **Chunk size** and **overlap** | Passage size in tokens. |
-| **Chunker** | How a page is cut into passages: **Standard** (version 1, a new passage at every heading) or **Merge short sections** (version 2, which also joins short neighbouring sections and drops passages that are only a heading). Chosen when the profile is created. |
+| **Chunker** | How a page is cut into passages; one of the four [chunkers](#chunkers) below. Chosen when the profile is created. |
+| **Parent sections** | Optional, in tokens. Off when empty or 0. Search still ranks small passages, and an agent's model is given the section around each match. At least twice the passage size, at most 8,192. See [Parent sections](#parent-sections). Since v0.7.0. |
 | **Default fusion weights** | Optional: the vector and keyword weights for knowledge bases on this profile that don't set their own. |
 
-Everything except the name, description, status, the default flag and the default fusion weights is **fixed** once the profile exists, because stored vectors depend on it. One profile is the platform default for new sources. A profile can be retired, or deleted once nothing uses it; the Profiles tab shows what uses each one, and since v0.4.2 the profile's own page has **Retire** and **Delete** too. Deleting a profile that past migrations refer to keeps their history. A new profile's key follows its name until you type one.
+Everything except the name, description, status, the default flag and the default fusion weights is **fixed** once the profile exists, because stored vectors depend on it. That includes the chunker and the parent size: to try another one on a knowledge base, [preview it](#previewing-new-settings). One profile is the platform default for new sources. A profile can be retired, or deleted once nothing uses it; the Profiles tab shows what uses each one, and since v0.4.2 the profile's own page has **Retire** and **Delete** too. Deleting a profile that past migrations refer to keeps their history. A new profile's key follows its name until you type one.
 
 Each profile has its own vector table, so different profiles never mix.
+
+<Screenshot slot="admin-profile-add-chunker" />
+
+### Chunkers
+
+| Chunker | Version | What it does |
+|---|---|---|
+| **Standard** | 1 | Starts a new passage at every heading of level 1 to 3. A table longer than a passage is cut by rows, with its header row repeated. |
+| **Merge short sections** | 2 | Does what Standard does, joins short neighbouring sections into one passage and drops passages that are only a heading. |
+| **Keep tables whole** | 3 | Since v0.7.0. Does what Merge short sections does, and keeps a table that fits in one passage whole, with a one-line caption. A longer table is cut between rows, and every piece repeats the caption, the header row and the separator row. No row is lost or repeated, and a row longer than a passage is cut into rows that keep their cells in their own columns. Tables inside list items are handled the same way. PDF text is never read as a table, so tables in PDFs are cut as paragraphs by every version. |
+| **Structural boundaries** | 4 | Since v0.7.0. For sections that mix several procedures. Keeps version 3's table, sentence and size rules but doesn't merge short sections: every heading (levels 1 to 6) starts a new passage, and so does a standalone bold line directly above a top-level list, such as `**Renewing a permit:**` followed by numbered steps. That label stays in the passage and joins its heading path. Ordinary paragraphs next to each other stay together. |
+
+Structural boundaries reads formatting, not meaning. A change of procedure with no heading or bold label isn't detected, nor is a plain `Label:` line, inline bold or a label inside a list; a bold line that isn't really a new procedure still starts a passage. Expect more, smaller passages, which can change ranking and embedding cost either way. Estimates for version 4 are approximate; the preview's actual passage count is the number to trust.
+
+Upgrade every API and worker to v0.7.0 before choosing version 3 or 4: older binaries can't build them.
+
+### Parent sections
+
+With **Parent sections** set (`parentTokens` in the API), search and ranking still work on the small passages, and an agent's model is given the **section** around each match: the consecutive passages of that document under the same heading, up to that many tokens. Passages of one section count as one source. Since v0.7.0.
+
+- **Citations** still point at the matched passage, and record the section's range, passage count, tokens and SHA-256 hash (`parent` in the API). The source viewer keeps showing the matched passage in context for signed-in, anonymous and shared-link readers; only editors can open the full section text. If the section's text changed since the answer, the viewer reports the passage as changed.
+- **Unchanged:** `/retrieve`, the MCP `search` tool and evaluation retrieval checks work on passages, as before.
+- **When a section can't be used** (missing or stale passages, a document that isn't ready, or too little room left in the model's context), the matched passage is used instead.
+- **To turn it off without re-indexing,** set `RETRIEVAL_PARENT_EXPANSION=false` and restart the API and worker: agents then search passages only, whatever the profiles index. See [Configuration](/docs/self-hosting/configuration#ingestion-and-retrieval).
 
 ## Migrations
 
@@ -31,7 +56,7 @@ To adopt a new embedding model, or other passage sizes, create a new profile and
 
 ### How a migration works
 
-- **In the background.** Each source of the knowledge base gets a second set of passages and vectors for the target profile, filled from each document's stored text. When the passage settings match, passages are copied and only embedded again; otherwise they're cut again from the parsed text.
+- **In the background.** Each source of the knowledge base gets a second set of passages and vectors for the target profile, filled from each document's stored text. When the passage settings match (size, overlap, chunker version and the model's input limit), passages are copied and only embedded again, unless the preview asks for near-duplicate repeated blocks; otherwise they're cut again from the parsed text. Parent ranges are computed for the target's own parent size, never copied.
 - **Gently.** It goes through the same batching as ingestion, at background priority, within the target connection's requests-per-minute limit. Live chat and search come first.
 - **Resumable.** A restart, deploy or crash loses nothing: the job continues where it stopped. A gateway's 429 or 503 pauses it.
 - **One switch.** Until every source has vectors for every ready document, the knowledge base keeps searching the old profile only. Then one transaction switches it, and every agent that uses it, to the new profile.
@@ -92,9 +117,22 @@ Repeat for every knowledge base on the old profile, then retire or delete it.
 
 ## Previewing new settings
 
-A migration switches by itself when its new index is ready. An **index preview** builds the new index **beside** the current one and waits, so you can see what it does before anything changes. Use it when you want evidence for a change: another passage size or overlap, a different embedding model, other prefixes, or the other chunker.
+A migration switches by itself when its new index is ready. An **index preview** builds the new index **beside** the current one and waits, so you can see what it does before anything changes. Use it when you want evidence for a change: another passage size or overlap, a different embedding model, other prefixes, another chunker, parent sections, near-duplicate repeated blocks or contextual chunks.
 
 **Migrations → Preview new settings…** (or **Preview new settings…** in a knowledge base's **…** menu). Pick the knowledge base and fill in **only what should change**; empty fields keep the current profile's. The knowledge base keeps answering from the current index the whole time.
+
+| Field | Choices |
+|---|---|
+| **Passage size**, **Passage overlap** | Tokens; empty keeps the current ones. |
+| **Embedding model** | A new model embeds again from the stored text. |
+| **Chunker** | **Keep the current chunker**, or one of the four [chunkers](#chunkers). |
+| **Repeated blocks** | **Keep each source's setting**, or **Treat near-duplicate blocks as one** (since v0.7.0; see below). |
+| **Contextual embedding inputs** | **Keep plain inputs** (or **Keep contextual inputs**), **Build contextual inputs for opted-in sources**, or **Build plain inputs (contextual rollback)** (since v0.7.0; see [Contextual chunks](/docs/administration/contextual-chunks)). |
+| **Parent sections** | Tokens; empty keeps the current setting, 0 turns it off. |
+| **Name**, **Document prefix**, **Query prefix** | Empty keeps the current ones; the name defaults to the profile's name and "(new settings)". |
+| **Keep old vectors for** | Days you can switch back after switching (0 to 90; empty uses the install's default). |
+
+### What the preview does
 
 - **A hidden copy.** The preview makes a copy of the knowledge base's profile with your changes. It is in no list or picker and nothing can use it until you switch.
 - **Compared on its evaluation sets.** When the new index is built, the platform runs the knowledge base's [evaluation sets](/docs/using/editors/evaluations) on both indexes, retrieval only, at the same time. The preview's page shows, for each set and in all, **recall, MRR, the questions ranked first, and how many questions got better, got worse or stayed the same**. **Compare again** runs them once more, for example after documents changed.
@@ -106,4 +144,21 @@ How to read a comparison:
 - It measures **retrieval**: whether the page a question expects comes back, and how high. It does not measure the quality of answers.
 - A difference of one or two questions is noise. With few questions, or questions that are all easy, the two indexes may not be told apart. A knowledge base with no evaluation sets has nothing to compare; ask the team to add some first.
 - Until you switch or discard, the knowledge base holds two sets of passages and vectors. Nothing expires a forgotten preview.
-- **Merge short sections** (chunker version 2) has not been measured on a real knowledge base. Preview it on one that has evaluation sets, and decide by the numbers.
+- **A preview that changes only the parent size shows no difference** in recall or rank, by design: the passages are the same, and the comparison can't tell whether the model answers better from sections. To see a difference in what is searched, preview a smaller passage size together with a parent size.
+- **Not measured.** Chunker versions 2 to 4, parent sections, near-duplicate repeated blocks and contextual chunks have not been measured on a real knowledge base with a real embedding model. Preview each on one that has evaluation sets, and decide by the numbers.
+
+<Screenshot slot="admin-index-preview-comparison" />
+
+### Near-duplicate repeated blocks
+
+Repeated-block removal matches blocks by exact text. **Repeated blocks → Treat near-duplicate blocks as one** builds the new index with near-duplicate matching on for every source of the knowledge base that removes repeated blocks, whatever the source's own **Also remove near-duplicate blocks** switch says: a menu with a different item highlighted, or a footer with a different date, counts as one block. Sources that don't remove repeated blocks are unaffected. Change only this setting to see what near-duplicates add.
+
+- **Before building,** the worker classifies each source once, about 50 documents per step (a few minutes at 100,000 documents) and about 40 bytes of storage per eligible block. A source with more than 100,000 candidate blocks, or one that needs more than 20 million comparisons, is classified by exact blocks only, with a warning in the log.
+- **The thresholds are fixed:** blocks of at least 8 words, about 75% of word pairs in common; reordered items are different blocks.
+- **Switch turns the setting on** for the sources the knowledge base's new profile serves (audited as `source.boilerplate_update`, by the system). A source shared with a knowledge base still on the old profile is left alone. **Switch back doesn't turn it off**: do that on the source's **Repeated blocks** card.
+
+The platform default for sources is `BOILERPLATE_FUZZY` (off); see [Configuration](/docs/self-hosting/configuration#ingestion-and-retrieval).
+
+## Upgrades and rollback
+
+Upgrade every API and worker to v0.7.0 before choosing chunker 3 or 4, parent sections, near-duplicate blocks or contextual chunks: older binaries can't build those indexes. Before rolling back to an older image, switch affected knowledge bases back to their previous index (**Switch back** within the grace period, or preview the previous settings and switch). See [Upgrades](/docs/self-hosting/upgrades).

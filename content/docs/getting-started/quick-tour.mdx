@@ -15,11 +15,11 @@ Answers stream in with numbered citation chips. Each chip opens a card with the 
 
 <Screenshot slot="chat-answer-with-claims" />
 
-Your conversations are listed in the sidebar and on the Conversations page. Only you can read them. See [Chatting with an agent](/docs/using/chat). Your name at the bottom of the sidebar opens the account menu: notification settings, connected apps and, since v0.4.2, the **Theme** (System, Light or Dark; see [Your settings and dark mode](/docs/using/personal-settings)).
+Your conversations are listed in the sidebar and on the Conversations page. Only you can read them. See [Chatting with an agent](/docs/using/chat). Your name at the bottom of the sidebar opens the account menu: **Profile**, **API keys** (if you're in a team), **Notification settings**, **Connected apps**, the **Theme** (System, Light or Dark), **Help** when your organisation has a support page, and **Sign out** (see [Your settings and dark mode](/docs/using/personal-settings)).
 
 ## Building for a team
 
-A team's sidebar has **Overview**, **Data sources**, **Knowledge bases**, **Agents**, **Evaluations** (editors and above) and **Team settings**.
+A team's sidebar has **Overview**, **Data sources**, **Knowledge bases**, **Agents**, **Evaluations**, **Gaps**, **Content health** and **Team settings**. Evaluations, Gaps and Content health are for editors, admins and owners only.
 
 <Screenshot slot="team-overview" />
 
@@ -42,14 +42,14 @@ Attach one or more sources and test search on its **Try it** tab. See [Knowledge
 
 ### Build an agent
 
-Write instructions, pick a chat model and the knowledge bases, and try the draft in the panel beside the settings. Publish it when it answers well. See [Agents](/docs/using/editors/agents).
+Start from a blank agent or a template, write instructions, pick a chat model and the knowledge bases, and try the draft in the panel beside the settings. Publish it when it answers well. See [Agents](/docs/using/editors/agents). A [router](/docs/using/editors/routers) is a front-door agent that sends each question to another agent instead.
 
 </Step>
 <Step>
 
 ### Share it
 
-Keep it for the team, share it with everyone who signs in, or make it public with a page and an embeddable widget. It is also a model on the OpenAI-compatible API. See [Sharing an agent](/docs/using/editors/sharing).
+Keep it for the team, share it with signed-in users, or make it public with a page and an embeddable widget. It is also a model on the OpenAI-compatible API. See [Sharing an agent](/docs/using/editors/sharing).
 
 </Step>
 <Step>
@@ -59,11 +59,18 @@ Keep it for the team, share it with everyone who signs in, or make it public wit
 Evaluation sets check that the knowledge base still finds the right documents and the agent still answers well after sources, settings or models change. See [Evaluations](/docs/using/editors/evaluations).
 
 </Step>
+<Step>
+
+### Find what's missing
+
+**Gaps** groups the questions your agents couldn't answer into topics ([Gaps](/docs/using/editors/gaps)). **Content health**, when a platform admin has turned it on, reports documents not processed in a long time, links a crawl saw fail, the same file in two sources, documents with no retained citation evidence, and documents that failed to parse ([Content health](/docs/using/editors/content-health)).
+
+</Step>
 </Steps>
 
 ## Running the platform
 
-The admin portal opens on **Overview**: the platform at a glance, what needs attention, the optional features and their state, and the latest changes. **Settings**, under Operations, holds the platform's general settings and the feature switches. Its sidebar groups the rest: **People**, **Content**, **Models**, **Usage & spend**, **Safety**, **Records** and **Operations**.
+The admin portal opens on **Overview**: the platform at a glance, what needs attention, the optional features and their state, and the latest changes. **Settings**, under Operations, holds the platform's general settings and the feature switches: Evaluations, Team requests, Webhooks, Content health reports, MCP server, OAuth sign-in for MCP clients and Saved answers. Its sidebar groups the rest: **People**, **Content**, **Models**, **Usage & spend**, **Safety**, **Records** and **Operations**.
 
 <Screenshot slot="admin-overview-features" />
 

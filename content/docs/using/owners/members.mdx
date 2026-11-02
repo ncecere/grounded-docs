@@ -3,7 +3,7 @@ title: Members and roles
 description: Add people to a team, give them roles, handle invites, and understand members managed by SSO groups.
 ---
 
-A team's members are managed under **Team settings → Members**. Team settings has five tabs: **Members · Usage & spend · API keys · Audit log · General**, and for admins and owners a sixth, **Webhooks**, while a platform admin has [webhooks](/docs/using/owners/webhooks) turned on.
+A team's members are managed under **Team settings → Members**. Team settings has these tabs, in order: **Members** · **Usage & spend** · **API keys** · **Webhooks** · **Audit log** · **General**. Members see only Members, API keys and General. Editors see the usage tab as **Usage & limits**, without money, and so does everyone while cost tracking is off for the team ([Usage and spend](/docs/using/owners/usage-and-spend)). **Webhooks** is for admins and owners, while a platform admin has [webhooks](/docs/using/owners/webhooks) turned on.
 
 <Screenshot slot="team-members" />
 
@@ -20,10 +20,11 @@ The full table is in [Concepts](/docs/getting-started/concepts#roles). In the ap
 
 ## Adding people
 
-**Add member** takes a name or an email address:
+**Add member** asks for an **Email address** ("Use the email address they sign in with.") and a **Role**:
 
 - Someone who has signed in to Grounded before is added at once.
-- A new email address gets an **invite**. The person joins when they first sign in with that verified email. Invites expire after 30 days, and the invite email is always sent (when the platform has email set up). Pending invites are listed on the Members tab, where you can revoke them.
+- A new email address gets an **invite**. The person joins when they first sign in with that verified email. Invites expire after 30 days, and the invite email is always sent (when the platform has email set up). Invites not yet used are listed on the Members tab under **Open invites**, with each one's email, role and expiry, where you can revoke them.
+- Adding an address that already has an open invite **renews** it (since v0.6.3): the invite gets a new expiry and the role you chose, the email is sent again, and the audit log records "Renewed invite" instead of a second invite.
 
 Admins can add editors, members and other admins; only owners can add or change owners. Only platform admins create teams. If people need a new team, they can [ask for one in the app](/docs/using/request-a-team) when a platform admin has turned that on; otherwise your install may link to a request form, or they ask a platform admin.
 

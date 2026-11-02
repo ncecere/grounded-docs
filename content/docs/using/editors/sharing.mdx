@@ -5,12 +5,12 @@ description: Choose an agent's audience, let routers send people to it, and reac
 
 ## Audiences
 
-Each agent has one audience, set in the draft and published with the next version:
+Each agent has one audience, set on the Share tab's **Audience** card. It's part of the draft, so a change takes effect when you publish:
 
 | Audience | Who can chat | Who may publish to it | Allowed for |
 |---|---|---|---|
-| **Team** | The team's members | Editors, admins, owners | Every level |
-| **Everyone who signs in** | Anyone who can sign in to the install; listed in the agent directory | Admins, owners | Sensitive and less, by default |
+| **Team members** | The team's members | Editors, admins, owners | Every level |
+| **Signed-in users** | Anyone who can sign in to the install, from any team; listed in Discover agents | Admins, owners | Sensitive and less, by default |
 | **Public** | Anyone, without signing in | Admins, owners | Open only, by default |
 
 The "allowed for" column is the default policy: each classification level has a most open audience, which platform admins can change. An agent's level is the level of its most sensitive knowledge base. The Share tab shows each audience with whether it's allowed and, if not, why.
@@ -20,7 +20,7 @@ A **public** audience also needs:
 - a moderation policy for the public audience with a working provider (see [Moderation and public access](/docs/administration/moderation-and-public-access)), and
 - the platform's public access switch turned on. While it's off, public pages, widgets and the public API refuse, and the directory hides public agents.
 
-"Everyone who signs in" means everyone your identity provider lets sign in to Grounded, which may include students, contractors or guests. Ask your platform admin who that is before you publish sensitive material to it. Publishing to everyone who signs in or to the public notifies the team's owners.
+**Signed-in users** means everyone your identity provider lets sign in to Grounded, which may include students, contractors or guests. Ask your platform admin who that is before you publish sensitive material to it. Publishing to signed-in users or to the public notifies the team's owners. Lists and badges elsewhere in the app call the audiences **Team**, **Signed-in users** and **Public**.
 
 <Screenshot slot="agent-share" />
 
@@ -30,13 +30,15 @@ Since v0.6.0, the Share tab has a **Routers** card under the audience. Its one s
 
 The switch doesn't widen who can use the agent. A router only sends someone to an agent they could chat with themselves, whoever made the router, and the agent still answers as an ordinary chat, with its own limits, moderation and analytics. The card isn't shown on a router agent, which can't be reached through routers.
 
+<Screenshot slot="agent-share-routers" />
+
 ## Links
 
-The Share tab lists the agent's addresses:
+The Share tab's **Links** card lists the agent's addresses, and says whether people must sign in first:
 
-- **Team address**: `/a/<team>/<agent>`. For a public agent, visitors who aren't signed in get the public page here too.
-- **Short address**: `/a/<short-name>`, if a platform admin has assigned one.
+- **Short address**: `/a/<short-name>`, if a platform admin has assigned one. Share this one when there is one.
 - **Stable address**: `/a/id/<agent-id>`. It never changes, even if the team or agent is renamed; widgets use it.
+- **Team address**: `/a/<team>/<agent>`. For a public agent, visitors who aren't signed in get the public page here too.
 
 Since v0.4.2 the tab shows the new audience, links and widget right after you publish, without a reload.
 
@@ -75,9 +77,9 @@ The key is embedded in web pages, so it isn't secret. What protects it is the al
 </Step>
 <Step>
 
-### Copy the snippet
+### Copy the embed code
 
-Paste it into the site's HTML:
+Right after **Create key**, the Share tab shows the new key once ("Shown once. It's already in the code below: copy the code now."), and the **Embed code** already contains it. Choose **Position**, **Bottom right** (the default) or **Bottom left**, then copy the code into the site's HTML:
 
 ```html
 <script src="https://grounded.example.org/widget.js"
@@ -85,7 +87,7 @@ Paste it into the site's HTML:
         integrity="sha384-…" crossorigin="anonymous" async></script>
 ```
 
-`data-position="bottom-left"` moves the launcher from the default bottom right. The Share tab fills in your install's address, the agent's ID and the script's Subresource Integrity hash; replace `pk_…` with your key, which is shown only once, when it's created. (Before v0.4.2 a false "Leave without saving?" could hide that one-time secret after **Create key**; it no longer does.)
+**Bottom left** adds `data-position="bottom-left"`. The Share tab fills in your install's address, the agent's ID and the script's Subresource Integrity hash. If you didn't just create a key, the code has `pk_…` in its place: replace it with the key, which was shown only once, when it was created. (Before v0.4.2 a false "Leave without saving?" could hide that one-time secret after **Create key**; it no longer does.)
 
 </Step>
 <Step>

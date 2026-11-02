@@ -32,7 +32,11 @@ While team requests are off, `TEAM_REQUEST_URL` stays the fallback: if you set i
 
 The table has the request's name with who asked, **Status** (Waiting for review, Approved, Declined or Withdrawn, with a filter), **Classification**, **Purpose** and when it was **Requested**; **Owner** can be shown too. A row's menu has **Approve…**, **Decline…** and **View…**, which opens everything about the request, including the reason it was declined and who decided. Platform auditors can read the queue and decide nothing.
 
-A request holds a name (up to 80 characters), a purpose (required, up to 1,000), the classification, and optionally an owner's email. It has **no address**: you choose one when you approve it. The purpose is the requester's own text, not team content.
+Since v0.6.3 the **Classification** of an approved request is the level the reviewer approved, in the queue and on the requester's page. When it differs from what was asked for, **View…** says "Asked for …; the reviewer approved …", and the requester's page shows "Asked for …" beside it.
+
+<Screenshot slot="admin-team-requests" />
+
+A request holds a name (up to 80 characters, with no invisible control or formatting characters since v0.6.3: `400 invalid_name`), a purpose (required, up to 1,000), the classification, and optionally an owner's email. It has **no address**: you choose one when you approve it. The purpose is the requester's own text, not team content.
 
 ### Approving
 
@@ -42,6 +46,8 @@ A request holds a name (up to 80 characters), a purpose (required, up to 1,000),
 - **Highest classification**, set to the level asked for, which is marked "(requested)". Change it if the team should hold less or more.
 - **First agent** (optional): start the team with one draft agent made from an [agent template](/docs/administration/agent-templates). It's named after the template, for the team only, and never published. The team's owner changes it and publishes it when ready.
 - The owner, shown under the fields: the person named in the request, or the requester. Someone who has never signed in is invited by email, as for any team.
+
+**If the owner's account is suspended** (since v0.6.3), the dialog says so first ("The owner's account is suspended") and adds an **Owner** field: the email of the person who will own the team instead. The person who asked is told, and isn't on the team. Without a different owner the request can't be approved (the API answers `409 owner_suspended` and creates nothing); you can still decline it.
 
 **Approve and create the team** does it all in one step. If something fails, for example the address is taken (`slug_taken`), the request stays pending and no team is left behind. The request's purpose becomes the team's description. The requester is told in either case, and the owner hears through the team invitation or the "you were added" notice.
 
@@ -65,4 +71,4 @@ If another admin decides a request first, your dialog closes and the queue shows
 
 ## API
 
-`GET` and `POST /v1/team-requests` and `POST /v1/team-requests/{id}/withdraw` are for the person; `GET /v1/admin/team-requests` (and `/{id}`), `POST …/approve` and `POST …/decline` (with `If-Match`) for admins; and `GET` and `PUT /v1/admin/settings/team-requests` for the switch and limits. See the [API reference](/docs/api).
+`GET` and `POST /v1/team-requests` and `POST /v1/team-requests/{id}/withdraw` are for the person; `GET /v1/admin/team-requests` (and `/{id}`), `POST …/approve` and `POST …/decline` (with `If-Match`) for admins; and `GET` and `PUT /v1/admin/settings/team-requests` for the switch and limits. Since v0.6.3 a request carries `ownerSuspended` and, once approved, `approvedClassification`; approving takes an optional `ownerEmail`. See the [API reference](/docs/api).

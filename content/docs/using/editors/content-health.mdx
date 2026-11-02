@@ -1,0 +1,112 @@
+---
+title: "Content health"
+description: "Ask for a report of where your team's documents may need attention: pages not processed in a long time, links a crawl saw fail, the same file in two sources, documents with no citation evidence, and failed documents. What each signal means, and what it doesn't."
+---
+
+Since v0.7.0 a team's editors can ask for a **content health report**: a list of places in the team's own sources that may need attention. It looks for five things:
+
+- documents **not processed in a long time**,
+- **links that failed** in a web source's last crawl,
+- **the same file in two sources**,
+- documents with **no retained citation evidence**,
+- documents that **failed to parse or ingest**.
+
+It's a list of places to look, not a score of quality. Every signal says what it doesn't mean, and one that can't be measured says so instead of showing zero. Making a report fetches no website, calls no model and changes nothing: no document is deleted, re-crawled or reclassified.
+
+Where [Gaps](/docs/using/editors/gaps) shows what people couldn't get answered, Content health looks at the documents themselves.
+
+## Where it is and who sees it
+
+**Content health** is in the team's sidebar, after Gaps, at `/teams/<team>/content-health`. It's for the team's **editors, admins and owners**, signed in to the app.
+
+- Members who open it are told it's for editors.
+- API keys of every kind, widget keys and people outside the team get "not found".
+- Platform admins and auditors get no access through their platform role, not even in a break-glass session. A platform admin who is also an editor, admin or owner of the team sees it like any other editor.
+
+## Turning it on
+
+Content health reports are **off by default**. A platform admin turns them on under **Admin → Settings → Features → Content health reports** ([Content health reports](/docs/administration/content-health)). Nothing runs by itself: a report exists only because someone on the team asked for one.
+
+While they're off, the page says "Content health reports are switched off." If the team has reports from before, they're listed under **Reports still kept** with when each was made, its status and how long it's kept, but nothing it found. You can still cancel a report that's being made and delete kept ones. When the reports are turned on again, kept reports come back with their findings.
+
+## Making a report
+
+The page opens with **How the report works**, then the **Make a report** card.
+
+<Screenshot slot="content-health-make-report" />
+
+| Field | What it does | Default |
+|---|---|---|
+| **What to look at** | **All of the team's sources**, one source (under **One source**), or the sources of one knowledge base (under **One knowledge base's sources**). Shared platform sources are never included. | All of the team's sources |
+| **Not processed for (days)** | A document whose last successful processing was at least this long ago is listed. 30 to 3,650. | 365 |
+| **Look for citations over (days)** | How far back to read kept answers when looking for documents with no citation evidence. 14 to 365. It's team-wide: a narrower **What to look at** doesn't read fewer answers. | 90 |
+
+Choose **Make report**. The report is made in the background; the page updates every few seconds while it's **Waiting to start** or **Being made**, and you can leave it. **Cancel report** stops it.
+
+- A team has one report in progress at a time.
+- A new report can start 10 minutes after the previous one started. If you ask sooner, the page says so.
+- An archived team can read its reports but can't make, cancel or delete one.
+
+## What it looks for
+
+| Signal | What's listed | What it doesn't mean |
+|---|---|---|
+| **Not processed in a long time** | Ready documents whose last successful processing finished at least **Not processed for** days before the report began. Oldest first. | That the content is out of date. Processing happens for a new or changed file, a retry or a re-read after an upgrade; Grounded doesn't know when someone last edited a page. A web page that a crawl saw again within the threshold is still listed, marked **Recently confirmed by a crawl**. |
+| **Links that failed in the last crawl** | Addresses the latest completed crawl of a web source tried to fetch and couldn't: **Not found (404 or 410)**, **Server error or refused**, or **Couldn't connect**. | That the link is still broken. It was seen failing once, when that crawl ended, and isn't checked again; nothing is fetched to make the report. Grounded doesn't record which page links to it. Addresses the crawler skipped on purpose (robots.txt, outside the crawl's scope, download links) aren't failures. A source with no usable crawl record is shown as unknown, never as having no broken links. |
+| **The same file in two sources** | Groups of ready documents, in different sources of the report, whose original files are byte-for-byte identical. | Near-duplicates. The same text as a PDF and a Word file, or a page with a changing date, doesn't match. With one source in scope, this signal doesn't apply. |
+| **No retained citation evidence** | Ready documents of sources a published agent reaches, that no kept answer cited in the window. See [below](#no-retained-citation-evidence). | That a document is never cited, unused, outdated or poor, or that it had a fair chance of being cited. A document can be rarely cited because few people ask about it. |
+| **Failed to parse or ingest** | Documents that failed (**Failed**, **Damaged, protected or unsupported**, **OCR failed**), that **Needs OCR**, or that are **Not finished after a day**. | The cause. Only the error code is shown: open the document for the details. A document that was read with warnings isn't listed. |
+
+### No retained citation evidence
+
+Grounded keeps a small record of each answer, without the question or the answer, that says which documents it cited. This signal reads those records. To keep it honest, a document is only judged when:
+
+- a published, active agent of the team reaches its source through a knowledge base (others are "not served");
+- at least **50 kept answers that could have cited something** came from agents that reach the source since it became reachable (refusals, errors and answers with no passages don't count);
+- the document already existed when its source became reachable.
+
+The window is team-wide: it covers up to **Look for citations over (days)**, starting no earlier than the team's oldest kept answer. A citation by any of the team's agents counts, except in an agent's **Try it** panel. Deleting a conversation doesn't remove its record, but records your platform's analytics retention has removed are gone. With too few answers, the signal is **Unavailable** and says why. The card says how many answers it saw and how many documents it judged or left out.
+
+## Reading a report
+
+<Screenshot slot="content-health-report" />
+
+The **Report** card gives its **Status**, **As of** (when it began; ages and windows are measured from then), the thresholds, the **Scope** and **Kept until**. Older reports can be picked under **Report**.
+
+Each signal has a card with its state:
+
+| State | Meaning |
+|---|---|
+| **Measured** | It was measured. Only a measured signal shows a count, including zero. |
+| **Not applicable** | It can't apply here, for example "There is no web source in this scope." |
+| **Unavailable** | It couldn't be measured, and the card says why, for example "Too few kept answers that could have cited something, team-wide, to say which documents have no citation evidence." or "It took longer than a report may take." |
+
+**What this does not mean** on each card opens the limits above. **Show findings** lists what the signal found, 25 at a time, with each document's live name and source. A document links to its source's page.
+
+The counts on the cards are as of the report. The findings are checked against your sources each time you open them, so one whose document was deleted, whose source left the report's scope, or whose source or crawl changed since is no longer listed. That's why a card can say fewer are "still listed now" than were found. A document processed again since the report is marked **Changed since this report**.
+
+**Sources in this report** shows, per source, what the report knew: its documents, whether its links were observed, unknown or not applicable, and what the citation-evidence signal could say about it.
+
+## How long reports are kept
+
+| Bound | Value |
+|---|---|
+| Reports kept per team | The latest 5, each for 30 days after it ended |
+| Findings kept per signal | 1,000 ("showing the first 1,000"); for identical files, 100 groups of at most 10 documents |
+| Time per report | 10 minutes of work |
+| Time per signal | 45 seconds; a signal that takes longer is **Unavailable** and the others go on |
+
+**Delete report** removes a report and its findings; your documents and sources aren't touched.
+
+## Privacy
+
+- A report stores IDs, codes, counts and times. Document and source names are read live when you open the findings, so findings disappear with their documents, sources and team.
+- A failed link's address is stored without user names, passwords, query or fragment. Its path can still contain something sensitive, so treat the list like the source itself.
+- Shared platform sources are never included, and other teams' sources are never compared.
+- The team's [audit log](/docs/using/owners/audit-log) records each report asked for, cancelled and deleted ("Asked for a content health report"), with IDs and thresholds only, never a title, an address or a count.
+
+## Limits to know
+
+- It was tested with fake models and test fixtures only. It doesn't measure the quality of a real knowledge base or of answers.
+- It doesn't look for near-duplicate documents, parse warnings, links inside uploaded documents, or links a crawl didn't reach because of its depth or page limit.
+- It doesn't look for personal data.

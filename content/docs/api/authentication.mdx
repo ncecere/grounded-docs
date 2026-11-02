@@ -19,6 +19,8 @@ Keys are created in the app under **Team settings → API keys** ([API keys](/do
 - may **expire**;
 - can never administer the platform.
 
+Since v0.6.3 an unknown or wrongly cased scope is `400 invalid_scopes` ("Scopes must be query, ingest, manage or mcp (lower-case)"), while a known scope above your role stays `403`. A key's name can't contain invisible control, bidirectional or zero-width characters (`400 invalid_name`).
+
 | | Personal key | Service key |
 |---|---|---|
 | Acts as | You, within the team | The team |
@@ -29,9 +31,9 @@ Keys are created in the app under **Team settings → API keys** ([API keys](/do
 
 A key with only the `query` scope, or a personal key whose owner is a plain member, sees an agent as a team member does: its profile and published version. `GET /v1/teams/{team}/agents` and the agent itself leave out the draft (instructions, knowledge bases and settings), the unpublished-changes flag and the publish problems. A key with `ingest` or `manage` still gets the draft.
 
-Keys are stored only as HMAC digests. Per-key rate limits apply (300 queries per minute by default), as do the team's and the agent's limits. A revoked, expired or unknown key gets 401.
+Keys are stored only as HMAC digests. Per-key rate limits apply (300 queries per minute by default), as do the team's and the agent's limits. A revoked, expired or unknown key gets 401. The scheme name `Bearer` is case-insensitive (since v0.6.3, on the REST API, the OpenAI-compatible endpoint and `/mcp`); the secret is case-sensitive. Revoking another person's key that you can't see answers `404 key_not_found`, as for a key that doesn't exist.
 
-Some routes don't accept API keys at all: evaluations, the command palette search (`/v1/search`), and everything under `/v1/admin`. Whether team keys may call a knowledge base's `/retrieve` directly depends on its classification level's setting.
+Some routes don't accept API keys at all: evaluations, the command palette search (`/v1/search`), [content health reports](/docs/administration/content-health) (keys get `404`, since v0.7.0), a source's contextual-chunks state (`GET /v1/teams/{team}/sources/{sourceId}/contextual`, since v0.7.0), making a conversation share (`401`), and everything under `/v1/admin`. Changing a source's contextual-chunks settings needs a platform admin's browser session. Whether team keys may call a knowledge base's `/retrieve` directly depends on its classification level's setting.
 
 ## MCP
 

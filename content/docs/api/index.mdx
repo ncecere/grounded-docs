@@ -22,8 +22,12 @@ Everything the web app does goes through Grounded's HTTP API, and the same route
 - **Responses** are `{"data": ...}` on success and `{"error": {"code": "...", "message": "..."}}` on failure. The OpenAI-compatible endpoints use OpenAI's shapes instead, for every error since v0.6.1 (before, a request with no key at all and an internal failure got the app's own shape).
 - **Bad input** is a `400` whose message names the problem. A JSON body that doesn't fit the route is `invalid_json`, and since v0.6.1 the message names the field: `Unknown field "kbIds"`, `Field "limit" must be a whole number` (nested fields with their path); before, it said only that the body wasn't valid JSON, even when it was. A NUL character (U+0000) in a body, a path or a query string is `400 invalid_text` (before, `500 internal` from about twenty endpoints, because the database can't store it).
 - **A JSON body has 30 seconds to arrive** (since v0.6.1). A client that stalls gets `408 request_timeout` and the connection closes. File uploads aren't covered.
+- **Wrong method.** Since v0.6.3, a method a known path doesn't accept is `405 method_not_allowed` with an `Allow` header (on the OpenAI-compatible paths, in OpenAI's shape); an unknown path stays `404`. `OPTIONS` isn't a CORS preflight grant: public writes stay same-origin.
+- **Badly formatted values.** Since v0.6.3, a value of the right JSON kind in the wrong format is `400 invalid_email`, `invalid_date` or `invalid_id`, naming the field and the format it expects, including an ID in a body such as `conversationId`. A body that isn't JSON, unknown fields and values of the wrong kind stay `invalid_json`.
+- **Names.** Since v0.6.3, names of teams, agents, knowledge bases, sources and API keys refuse control, bidirectional, zero-width and other invisible formatting characters (`400 invalid_name`), as do explicit conversation titles (`invalid_title`). Upload filenames with them are `400 invalid_filename`. Existing names aren't changed.
 - **Credentials decide what's allowed.** Browser sessions and API keys share the same routes; an API key can only do what its team, scopes and restrictions allow.
-- **Admin writes** need a revision precondition (`If-Match`): a missing one returns 428, a stale one 412.
+- **Admin writes** need a revision precondition (`If-Match`): a missing one returns 428, a stale one 412. Since v0.6.3 a platform auditor gets `403` first, before any revision or body check.
+- **Errors are in the reference.** Since v0.6.3 every `/v1` operation documents a default error response, and shared `429` answers carry `Retry-After`.
 - **Limits** return 429 with `Retry-After` for rate limits (`rate_limited`), daily quotas (`quota_exceeded`) and used-up budgets (`budget_exhausted`), with `details: {limit, max, current}` or the budget figures. Resource caps return 409 `limit_reached`.
 - **Maintenance mode** returns 503 `maintenance_mode` for new uploads, syncs and crawls.
 - **Streaming** uses Server-Sent Events, with a `: ping` comment every 15 seconds.
@@ -38,7 +42,8 @@ Everything the web app does goes through Grounded's HTTP API, and the same route
 | Search a knowledge base | `POST /v1/teams/{team}/kbs/{kbId}/retrieve` |
 | Upload documents | `POST /v1/teams/{team}/sources/{sourceId}/documents` (multipart, `ingest` scope) |
 | List your conversations, export one | `GET /v1/conversations`, `GET /v1/conversations/{id}/export` |
+| Ask for a [content health report](/docs/administration/content-health) | `POST /v1/teams/{team}/content-health/reports` (browser session only) |
 
 ## Keeping the spec
 
-The reference is generated from `openapi/grounded.yaml` in this documentation's repository, a copy of `api/openapi.yaml` from Grounded v0.6.0. It hasn't been refreshed for v0.6.1 yet, which changes no route or field; only descriptions (such as who may read a document's passages) differ. The Grounded repository's copy is the source of truth.
+The reference is generated from `openapi/grounded.yaml` in this documentation's repository, a copy of `api/openapi.yaml` from Grounded v0.7.0. The Grounded repository's copy is the source of truth.

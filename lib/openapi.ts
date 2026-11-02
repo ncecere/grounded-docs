@@ -49,6 +49,7 @@ export const tagLabels: Record<string, string> = {
   public: 'Public agents and widget',
   'team-requests': 'Team requests',
   webhooks: 'Webhooks',
+  contenthealth: 'Content health',
 };
 
 /**

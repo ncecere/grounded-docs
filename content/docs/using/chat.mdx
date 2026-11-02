@@ -5,15 +5,17 @@ description: Asking questions, reading citations and claim verdicts, giving feed
 
 ## Finding an agent
 
-Home lists the agents you can use. The agent directory groups them:
+Home lists the agents you can use. The agent directory, **Discover agents**, groups them:
 
-- **Your teams**: agents of the teams you belong to.
-- **Across the organisation**: agents published to everyone who signs in.
+- **From your teams**: agents of the teams you belong to.
+- **Shared with signed-in users**: agents published to everyone who can sign in.
 - **Public**: public agents, while the platform allows public access.
+
+The **Show** filter (**All**, **Your teams**, **Signed-in users** or **Public**) keeps one group, and a **Team** filter appears when the directory has agents from more than one team.
 
 <Screenshot slot="discover-agents" />
 
-Search the directory by name or description: letters and digits are compared, so "wifi" finds "Wi-Fi" (v0.4.2). Your search shows as a chip beside the filters, and **Clear all** clears it with them. You can also type an agent's name in the command palette (⌘K or Ctrl+K). An agent may also have a public page or appear in a widget on a website; those work without signing in (see [Public pages and the widget](#public-pages-and-the-widget)).
+Search the directory by name, description or team: letters and digits are compared, so "wifi" finds "Wi-Fi" (v0.4.2). Your search shows as a chip beside the filters, and **Clear all** clears it with them. You can also type an agent's name in the command palette (⌘K or Ctrl+K). An agent may also have a public page or appear in a widget on a website; those work without signing in (see [Public pages and the widget](#public-pages-and-the-widget)).
 
 ## Asking a question
 
@@ -61,7 +63,7 @@ If the safety check itself is unavailable, a public agent refuses with "The safe
 
 Since v0.6.0, some agents are **routers**: front doors that answer nothing themselves and send your question to the agent that covers it, out of the agents you could chat with anyway. A routed answer says who gave it: **Answered by *Agent* · *Team***, with a **Continue there** link. It opens your own conversation with that agent, where you can ask a follow-up; a later question to the router that goes to the same agent continues that conversation. If the agent has been removed since, the line says "(removed since)" and has no link.
 
-If no agent fits, the router says so in its own words. If it can't choose just now, it says "I can't send your question to the right assistant just now. Please try again later." The answer's citations and sources work as in any answer. A conversation with a router can't be shared; share your conversation with the agent it sent you to. Editors: see [Routers](/docs/using/editors/routers).
+If no agent fits, the router says so in its own words. If it can't choose just now, it says "I can't send your question to the right assistant just now. Please try again later." The answer's citations and sources work as in any answer. Once a router has sent one of your questions to another agent, that conversation can't be shared: share your conversation with that agent instead ([Sharing a conversation](#sharing-a-conversation)). Editors: see [Routers](/docs/using/editors/routers).
 
 ## Citations
 
@@ -70,7 +72,7 @@ Each factual sentence should end with a numbered citation chip such as **[1]**. 
 **Copy answer** (under the answer) copies the text with the same numbers, followed by its sources, each with its section ("Connect to campus Wi-Fi — Networks"). [Exports](#your-conversations) number the same way.
 
 - Hover, click, or press Enter or Space on a chip to open its card, below the chip when there's room: the cited passage, with its heading path and pages. Focus moves into the card; Escape returns you to the chip.
-- **Show source *n*** opens the cited passage in the **source viewer**, highlighted in its document beside the answer, with the claims that cite it ([Checking a source](/docs/using/source-viewer)). Where there's no viewer, such as a deleted agent's transcript, it reads **Show source *n* below** and opens the answer's sources, which start collapsed.
+- **Show source *n*** opens the cited passage in the **source viewer**, highlighted in its document beside the answer, with the claims that cite it ([Checking a source](/docs/using/source-viewer)). When the agent's knowledge base uses parent sections (v0.7.0), the model was given a larger section around the passage, and the viewer says so ([Parent sections](/docs/using/source-viewer#when-the-model-used-a-larger-section)). Where there's no viewer, such as a deleted agent's transcript, it reads **Show source *n* below** and opens the answer's sources, which start collapsed.
 - The source cards under an answer open the viewer too.
 - A web page is linked to its original URL when the agent's citation mode includes links. Uploaded files are cited by title only; you can't download them from a chat.
 - Some agents can also call **tools** while they answer, such as a service status check. A tool's result is cited like a document and reads **From *Service status* · Check outage** among the sources: the service, then the tool's title (its name, such as `check_outage`, when it has no title; before v0.4.2 always the name). Claim checks treat it like any other source. A tool gets only the details the agent puts in a call, not your conversation. See [Tools from MCP servers](/docs/administration/mcp-servers#results-are-sources).
@@ -108,7 +110,7 @@ A chip's card states its claim's verdict first, then what this source says about
 
 ## Feedback
 
-Each answer has thumbs up and thumbs down buttons; the one you chose stays pressed (no pop-up message; screen readers hear it). Since v0.4.2 you can take a rating back: press a pressed thumbs up again, or choose **Remove my rating** in the thumbs-down menu. A thumbs down asks for a reason from a fixed list: incorrect, not helpful, missing sources, wrong sources, outdated, harmful or unsafe, or other. The team sees counts of ratings and reasons in its analytics, never your question or the answer.
+Each answer has thumbs up and thumbs down buttons; the one you chose stays pressed (no pop-up message; screen readers hear it). Since v0.4.2 you can take a rating back: press a pressed thumbs up again, or choose **Remove my rating** in the thumbs-down menu. A thumbs down asks for a reason from a fixed list: **Incorrect**, **Not helpful**, **Missing sources**, **Wrong sources**, **Outdated**, **Harmful or unsafe** or **Something else**. Since v0.6.3 the reasons are a choice of one: the reason you gave is marked when you open the menu again, and choosing a reason saves it and closes the menu. The team sees counts of ratings and reasons in its analytics, never your question or the answer.
 
 The thumbs-down menu also has **Share this question with the team**, off by default. Tick it before you choose a reason, and the team's editors can read your question (never who asked) in their [gap report](/docs/using/editors/gaps), to see what the agent is missing. Unticking it, or rating the answer up instead, takes the question back. Without the tick, a question the agent couldn't answer still counts towards the gap report's topics, but its text is never shown. A thumbs down also retires a [saved answer](/docs/using/editors/saved-answers), so the next person gets a fresh one.
 
@@ -118,16 +120,18 @@ If you're an editor on the agent's team, an answer you rated down, or one withou
 
 ## Your conversations
 
-The sidebar lists your recent conversations. The **Conversations** page has all of them, searchable and filtered by agent and date. Times are relative ("2 days ago", counted by calendar day) with the exact time on hover, and a title cut short shows in full on hover. From a conversation's "…" menu you can:
+The sidebar lists your five most recent conversations under **Recent conversations**. On the chat page, **Your conversations** beside the thread lists your conversations with that agent, newest first, with **New conversation** at the top and **Load more** at the end; on a narrow screen it opens as a sheet. The **Conversations** page has all of them, searchable and filtered by agent and date. Times are relative ("2 days ago", counted by calendar day) with the exact time on hover, and a title cut short shows in full on hover. From a conversation's "…" menu you can:
 
-- **Rename** it. Renaming doesn't change when it was last active.
-- **Export** it as Markdown or JSON, with its citations. Since v0.4.2 the export numbers sources as the chat shows them, and the Markdown gives times in your time zone.
+- **Rename** it. Renaming doesn't change when it was last active. Since v0.6.3 a title with control characters or invisible formatting characters (such as zero-width or text-direction marks) is refused.
+- **Export** it as Markdown or JSON, with its citations. Since v0.4.2 the export numbers sources as the chat shows them, and the Markdown gives times in your time zone. Since v0.6.3 the Markdown export of a router conversation says which agent answered each routed message ("Answered by *Agent* · *Team*"); the JSON export already had it.
 - **Share…** it as a read-only link ([Sharing a conversation](#sharing-a-conversation)).
 - **Delete** it. It disappears for you at once. The stored copy is removed later according to your organisation's retention rules, which may keep it longer. Deleting a conversation also ends every link you made to it.
 
 Nobody else can read your conversations unless you share one: not your team's admins, not platform admins. The other exception is a platform admin in a time-limited, audited break-glass session with the conversations scope; your team's owners are told when one starts and ends. Your organisation's terms of use may say more.
 
-If an agent is deleted, its conversations stay readable for you, read-only. A link to a conversation that was deleted, or isn't yours, says "This conversation isn't available." with **Start a new chat**; a question typed there starts a new conversation.
+If an agent is deleted, its conversations stay readable for you, read-only. A link to a conversation that was deleted, or isn't yours, says "This conversation isn't available." with **Start a new chat**; a question typed there starts a new conversation. Since v0.6.3 a link with no real conversation in it (`?c=null`) says the same, instead of opening a blank chat.
+
+Since v0.6.3, two tabs or devices showing the same conversation stay in step. A tab fetches the stored conversation when you come back to it and after each of its own answers, and adds what the other tab stored, in order, without disturbing an answer it's still writing.
 
 The last answer's follow-up chips come back when you reload the page in the same browser tab (v0.4.2); another tab or browser shows the answer without them.
 
@@ -142,7 +146,7 @@ Since v0.6.0, **Share…** in a conversation's "…" menu (on the chat page and 
 
 In **Share this conversation**, pick under **Who can open the link**:
 
-- **People who can use *agent*** (the default): whoever the agent's audience lets chat with it, after they sign in. For a team agent that's the team's members; for an agent shared with everyone who signs in, anyone who is signed in.
+- **People who can use *agent*** (the default): whoever the agent's audience lets chat with it, after they sign in. For a team agent that's the team's members; for an agent shared with signed-in users, anyone who is signed in.
 - **Anyone with the link**: no sign-in. This is offered only for a **public** agent, and it's checked again every time the link is opened, so turning public access off, or making the agent less open, stops it working for people outside the agent's audience without touching the link.
 
 Tick **Show my name** to put your display name (never your email) on the shared view. It's off by default.
@@ -159,9 +163,11 @@ Choose **Create link**. **Your link** is shown **once**: copy it now. Grounded k
 
 The dialog warns first: **anyone who opens the link can read this conversation**. You can't take back what someone has already read, so share it only with people you trust with what it says.
 
+<Screenshot slot="chat-share-dialog" />
+
 ### What a viewer sees
 
-The link opens a page outside the app, `/shared/<secret>`, that reads the same signed in or not: the conversation's title, "With *agent*", who shared it if you ticked **Show my name**, and the thread, with a notice that it's a read-only copy as it was when it was shared. Sources open beside the conversation, as in the chat, but only the passages the answers cited, never the whole document. **Ask *agent*** takes them to the agent. Someone the link isn't for, or who isn't signed in, is asked to **Sign in to open this conversation**; a link that never existed gets the same prompt, so nobody can tell valid links from invalid ones. Once signed in without access, they see "This conversation isn't available".
+The link opens a page outside the app, `/shared/<secret>`, that reads the same signed in or not: the conversation's title, "With *agent*", who shared it if you ticked **Show my name**, and the thread, with a notice that it's a read-only copy as it was when it was shared. Sources open beside the conversation, as in the chat, but only the passages the answers cited, never the whole document. **Ask *agent*** takes them to the agent. Someone the link isn't for, or who isn't signed in, is asked to **Sign in to open this conversation**; a link that never existed gets the same prompt, so nobody can tell valid links from invalid ones. Once signed in without access, they see "This conversation isn't available", with **Home**, **Discover agents** and **Sign out**, so the page isn't a dead end (v0.6.3).
 
 A viewer **never** sees your feedback, the model's reasoning, what the agent did to answer (its steps and searches), SystemOne's checks, or tokens and timings. A tool's result is named but its text isn't shown. A viewer sees no more than they would by asking the agent the same question.
 
@@ -177,7 +183,7 @@ In **Links you made**, the Revoke button (a bin icon) beside a link asks "Revoke
 ### Limits to know
 
 - A link covers the conversation **up to the last finished answer when you made it**. Later messages aren't in it; make a new link to share more. A stopped answer doesn't count, and a conversation with no finished answer can't be shared.
-- At most 10 links per conversation. A conversation with a deleted agent, or one holding a [router's](#routers) answers, can't be shared.
+- At most 10 links per conversation. A conversation with a deleted agent can't be shared, and neither can a [router](#routers) conversation in which the router sent a question to another agent. Since v0.6.3 the dialog says so before you choose anything: "This conversation can't be shared", naming the agent and its team, with **Continue there** to open your conversation with that agent and share that one. A router conversation that holds only the router's own replies, such as a greeting, can be shared.
 - **Links don't expire** by time: they last until you revoke them, the conversation's own retention removes it, or one of the reasons above applies (a link that has stopped because its owner lost access isn't gone, and works again when that is put right). There are no view counts. A link is made and revoked, not edited.
 - It needs you signed in; an API key can't make one.
 - The platform's audit log records that a link was made or revoked and whether it was open to anyone, without the agent, the conversation or any content, and never in a team's log. For an agent at the Sensitive level or above, reading a shared answer is written to the [access log](/docs/administration/analytics-and-logs#access-log) like using the agent.

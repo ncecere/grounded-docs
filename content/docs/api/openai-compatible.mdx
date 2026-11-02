@@ -63,8 +63,9 @@ console.log(reply.citations); // Grounded's extension field
 - `model` must be `agent:<team>/<agent>`.
 - **System messages from the client are dropped**: the agent's own instructions win. The other messages are the history.
 - `tools` and `n` greater than 1 are refused (400).
+- **Messages are text only** (since v0.6.3): each message's content is a string or an array of `text` parts. An image or any other non-text part is `400 invalid_messages`, and so is a request with more than 51 messages (system and other ignored messages count).
 - Temperature, output length and other generation settings come from the agent, not the request.
-- Errors use OpenAI's shape: `{"error": {"message", "type", "code", "param"}}`. Since v0.6.1 that includes a request with no API key at all (`type` `authentication_error`) and an internal failure (`type` `api_error`); before, those two got the app's own `{code, message}` body.
+- Errors use OpenAI's shape: `{"error": {"message", "type", "code", "param"}}`. Since v0.6.1 that includes a request with no API key at all (`type` `authentication_error`) and an internal failure (`type` `api_error`); before, those two got the app's own `{code, message}` body. Since v0.6.3 it also covers expired or suspended sessions, CSRF refusals, per-user rate limits and other failures before the request reaches the agent, keeping `Retry-After`.
 
 ## The response
 
@@ -106,6 +107,8 @@ A normal chat completion, plus two extension fields:
 ### `citations`
 
 The sources the answer's `[n]` markers refer to. Each has its number `n`, the document's `title`, a `snippet` of the passage (up to about 300 characters), its `headingPath`, `pageStart` and `pageEnd` for paginated documents, and `documentId` and `sourceId`. `url` is set only for web pages, when the agent's citation mode includes links; uploaded files are cited by title only.
+
+Since v0.7.0 a citation may also carry `parent`, when the agent's profile uses [parent sections](/docs/administration/embedding-profiles#parent-sections) and the model was given the section around the passage; see [Native chat API](/docs/api/chat-api#the-event-stream).
 
 With SystemOne citation checks on, each citation also has `verification` (`verified`, `unsupported`, `contradicted` or `unchecked`, the worst verdict of the claims that cite it), `confidence`, and `markers`: one verdict per `[n]` marker of this source, in order.
 
@@ -150,11 +153,12 @@ curl -N https://grounded.example.org/v1/chat/completions \
 
 | Status | When |
 |---|---|
-| 400 | A malformed request, `tools`, or `n` > 1, or a NUL character in the text (`invalid_text`). |
+| 400 | A malformed request, `tools`, or `n` > 1, a NUL character in the text (`invalid_text`), or a non-text message part or more than 51 messages (`invalid_messages`, since v0.6.3). |
 | 408 | The JSON body took longer than 30 seconds to arrive (`request_timeout`); the connection closes. |
 | 401 | A missing, unknown, revoked or expired key. |
 | 403 | The key's scope or restrictions don't allow this agent, or the agent is disabled (`agent_disabled`). |
 | 404 | No such agent for this key, or it isn't published. |
+| 405 | A method the path doesn't accept (since v0.6.3), with an `Allow` header. |
 | 409 | The published version no longer passes the platform's rules (`agent_policy_violation`), for example after a model's approved level was lowered. |
 | 429 | A rate limit, daily quota or used-up budget, with `Retry-After` where it helps. |
 | 503 | The model is unavailable, or a fail-closed moderation check couldn't run ("The safety check is unavailable right now. Please try again."). While streaming, it arrives as an error chunk. |

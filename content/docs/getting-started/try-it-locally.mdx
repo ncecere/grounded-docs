@@ -91,7 +91,7 @@ Prefer the variables to flags for keys: command lines are visible to other users
 | Web source **Go documentation** | Crawls `https://go.dev/doc/`: pages under `/doc/`, depth 2, at most 100 pages, weekly. |
 | Knowledge base **Go documentation** | The web source attached. |
 | Agent **Go docs assistant** (`go-docs`) | Published to the team, with a welcome message and four starter questions. |
-| Agent **Go docs (signed-in)** (`go-docs-signed-in`) | Published to everyone who signs in. |
+| Agent **Go docs (signed-in)** (`go-docs-signed-in`) | Published to signed-in users. |
 
 The demo never changes existing data; every step only adds what is missing, and it's safe to run again. It refuses to run on an install that already has a team, unless you pass `--force`. Everything it creates is ordinary data that you can change or delete like any other. Each object is audited as the owner created it, plus one system entry, "Seeded the demo".
 

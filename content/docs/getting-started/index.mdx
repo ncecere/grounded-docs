@@ -13,7 +13,7 @@ People use the agents in the web app, in a widget embedded on a website, or from
 
 <Cards>
   <Card title="Knowledge from your sources" href="/docs/using/editors/data-sources">
-    Upload PDF, Word, PowerPoint, HTML, Markdown and text files, or crawl public websites. Scanned documents can be read with optional OCR.
+    Upload PDF, Word, PowerPoint, HTML, Markdown and text files, or crawl public websites. Scanned documents can be read with optional OCR, and menus and footers repeated across pages are left out of search. Opt-in indexing options keep tables whole, give agents the section around each match, or add model-written context to what is embedded.
   </Card>
   <Card title="Agents that cite" href="/docs/using/chat">
     Agents answer from their knowledge bases with numbered citations. With strict grounding (on by default) they refuse rather than guess.
@@ -24,11 +24,14 @@ People use the agents in the web app, in a widget embedded on a website, or from
   <Card title="Three ways to reach an agent" href="/docs/using/editors/sharing">
     The web app, an embeddable widget and public page, and an OpenAI-compatible API where each agent is a model.
   </Card>
+  <Card title="Routers, templates and sharing" href="/docs/using/editors/routers">
+    A router sends each question to the agent that covers it. Templates start new agents, people can share a read-only copy of a conversation, and webhooks tell other systems what happened.
+  </Card>
   <Card title="Governance built in" href="/docs/administration/classifications">
     Classification levels, moderation for public agents, retention with legal holds, audited break-glass access and a full audit log.
   </Card>
   <Card title="Quality you can measure" href="/docs/using/editors/evaluations">
-    Evaluation sets check that knowledge bases still find the right documents and agents still answer well after changes.
+    Evaluation sets check that knowledge bases still find the right documents and agents still answer well after changes. The gap report groups the questions agents couldn't answer, an index preview compares new index settings before they go live, and the content health report lists documents that may need attention.
   </Card>
 </Cards>
 
@@ -53,13 +56,13 @@ If you only want to see it working, [try it locally](/docs/getting-started/try-i
 
 ## Project status
 
-Grounded is **pre-1.0**, and it currently has one maintainer. The latest release is [v0.2.1](/docs/releases/v0-2-1). What to expect:
+Grounded is **pre-1.0**, and it currently has one maintainer. The latest release is [v0.7.0](/docs/releases/v0-7-0). What to expect:
 
 - **Meant to stay stable through 0.x:** the OpenAI-compatible chat endpoint, the widget embed, the environment variables, and the Kubernetes resource names that overlays patch. If one of these has to change, the release notes say how to adapt.
 - **May change between minor releases:** the native REST API, metric names, the UI and component defaults.
 - **Upgrades** are forward-only and happen without downtime. Downgrading means restoring a backup.
 
-Capacity figures in the project come from load tests on a single-node test cluster, not from long production use. Test your own install before relying on it. See the [known limitations](/docs/releases/v0-1-0#known-limitations).
+Capacity figures in the project come from load tests on a single-node test cluster, not from long production use. Test your own install before relying on it. See the [known limitations](/docs/releases/v0-7-0#known-limitations).
 
 <Callout title="These docs and the repository">
   These pages are the user and operator guide. The Grounded repository's own `docs/` folder stays the engineering record: the design, architecture decision records and the original runbooks.
