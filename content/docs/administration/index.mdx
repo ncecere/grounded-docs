@@ -17,6 +17,9 @@ The admin portal (`/admin`) is where platform admins run the install and platfor
 | Change settings, create teams, manage models | Yes | No |
 | Place legal holds, open break-glass sessions | Yes | No, but can see them |
 | Read team content | Only under break-glass | Never |
+| Read a team's [content health reports](/docs/administration/content-health) | No, not even under break-glass | No |
+
+Since v0.6.3 an auditor's write to an admin route is refused with `403` before any revision (`If-Match`) or body check. Read-only previews that use `POST`, such as the SSO group dry run, a migration preflight and contextual-chunk estimates, stay open to auditors.
 
 The first platform admin is set by configuration ([First platform admin](/docs/self-hosting/kubernetes#5-the-first-platform-admin)). After that, admins grant platform roles under **People → Users**. The last active platform admin can't be demoted or suspended.
 
@@ -37,14 +40,16 @@ The admin sidebar has Overview and seven groups. Only Overview and the group of 
 | Group | Pages |
 |---|---|
 | **People** | [Users, Teams](/docs/administration/people-and-teams) (Teams · [Requests](/docs/administration/team-requests), since v0.6.0), [SSO groups](/docs/administration/sso-groups) |
-| **Content** | [Shared sources, Agents, Crawl domains](/docs/administration/content), [Agent templates](/docs/administration/agent-templates) (since v0.6.0), [Parsing & OCR](/docs/administration/parsing-and-ocr) |
-| **Models** | [Connections, Models](/docs/administration/models), [Embedding profiles](/docs/administration/embedding-profiles) (Profiles · Migrations), [MCP servers](/docs/administration/mcp-servers), [SystemOne](/docs/administration/systemone) (always shown; until a SystemOne model exists its page says how to add one), [Reranking](/docs/administration/reranking) (since v0.4.2, always shown) |
+| **Content** | [Shared sources, Agents](/docs/administration/content), [Agent templates](/docs/administration/agent-templates) (since v0.6.0), [Crawl domains](/docs/administration/content), [Parsing & OCR](/docs/administration/parsing-and-ocr) |
+| **Models** | [Connections, Models](/docs/administration/models), [Embedding profiles](/docs/administration/embedding-profiles) (Profiles · Migrations), [MCP servers](/docs/administration/mcp-servers), [SystemOne](/docs/administration/systemone) (always shown since v0.6.3; until a SystemOne model exists its page says how to add one), [Reranking](/docs/administration/reranking) (since v0.4.2, always shown) |
 | **Usage & spend** | [Analytics](/docs/administration/analytics-and-logs), [Costs](/docs/administration/costs), [Limits](/docs/administration/limits) |
 | **Safety** | [Classifications](/docs/administration/classifications), [Moderation, Public access](/docs/administration/moderation-and-public-access) ([modes and reasoning](/docs/administration/moderation-modes)) |
 | **Records** | [Logs](/docs/administration/analytics-and-logs#logs), [Retention](/docs/administration/retention) (Periods · Dry run · Runs · Legal holds), [Break-glass](/docs/administration/break-glass) |
 | **Operations** | [Webhooks](/docs/administration/webhooks) (since v0.6.0), [Maintenance](/docs/administration/maintenance), [Settings](/docs/administration/settings) (since v0.4.2) |
 
 The command palette (⌘K or Ctrl+K) finds admin pages, their tabs ("Costs › Settings", "Retention › Runs", "Limits › Ingestion") and places such as **Reranking settings**, **Features** and **Legal holds**; "time zone" or "currency" finds Settings, and "failing" or "health" offers **Failing models** and **Failing connections**. For platform staff it also finds teams, users, models, connections, embedding profiles and shared sources by name. It never returns another team's content.
+
+Platform admins who are also editors, admins or owners of a team see that team's pages in the Workspace sidebar like anyone else, including **Content health** (since v0.7.0). Platform roles add nothing there.
 
 Below 1100 px wide the sidebar starts as a rail of icons until you expand it (your choice is remembered); on a phone (below 600 px) it's a drawer opened from the top bar.
 

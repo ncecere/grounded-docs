@@ -104,12 +104,16 @@ Since v0.4.2 platform staff see these values, read-only and with their variables
 | `VECTOR_EF_SEARCH` | `400` | The approximate index's candidate list above the threshold. |
 | `RETRIEVAL_VECTOR_WEIGHT` | `1` | Platform default hybrid fusion weight for vector search (0–1). |
 | `RETRIEVAL_KEYWORD_WEIGHT` | `0.1` | Platform default weight for keyword search (0–1). |
+| `RETRIEVAL_PARENT_EXPANSION` | `true` | The platform switch for [parent sections](/docs/administration/embedding-profiles#parent-sections). `false`: agents' searches use passages only, whatever a profile indexes; no re-index is needed. Restart the API and worker. Since v0.7.0. |
 | `PROFILE_MIGRATION_GRACE_DAYS` | `7` | Days a knowledge base keeps its old vectors after a profile migration (0–90). |
 | `EVALUATION_CONCURRENCY` | `2` | Questions an evaluation run checks at once (1–8). |
 | `BOILERPLATE_WEB` | `true` | Remove repeated blocks from web sources by default. |
 | `BOILERPLATE_UPLOAD` | `false` | The same for upload sources. |
 | `BOILERPLATE_MIN_DOCS` | `5` | A block is repeated when it's in at least this many documents… |
 | `BOILERPLATE_RATIO` | `0.2` | …and this share of the source's documents (0.05–1). |
+| `BOILERPLATE_FUZZY` | `false` | Also count near-duplicate blocks as one (a menu with a different item highlighted, a footer with a different date). A source can override it; try it first with an [index preview](/docs/administration/embedding-profiles#near-duplicate-repeated-blocks). Since v0.7.0. |
+| `CONTEXTUAL_CHUNKS` | `false` | The installation switch for [contextual chunks](/docs/administration/contextual-chunks). While `false`, no source can opt in and no context-writing model call is made. Turning it off later stops new context generation but doesn't rewrite existing vectors. Since v0.7.0. |
+| `CONTEXTUAL_CONCURRENCY` | `2` | Context-writing model calls at once per process (1–16), in addition to the connection's own limits. Since v0.7.0. |
 
 ## Parsing and OCR
 

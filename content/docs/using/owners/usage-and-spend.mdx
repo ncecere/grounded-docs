@@ -26,6 +26,7 @@ Each limit has a platform default, and a platform admin can override it for your
 | Questions per day (team) | 50,000 |
 | Chat tokens per day (team) | 2,000,000 |
 | Concurrent chats per person | 3 |
+| MCP tool calls per answer | 5 |
 | Evaluation sets, questions per set | 50, 500 |
 
 These are Grounded's built-in defaults; your platform may use others. The tab shows the values in effect and a meter for each, including this minute's count for per-minute limits.
@@ -37,6 +38,15 @@ What happens at a limit:
 - **Query and chat limits** refuse with "rate limited" or "quota exceeded". Per-minute limits clear within the minute; daily limits reset at midnight UTC.
 
 Team admins and owners get a notification when the team reaches a daily limit.
+
+Some work counts towards these limits without anyone chatting:
+
+- **Evaluation runs** count as queries, and full-answer runs as chats. So do the comparison runs a platform admin's [index preview](/docs/using/editors/knowledge-bases#when-a-platform-admin-previews-new-settings) makes with your knowledge base's evaluation sets.
+- **Contextual chunks** (below) count as chat tokens.
+
+### Contextual chunks
+
+When a platform admin opts one of your sources in to [contextual chunks](/docs/using/editors/data-sources#contextual-chunks) (v0.7.0), a chat model is called while the source's documents are indexed. Those calls are recorded as chat tokens of that model, so they count towards the team's **chat tokens per day** and, when costs are tracked, its monthly spend and budget. A large source can use up a day's chat tokens. When the daily limit, an enforced budget or the source's own limits are reached, its documents wait rather than fail, and continue once there is room.
 
 ## Spend
 

@@ -5,6 +5,17 @@ description: Turn on OCR for scanned documents, choose a backend, test it, and d
 
 Grounded parses PDF, Word, PowerPoint, HTML, Markdown and text itself. **OCR** reads what has no text layer: scanned PDF pages, and PNG, JPEG and TIFF uploads. It's **off** by default. With it off, parsing is exactly as without OCR: a PDF with no text is skipped as "Needs OCR", and images can't be uploaded.
 
+## Parsing changes in v0.6.3 and v0.7.0
+
+These apply to every source and need no setting:
+
+- **Merged table cells keep their columns** (since v0.7.0). An HTML cell that spans rows (`rowspan`) repeats its text in the rows below it; a Word cell that spans columns (`gridSpan`) adds the empty cells it covers, and one merged into the cell above (`vMerge`) repeats its text. The cells after them stay under their headers. This changes the parsed text of such tables, for every chunker, the next time a document is processed.
+- **HTML pages lose images without alt text** (since v0.6.3); images with alt text are unchanged.
+- **Upload filenames with invisible control or formatting characters are refused** before anything is stored (`400 invalid_filename`, since v0.6.3), instead of being renamed.
+- **The crawler skips links to archives, installers, pictures, audio, video and fonts** without requesting them (since v0.6.3).
+
+How a parsed page is then cut into passages is the embedding profile's [chunker](/docs/administration/embedding-profiles#chunkers).
+
 ## How it works
 
 - Only pages **without a text layer** are read. Grounded renders each such page to a greyscale image (300 DPI) and sends it to one backend. The text goes under the page's marker, so page numbers and citations work as for any page.
@@ -21,7 +32,7 @@ Grounded parses PDF, Word, PowerPoint, HTML, Markdown and text itself. **OCR** r
 | **Apache Tika** | The `tika` component with Tika's `-full` image | Installs that already run Tika | CPU; the full image is large |
 | **Vision model** | A model of kind **Vision (OCR)** under [Models](/docs/administration/models) | Forms, tables and complex layouts; returns Markdown | Tokens per page, recorded in the usage ledger |
 
-Only configured backends can be chosen: Tesseract needs `OCR_TESSERACT_URL`, Tika needs `TIKA_URL`, and the vision backend needs a vision model. Deploying the sidecar is covered in [OCR sidecar](/docs/self-hosting/ocr-sidecar).
+Only configured backends can be chosen: Tesseract needs `OCR_TESSERACT_URL`, Tika needs `TIKA_URL`, and the vision backend needs a vision model. Deploying the sidecar is covered in [OCR sidecar](/docs/self-hosting/ocr-sidecar). Since v0.6.3 the sidecar's NetworkPolicy allows it no outbound traffic at all, not even DNS.
 
 A vision model is subject to its **maximum classification**, like any model: sources classified above it get no OCR (their scans stay "Needs OCR", and images can't be uploaded to them). Choose a model approved for the data you scan, or use Tesseract, which runs inside your cluster.
 

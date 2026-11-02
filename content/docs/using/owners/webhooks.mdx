@@ -58,9 +58,11 @@ The receiver should check each delivery's signature with the secret before it tr
 </Step>
 </Steps>
 
-If the address is refused, the message appears on the field: it isn't `https`, isn't on port 443, is an IP address, or its host isn't approved. The same check runs again before every delivery.
+If the address is refused, the message appears on the field: it isn't `https`, isn't on port 443, is an IP address, its host isn't approved, or (since v0.6.3) its host isn't a real host name, with a part longer than 63 characters or a whole name longer than 253. The same check runs again before every delivery.
 
 ## The list
+
+<Screenshot slot="team-webhooks" />
 
 The table shows each webhook's **Address** (with its description), **Events**, **Status** and **Secret**: `whsec_…` and the last four characters, enough to tell secrets apart. Status is **On**, **Off**, or **Paused: failing** or **Paused: gone**. A row's menu has:
 
@@ -77,6 +79,8 @@ The table shows each webhook's **Address** (with its description), **Events**, *
 
 - **Send test event** sends a `webhook.test` event whatever the webhook is subscribed to. It's queued ("Test event queued") and appears in the log in a moment.
 - **Redeliver** on a row sends that delivery's event again: the same event ID and body, as a new delivery. Use it after you've fixed the receiver.
+
+<Screenshot slot="webhook-deliveries" />
 
 ## How delivery works
 
@@ -100,7 +104,7 @@ The team's admins and owners get a **Webhook paused** notification. A paused web
 
 ### Find out why
 
-Open **Deliveries…** and read the **Receiver answered** and **Error** columns: a certificate problem, a timeout, a `404` or `500`, or "no longer approved" (a platform admin withdrew the destination, so ask them to approve it again).
+Open **Deliveries…** and read the **Receiver answered** and **Error** columns: a certificate problem, a timeout, a `404` or `500`, or "no longer approved" (a platform admin withdrew the destination: see [When a destination is withdrawn](#when-a-destination-is-withdrawn)).
 
 </Step>
 <Step>
@@ -120,6 +124,15 @@ Choose **Edit…**. The dialog says "Paused: failing" or "Paused: gone". Make su
 </Steps>
 
 Events that happened while the webhook was paused or off aren't recorded for it, so they aren't sent later. If a platform admin switches webhooks off for the whole install, nothing is recorded or sent while it's off; a delivery that was waiting to be retried waits, and since v0.6.1 goes on within five minutes of the switch being turned on again instead of failing for good. **Redeliver** can send again a delivery that failed before it paused, as long as it's still in the log (14 days).
+
+## When a destination is withdrawn
+
+A platform admin can withdraw an approved destination after your webhook was made. From then on nothing is sent to it, and since v0.6.3 its **Edit…** dialog says "This address is no longer an approved destination". You can still:
+
+- turn the webhook off, and
+- change its description and events.
+
+You can't turn it on, or change its address to another host that isn't approved (`destination_not_approved`), until a platform admin approves the host again under Admin → Webhooks.
 
 ## Limits to know
 

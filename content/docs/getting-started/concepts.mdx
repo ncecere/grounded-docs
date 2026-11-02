@@ -8,7 +8,7 @@ description: Teams, data sources, knowledge bases, agents, conversations, classi
 ```
 Platform
 ├── Users (platform admin, platform auditor, or neither)
-├── Model connections ──< Models (chat, embedding, moderation, SystemOne, vision)
+├── Model connections ──< Models (chat, embedding, rerank, moderation, SystemOne, vision)
 ├── Embedding profiles
 ├── Classification levels (Open, Sensitive, Restricted by default)
 ├── Platform-shared data sources
@@ -18,7 +18,7 @@ Platform
     ├── Data sources ──< Documents ──< Passages
     ├── Knowledge bases (a set of data sources)
     └── Agents ──< Published versions
-          └── Conversations (readable only by the person who had them)
+          └── Conversations (readable only by the person who had them, unless they share one)
 ```
 
 ### Teams
@@ -30,13 +30,13 @@ A **team** is the tenant. It owns its data sources, knowledge bases, agents and 
 A **data source** produces documents. It has exactly one type, set when it's created:
 
 - **Upload**: files you upload in the app or through the API.
-- **Web**: pages fetched by Grounded's own crawler. It can scrape one page, fetch a list of pages, crawl a site or map one.
+- **Web**: pages fetched by Grounded's own crawler. It can fetch one page, fetch a list of pages, or crawl a site.
 
-Each source also has one embedding profile and one classification level. A **document** is one parsed page or file, split into **passages** (chunks) that are embedded and indexed for search. Platform admins can also create **platform-shared sources** that any team may attach to its knowledge bases.
+Each source also has one embedding profile and one classification level. A **document** is one parsed page or file, split into **passages** (chunks) that are embedded and indexed for search. How a document is split depends on its embedding profile's chunker. Blocks of text that repeat across many of a source's pages, such as menus and footers, are left out of search; since v0.7.0 a source can also leave out blocks that differ only a little from page to page. Platform admins can also create **platform-shared sources** that any team may attach to its knowledge bases.
 
 ### Knowledge bases
 
-A **knowledge base** is a named set of data sources, searched together. It can mix the team's own sources with platform-shared ones. All its sources share one embedding profile. Search is hybrid: a vector search and a keyword search run side by side and their results are fused. Each knowledge base has default retrieval settings, such as how many passages a search returns.
+A **knowledge base** is a named set of data sources, searched together. It can mix the team's own sources with platform-shared ones. All its sources share one embedding profile. Search is hybrid: a vector search and a keyword search run side by side and their results are fused. When the platform has a rerank model (since v0.4.0), the fused results are then reranked. Each knowledge base has default retrieval settings, such as how many passages a search returns. With **parent sections** (v0.7.0, set on the embedding profile), search still ranks passages, but an agent's model is given the section around each matched passage.
 
 ### Agents
 
@@ -53,12 +53,12 @@ Each published agent has one audience:
 | Audience | Who can use it |
 |---|---|
 | **Team** | Members of the team that owns it. |
-| **Everyone who signs in** | Anyone who can sign in to the install. These agents are listed in the agent directory. |
+| **Signed-in users** | Anyone who can sign in to the install. These agents are listed in the agent directory. |
 | **Public** | Anyone, without signing in, on a public page or in an embedded widget. Requires moderation and the platform's public access switch. |
 
 ### Conversations
 
-A **conversation** is private to the person who had it. Other team members, team admins and platform admins can't read it. The one exception is a platform admin in an audited, time-limited [break-glass session](/docs/administration/break-glass) with the conversations scope. People can export their own conversations (Markdown or JSON) and delete them. Teams see only aggregates and metadata, never message content. The one exception, since v0.4.0, is the [gap report](/docs/using/editors/gaps): the questions agents couldn't answer, grouped into labelled topics once at least 3 people asked, and in full only when the person who asked chose to share it.
+A **conversation** is private to the person who had it. Other team members, team admins and platform admins can't read it. Since v0.6.0 a person can [share](/docs/using/chat#sharing-a-conversation) a read-only copy of one of their own conversations as a link; that is their own deliberate act. The one other exception is a platform admin in an audited, time-limited [break-glass session](/docs/administration/break-glass) with the conversations scope. People can export their own conversations (Markdown or JSON) and delete them. Teams see only aggregates and metadata, never message content. The one exception, since v0.4.0, is the [gap report](/docs/using/editors/gaps): the questions agents couldn't answer, grouped into labelled topics once at least 3 people asked, and in full only when the person who asked chose to share it.
 
 ### Classification levels
 
@@ -67,7 +67,7 @@ A **conversation** is private to the person who had it. Other team members, team
 | Level | Most open audience by default | Models allowed by default |
 |---|---|---|
 | **Open** | Public | Any enabled model |
-| **Sensitive** | Everyone who signs in | Models tagged Sensitive or higher |
+| **Sensitive** | Signed-in users | Models tagged Sensitive or higher |
 | **Restricted** | Team | Only models an admin tags for Restricted |
 
 Platform admins can change the levels and write what each one means for their organisation. Grounded enforces the rules when anything changes and again on every question:
@@ -81,7 +81,7 @@ What each level covers, and which data is not allowed at all, is your organisati
 
 ### Embedding profiles and models
 
-Platform admins connect Grounded to one or more OpenAI-compatible **model connections** and add **models** from them. An **embedding profile** fixes the embedding model, the vector dimensions, the query and document prefixes and the passage sizes. A profile can't change in place: moving a knowledge base to a new one is a background [profile migration](/docs/administration/embedding-profiles).
+Platform admins connect Grounded to one or more OpenAI-compatible **model connections** and add **models** from them. An **embedding profile** fixes the embedding model, the vector dimensions, the query and document prefixes and the passage sizes. It also fixes the **chunker**, which decides how documents are cut into passages: version 1 by default, 2 merges short sections, 3 keeps tables whole (v0.7.0) and 4 also never runs a passage across a heading or a bold label above a list (v0.7.0). Since v0.7.0 a profile can also set **parent sections** (0, off, by default) and be built with **contextual chunks**. A profile can't change in place: moving a knowledge base to a new one is a background [profile migration](/docs/administration/embedding-profiles). Since v0.5.0 a platform admin can also [preview new settings](/docs/administration/embedding-profiles#previewing-new-settings): a second index is built beside the live one, the knowledge base's evaluation sets are run on both, and the admin switches to it or discards it.
 
 ## Roles
 
@@ -94,14 +94,17 @@ Platform admins connect Grounded to one or more OpenAI-compatible **model connec
 | Raise a source's classification | Yes | Yes | Yes | |
 | Lower a source's classification (with a reason; owners are notified) | Yes | Yes | | |
 | Publish agents to the team | Yes | Yes | Yes | |
-| Publish agents to everyone who signs in, or to the public | Yes | Yes | | |
+| Publish agents to signed-in users, or to the public | Yes | Yes | | |
+| Disable, enable or delete an agent | Yes | Yes | | |
 | Manage members | Yes | Yes (not owners) | | |
 | Create team service keys | Yes | Yes | | |
-| Create personal API keys | Yes | Yes | Yes | Query scope only |
+| Create personal API keys | Yes | Yes | Yes | Query and MCP scopes only |
+| Manage the team's webhooks (while a platform admin has them on) | Yes | Yes | | |
 | Request crawl domains outside the allowlist | Yes | Yes | Yes | |
 | See usage, analytics and the audit log | Yes | Yes | Read | |
 | See the team's spend | Yes | Yes | | |
 | Use evaluations | Yes | Yes | Yes | |
+| See [Gaps](/docs/using/editors/gaps) and [Content health](/docs/using/editors/content-health) | Yes | Yes | Yes | |
 
 Only platform admins change a team's limits or approved classification. In the app, a role's badge (on Members, and "Your role" on the team Overview) opens what that role can and can't do.
 
@@ -109,7 +112,7 @@ Only platform admins change a team's limits or approved classification. In the a
 
 | Role | Can | Can't |
 |---|---|---|
-| **Platform admin** | Manage users and teams, models and embedding profiles, classification levels, limits, the crawl allowlist, shared sources, moderation and public access, retention and legal holds; disable any agent; open break-glass sessions | Read team content or conversations outside break-glass; change team content, even under break-glass |
+| **Platform admin** | Manage users and teams, models and embedding profiles, classification levels, limits, the crawl allowlist, shared sources, moderation and public access, retention and legal holds; turn optional features on and off (Admin → Settings → Features); approve team requests and webhook destinations; manage agent templates; preview and switch a knowledge base's index settings; configure [contextual chunks](/docs/administration/contextual-chunks) for a source; disable any agent; open break-glass sessions | Read team content or conversations outside break-glass; change team content, even under break-glass. (Index settings and contextual chunks change how a team's sources are indexed, not what they contain; both are recorded in the team's audit log.) |
 | **Platform auditor** | Read platform settings, usage, the audit log and the access log | Change anything; read content |
 
 Platform roles don't grant any access to team content. The last active platform admin can't be demoted or suspended.

@@ -63,15 +63,17 @@ Choose an audience in **Share** and publish, as for any agent ([Sharing an agent
 - "No agent can be reached yet" when no agent has opted in. Until one does, every question gets the wording below.
 - **When nothing fits**: what the router says, word for word, when no agent covers the question. It's the router's refusal message, up to 500 characters. The default is "I couldn't find an assistant here that covers that. Try asking it another way, or ask the people who run this service."
 
+<Screenshot slot="agent-build-routing" />
+
 ## How a router chooses
 
 For each question, Grounded asks the SystemOne model one question: which of the candidate agents covers this, or is it small talk, or none? The candidates are the agents that:
 
-- the person asking may chat with (their team's, everyone who signs in, or public ones while public access is on),
+- the person asking may chat with (their team's, those for signed-in users, or public ones while public access is on),
 - have a **published** version with **Can be reached through routers** on,
 - are active, aren't routers, and aren't the router itself.
 
-So a **public** router reaches only public agents, since an anonymous visitor could open nothing else; a router for everyone who signs in also reaches agents for everyone who signs in; and a team router reaches whatever its member may use.
+So a **public** router reaches only public agents, since an anonymous visitor could open nothing else; a router for signed-in users also reaches agents for signed-in users; and a team router reaches whatever its member may use.
 
 The model sees each candidate's **name, team, description and the start of its instructions**, not its documents. That keeps routing cheap and private, and it means a vague name or an empty description makes an agent hard to choose. Write the description for a stranger. A chosen agent needs at least 50% confidence; below that, the router treats the question as fitting none.
 
@@ -85,7 +87,7 @@ A router considers **at most 25 candidates**, by name. If more are reachable, on
 - **It has no knowledge bases and no tools**, and publishing refuses them.
 - **Feedback on a routed answer is the router's.** The router's team sees it, not the target's.
 - **It can't be tried in the editor or called with a service key.** It answers in a person's or a visitor's conversation, so a service key and the OpenAI-compatible endpoint get an error (`router_needs_conversation`).
-- **Its conversations can't be shared.** A conversation holding routed answers contains answers from agents whose audience isn't the router's, so **Share…** refuses it and says to share the agent's own conversation (**Continue there**) instead.
+- **A conversation with routed answers can't be shared.** It contains answers from agents whose audience isn't the router's. Since v0.6.3 the **Share this conversation** dialog says so before anything is chosen ("This conversation can't be shared"), names the agent and its team, and links to **Continue there**, so the person can share their own conversation with that agent. There is no **Create link** button. A router conversation that holds only the router's own replies, such as small talk, can be shared.
 - **There's no list of targets on the router.** The agents' own opt-in is the only allow-list.
 
 The router's record of a turn holds the decision, the confidence, the number of candidates and the chosen agent, never the question.
@@ -94,7 +96,7 @@ The router's record of a turn holds the decision, the confidence, the number of 
 
 Under a routed answer the chat shows **Answered by *Agent* · *Team***, with a **Continue there** link. It opens the person's own conversation with that agent, where they can ask a follow-up. A later question to the router that goes to the same agent continues that conversation. If the agent has been removed since, the line says "(removed since)" and has no link.
 
-The router's conversation keeps the question and a copy of the answer with its citations, so it reloads, exports and opens sources like any answer.
+The router's conversation keeps the question and a copy of the answer with its citations, so it reloads, exports and opens sources like any answer. Since v0.6.3 a Markdown export of it says which agent answered each routed message ("Answered by *Agent* · *Team*"); the JSON export has it as `routedTo`.
 
 ## When nothing fits
 

@@ -101,7 +101,7 @@ In a web framework, read the body as raw bytes before any JSON parsing; a parsed
 - Any `2xx` answer is **delivered**. Anything else, or no answer within 10 seconds, is a failure and is retried: **8 attempts** in all, after 15 seconds, 1 minute, 5 minutes, 30 minutes, 2 hours, 6 hours and 12 hours (about a day).
 - `410 Gone` ends the delivery at once and **pauses** the webhook (`pausedReason: "gone"`).
 - After **5 deliveries in a row** gave up, the webhook is **paused** (`pausedReason: "failing"`), and its team's admins and owners (platform admins for a platform webhook) are notified. One success resets the count. Turning a paused webhook back on is a deliberate edit (`enabled: true` in a `PATCH`).
-- A delivery isn't sent when the webhook is off or its host is no longer an approved destination. It fails, and isn't retried.
+- A delivery isn't sent when the webhook is off or its host is no longer an approved destination. It fails, and isn't retried. Such a webhook can't be turned on again until its host is approved again or its `url` points at an approved one.
 - While a platform admin has webhooks switched off for the install, nothing is recorded and nothing is sent. Since v0.6.1 a delivery that was waiting to be retried **waits** and goes on within five minutes of the switch being turned on again, instead of failing for good.
 - Each webhook keeps its deliveries for **14 days**: event type, status (`pending`, `delivered` or `failed`), attempts, the receiver's last HTTP status and a short error, never your answer.
 - A **test event** (`webhook.test`) is sent on request whatever the webhook subscribes to. **Redeliver** sends a delivery's event again: the same event ID and body, as a new delivery.
@@ -132,4 +132,4 @@ A webhook's fields are `url`, `description`, `events`, `enabled`, `secretHint` (
 
 An **archived** team's webhooks are read-only: reads work, and creating, changing, rotating the secret, testing, redelivering and deleting answer `409 team_archived`. `GET /v1/webhook-destinations` returns each destination's `note` empty unless the caller is platform staff (an admin or auditor).
 
-Useful error codes: `400 invalid_webhook`, `400 no_events`, `409 team_archived`, `400 destination_not_approved` (the host isn't covered), `409 too_many_webhooks` (10 per team and 10 for the platform), and `409 webhooks_off` while a platform admin has webhooks turned off.
+Useful error codes: `400 invalid_webhook`, `400 no_events`, `409 team_archived`, `400 destination_not_approved` (the host isn't covered; since v0.6.3 also when turning on a webhook whose destination was withdrawn, while changing its description or events and turning it off still work), `400 invalid_host` and, for destinations, `400 invalid_pattern` (since v0.6.3: a host name part longer than 63 characters, or a name longer than 253), `409 too_many_webhooks` (10 per team and 10 for the platform), and `409 webhooks_off` while a platform admin has webhooks turned off.

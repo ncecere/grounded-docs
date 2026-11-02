@@ -103,6 +103,8 @@ Delete the `grounded-restore` ConfigMap and the restore Jobs, resume your GitOps
 
 The database and bucket are copied half an hour apart, so after restoring both you may have files without rows (harmless) or, if the bucket copy is older, rows without files: re-upload those documents, or re-fetch web pages.
 
+If you restore into a database server with a different ICU version than the one the dump came from, run `REINDEX INDEX CONCURRENTLY agent_templates_name_fold_idx;` and `ALTER COLLATION "und-x-icu" REFRESH VERSION;` afterwards (since v0.6.3; see [Upgrades](/docs/self-hosting/upgrades#after-a-database-icu-update)).
+
 If you restore a backup taken before a key rotation, set the old key as `ENCRYPTION_KEY_PREVIOUS` and run `grounded rotate-keys`. For CloudNativePG, restore by creating a new cluster that bootstraps from its object store (optionally to a point in time), then point `DATABASE_URL` at it; see the CloudNativePG documentation.
 
 ## Rehearse

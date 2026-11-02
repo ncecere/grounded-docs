@@ -7,7 +7,7 @@ A knowledge base searches one or more data sources together. Agents answer from 
 
 ## Creating one
 
-1. **Knowledge bases → New knowledge base.** Give it a name, a description and an **embedding profile**. The profile can't change later, and only sources that use it can be attached.
+1. **Knowledge bases → New knowledge base.** Give it a name, an optional description, an **embedding profile** and **Results per query (top-k)**, a whole number from 1 to 50. You can't change the profile yourself (see [Changing the embedding profile](#changing-the-embedding-profile)), and only sources that use it can be attached.
 2. **Attach source** on the **Sources** tab. You can attach your team's own sources and platform-shared sources, as long as each is classified within your team's approved level.
 3. Wait until the sources have ready documents, then try a search.
 
@@ -50,20 +50,43 @@ For each question, Grounded:
 1. Rewrites a follow-up that depends on the conversation into a question that stands alone (agents only, if turned on). A question that already stands alone is searched as it is.
 2. Embeds the question with the knowledge base's profile.
 3. Runs a vector search and a keyword (Postgres full-text) search at the same time, both limited to the knowledge base's sources and any filters.
-4. Fuses the two rankings with the weights above and returns the top passages.
+4. Fuses the two rankings with the weights above.
+5. Reranks the best of them, when the platform has a [rerank model](/docs/administration/reranking) and reranking is on, and returns the top passages.
+6. For agents only, when the embedding profile uses **parent sections** (v0.7.0): passages from the same section count as one source, and the model is given the whole section around each match, up to the profile's section size and within the answer's source token budget. A section that doesn't fit, or has changed, is replaced by the matched passage. Ranking still uses the passages.
+
+**Try it**, the retrieval API and the MCP `search` tool return the passages themselves, ranked as above, never sections.
 
 Small knowledge bases are searched exactly; very large ones use an approximate vector index. An agent that uses several knowledge bases searches each with its own profile and merges the results.
 
 ## Changing the embedding profile
 
-A knowledge base's profile can't be edited, but a platform admin can **migrate** it to a new profile in the background, for example to adopt a better embedding model. Search keeps working throughout, the switch happens in one step, and it can be switched back for a grace period. The knowledge base's page shows a migration while it runs. See [Embedding profiles](/docs/administration/embedding-profiles).
+A knowledge base's profile can't be edited, but a platform admin can **migrate** it to a new profile in the background, for example to adopt a better embedding model. Search keeps working throughout, the switch happens in one step, and it can be switched back for a grace period. While it runs, the knowledge base's page says "Moving to the embedding profile *name*" with a **Documents re-embedded** meter. See [Embedding profiles](/docs/administration/embedding-profiles).
+
+Platform admins who are also members of the team see **Change embedding profile…** and **Preview new settings…** in the knowledge base's "…" menu. Both open the admin portal.
+
+### When a platform admin previews new settings
+
+Since v0.5.0 a platform admin can try new index settings on a knowledge base before anything changes: a second index is built beside the current one, and the knowledge base's evaluation sets are run on both. In v0.7.0 a preview can change the passage size and overlap, the embedding model, the prefixes, the chunker (versions 1 to 4), parent sections, near-duplicate repeated blocks and contextual chunks.
+
+The knowledge base's page then says "A platform admin is trying new index settings on this knowledge base":
+
+- **While it builds:** "The new index is being built. Search and agents keep using *profile*, and nothing changes for you unless the platform admin switches.", with a **Documents embedded** meter.
+- **When it's ready:** "Your evaluation sets were run on both; what changed is below." For each evaluation set it gives recall and MRR now and with the new index, and how many questions got better, worse or stayed the same. **Questions that changed** lists each one with **Question**, **Current index**, **New index** (the rank its expected document came back at, or "not found") and **Change** (**Better** or **Worse**).
+
+<Screenshot slot="kb-index-preview-ready" />
+
+Search and agents keep using the current index until the platform admin switches; they can also discard the preview. After a switch, the page says "Now on the embedding profile *name*", and the admin can switch back during the grace period.
+
+- Only the knowledge base's own evaluation sets are compared, retrieval only. Without evaluation sets there is nothing to compare. See [Evaluations](/docs/using/editors/evaluations#index-previews).
+- A preview that changes only parent sections shows no difference, because the comparison scores passages, not sections.
+- The comparison runs count towards the team's query usage.
 
 ## Other tabs
 
-- **Overview**: the profile, sources, ready documents, passages per search, and the agents that use it.
+- **Overview**: **Data sources**, **Documents ready**, **Passages** and **Used by agents**, with the profile, sources and passages per search in the header.
 - **Evaluations**: test sets for its search. See [Evaluations](/docs/using/editors/evaluations).
 - **Settings**: name, description, retrieval, and delete. Deleting a knowledge base keeps its data sources; published agents that use it must drop it first.
 
 ## Searching through the API
 
-`POST /v1/teams/{team}/kbs/{kbId}/retrieve` runs the same search for a signed-in session or an API key with the `query` scope. Each search counts against the team's query limits. Whether team API keys may call it directly for a given classification level is a platform setting. See [the API reference](/docs/api/reference/kbs/retrieve).
+`POST /v1/teams/{team}/kbs/{kbId}/retrieve` runs the same search for a signed-in session or an API key with the `query` scope. Each search counts against the team's query limits. Since v0.6.3 a `topK` outside 1 to 50 is refused (`400 invalid_topk`) instead of being adjusted; leave it out to use the knowledge base's setting. Whether team API keys may call it directly for a given classification level is a platform setting. See [the API reference](/docs/api/reference/kbs/retrieve).

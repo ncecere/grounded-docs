@@ -1,0 +1,89 @@
+---
+title: "Content health reports"
+description: "The platform side of content health reports: the switch, what a report reads and never does, who can see it, its bounds and how long it's kept."
+---
+
+A **content health report** tells a team's editors where their knowledge looks neglected or broken, so they know what to look at: documents not processed in a long time, links a crawl saw fail, the same file in two sources, documents with no retained citation evidence, and documents that failed to parse. It's off by default and never runs by itself. Since v0.7.0.
+
+This page is for platform admins and operators. How a team asks for and reads a report is in [Content health for editors](/docs/using/editors/content-health).
+
+## Turning it on
+
+1. On **Admin → Settings → Features**, turn on **Allow content health reports**. Platform admins change it; auditors see it read-only. It's audited as `platform.content_health` ("Turned content health reports on or off").
+2. Tell the teams' editors where it is: **Content health** in their team's sidebar.
+
+<Screenshot slot="admin-features-content-health" />
+
+Nothing else is needed: no model, no connection, no site to approve, no setting in the environment.
+
+### Turning it off
+
+Turning it off asks first ("Turn content health reports off?", **Turn reports off**). Then:
+
+- no new report can be made (`409 content_health_off`), and a report waiting to start ends as failed;
+- a report being made stops at its next step and ends as failed. The step under way may finish its queries first, so it isn't instant;
+- teams are told reports are off and can't open their reports, but they see the kept ones listed, without findings or counts, and can still **cancel** one being made and **delete** kept ones;
+- stored reports are kept for their usual time and come back, findings and all, when it's turned on again.
+
+There is no platform-side way to read or remove a team's report. To remove every kept copy, turn the feature off and have teams delete their reports, or let them expire after 30 days.
+
+## Who can see what
+
+| Who | Can |
+|---|---|
+| A team's **editors, admins and owners**, signed in to the app | See the team's reports, make one, cancel or delete one |
+| **Members** | Nothing (404) |
+| **API keys** of every kind, OAuth clients, anonymous callers | Nothing (404): reports are for browser sessions only |
+| **Platform admins and auditors** | The switch only. Not a team's reports, counts, titles or addresses. A [break-glass session](/docs/administration/break-glass) gives no access to reports either. |
+| People outside the team | Nothing (404) |
+
+A platform admin who is also an editor, admin or owner of a team sees that team's reports like any other member with that role; losing the membership can't fall back to platform privilege. An archived team can read its reports but not make, cancel or delete one (`409 team_archived`).
+
+A report covers **the team's own sources** only. Shared platform sources are left out, and nothing is compared across teams. A finding links to the source's own page, which checks access again.
+
+## What a report reads, and what it never does
+
+| Signal | Read it as | Not as |
+|---|---|---|
+| **Not processed in a long time** (30 to 3,650 days, default 365) | Grounded last finished processing these documents long ago | That they are outdated: Grounded doesn't know when a page was edited |
+| **Links that failed** | The latest completed crawl of a web source saw these addresses fail | That they're broken now: nothing is re-checked. *Unknown* means there was no usable crawl record |
+| **Same file in two sources** | Identical bytes (raw SHA-256) in two of the team's sources | Near-duplicates, or the same text in another format |
+| **No retained citation evidence** (window 14 to 365 days, default 90) | Kept answer records show no citation of these documents, among documents of sources a published agent reaches | That they're never cited, unused or poor. Below 50 answers that could have cited something, the signal doesn't judge |
+| **Failed to parse or ingest** | Failed, needs OCR, or not finished after a day | The cause: open the document |
+
+A report reads the team's own documents and sources, the latest completed crawl's record, agents' publish times and knowledge-base attachments, and the content-free answer events (time, outcome flags and cited document IDs; no question, answer or user). It makes **no network request and no model call**, so it costs nothing beyond database work, and it changes, deletes, reclassifies or re-crawls nothing.
+
+The citation-evidence signal reads analytics events, which outlive deleted conversations until the **Analytics events** [retention period](/docs/administration/retention) removes them.
+
+## Bounds
+
+These are fixed, not settings:
+
+| Bound | Value |
+|---|---|
+| Reports in progress per team | 1 (`409 content_health_active` for another) |
+| Time between the start of two reports | 10 minutes (`429 content_health_wait`) |
+| Findings stored per signal | 1,000 (the true count is kept) |
+| Time per signal | 45 seconds; a signal that runs out is *unavailable* and the others still arrive |
+| Time per report | 10 minutes |
+| Answer events read for citation evidence | At most 1,000,000 in the window, team-wide; above that, the signal is *unavailable* and a shorter window is the remedy |
+| Agents per team for that signal | 5,000 |
+| Sources per report | 1,000 |
+| Reports kept | The latest 5 per team, each for 30 days after it ended |
+
+Each report is one background job on the `content_health` queue, one worker per process; there's nothing to configure. An hourly `content_health.prune` job removes expired reports and ends, as failed, any report that never started within 60 minutes or whose worker stopped for 15.
+
+## Retention and records
+
+Reports hold IDs, counts and times, not document text. They are kept 30 days after they ended, and only the latest 5 per team; this isn't configurable and needs no legal-hold handling. Deleting a document, a source, a knowledge base a report is scoped to, or a team removes its findings (or the report) at once. See [Retention](/docs/administration/retention).
+
+Asking for, cancelling and deleting a report are audited (`content_health.generate`, `.cancel`, `.delete`, under the Area **Content health**) with IDs and thresholds only.
+
+## Operations
+
+- **Metric:** `grounded_content_health_reports_total{status}`, with `completed`, `failed` and `cancelled`. It isn't on the shipped dashboards. See [Observability](/docs/self-hosting/observability).
+- **Upgrade:** migration `00058` only adds the `content_health_*` tables. An older release neither reads them nor takes the queue, so a rolling upgrade, or a rollback with the switch on, is safe: reports stay queued until a new worker runs.
+
+## API
+
+`GET` and `PUT /v1/admin/settings/content-health` for the switch (with `If-Match`). The team's routes are under `/v1/teams/{team}/content-health/reports` (list, make, read, findings, cancel, delete), for signed-in editors, admins and owners only. See the [API reference](/docs/api).

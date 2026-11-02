@@ -20,6 +20,8 @@ The repository's security package (data flow, controls with their tests, a depen
 | **Sign-in** | Forged tokens, login CSRF | OIDC with verified tokens, nonce, state and PKCE; users identified by issuer and subject, not email; sign-in rate limits. |
 | **Platform admins** | Reading team content | No content access by default; break-glass only, scoped, time-boxed, audited per read, owners notified. |
 | **Teams → people's questions** (since v0.4.0) | The gap report or the source viewer revealing what someone asked, or more of a knowledge base than they may read | Failed questions are kept apart from transcripts with a pseudonymous asker key; teams see a topic only once 3 different people asked, and a question's text only when its asker shared it; platform staff see counts per team; audit entries carry no label, question or reason. The source viewer serves only passages an answer cited, to the person who asked; whole documents only to the source's team editors and above. See [Conversation privacy](#conversation-privacy). |
+| **Source text → context model** (since v0.7.0) | Sending a source's text to a model it shouldn't reach, unbounded spend, injected text steering the model | [Contextual chunks](/docs/administration/contextual-chunks) are off for the installation (`CONTEXTUAL_CHUNKS=false`) and per source; only a platform admin in a browser session can opt a source in, never an API key; the model's classification is checked at save, when a build starts and before each document; explicit per-build and per-day call, token and configured-price limits; one section of one document per call, delimited as untrusted, with no tools, history or retrieval; the generated text goes only into the embedding input and never into an API response, log or audit entry. |
+| **Content health reports** (since v0.7.0) | A report revealing a team's content to others | Reports make no network request and no model call, and hold IDs and counts; only the team's editors, admins and owners in a browser session can read them, with no access for platform roles or break-glass. See [Content health reports](/docs/administration/content-health). |
 | **Supply chain** | A compromised build or image | Images built only in CI from actions pinned by commit, scanned by Trivy (fixable HIGH and CRITICAL fail the build), signed with cosign, with SBOM and provenance; `govulncheck` on every push. |
 
 ### Accepted risks
@@ -28,7 +30,7 @@ The repository's security package (data flow, controls with their tests, a depen
 - **Database superusers can alter the audit log.** Protect database credentials, and ship audit data elsewhere if your policies require it.
 - **Prompt injection can still mislead answers.** It's mitigated, not solved.
 - **The model gateway sees what's sent to it**: questions, passages and answers. Choose gateways and models per classification level accordingly.
-- An auditor sending a malformed body to an admin write route gets 400 instead of 403 (no data revealed), and the distroless base image is referenced by tag.
+- The distroless base image is referenced by tag. (Since v0.6.3 an auditor's write to an admin route gets `403` before any revision or body check; before, a malformed body got `400`.)
 
 ## Conversation privacy
 
@@ -50,6 +52,10 @@ The [source viewer](/docs/using/source-viewer) doesn't change who can read what:
 - Browser sessions use CSRF tokens and Origin checks; the app sends `X-Frame-Options: DENY` except on the embed page.
 - Pods are non-root with read-only root filesystems, no capabilities, seccomp `RuntimeDefault` and no service account token; the namespace is default-deny.
 - Metrics are served on an internal listener, never through the Ingress.
+- The OCR sidecar has no egress at all, not even DNS (since v0.6.3); see [OCR sidecar](/docs/self-hosting/ocr-sidecar#network).
+- HSTS is set by your TLS proxy, not by Grounded; see [Kubernetes](/docs/self-hosting/kubernetes#hsts).
+- Since v0.6.3, names of teams, agents, knowledge bases, sources and API keys, and explicit conversation titles, refuse control, bidirectional and zero-width characters (`invalid_name`, `invalid_title`). This stops hidden text, not every look-alike character.
+- Since v0.6.3, `OPTIONS` grants no cross-origin write: public writes stay same-origin. The `Bearer` scheme name is case-insensitive; secrets aren't. Revoking a key you can't see answers `404 key_not_found`, like an unknown key, so it doesn't reveal that the key exists.
 
 ## grounded doctor
 

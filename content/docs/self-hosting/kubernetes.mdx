@@ -46,17 +46,17 @@ namespace: grounded
 
 resources:
   - namespace.yaml   # your namespace, labelled for the restricted Pod Security Standard
-  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.6.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/base?ref=v0.7.0
 
 components:
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.6.1
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.6.1
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.6.1
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.6.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/postgres-single?ref=v0.7.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/valkey-single?ref=v0.7.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/backup-pgdump?ref=v0.7.0
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ingress?ref=v0.7.0
 
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.6.1             # informational
+    newTag: v0.7.0             # informational
     digest: sha256:<digest>    # what is deployed
 
 configMapGenerator:
@@ -74,7 +74,7 @@ configMapGenerator:
 Copy `example-small` or `example-ha` from the repository as a starting point. Flux and Argo CD both build remote bases. Keep `?ref=` on a tag, and bump it together with the image digest.
 
 <Callout title="Pin by digest">
-  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.6.1`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
+  The base's image tag is the placeholder `pin-a-digest-in-your-overlay`, so an overlay that forgets `images:` fails with `ErrImagePull` rather than running an unknown version. There's no `latest` tag. Get the digest from the release notes or `docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.7.0`, and [verify its signature](/docs/self-hosting/upgrades#verifying-images) before you deploy it.
 </Callout>
 
 ### Components
@@ -223,7 +223,8 @@ Every resource carries `app.kubernetes.io/name: grounded` and, per workload, `ap
 
 - API replicas spread across nodes with a hard topology spread constraint; workers with a soft one. Both PodDisruptionBudgets allow one pod down at a time and never let an unready pod block a node drain.
 - Pods run non-root with a read-only root filesystem, no capabilities, no privilege escalation, seccomp `RuntimeDefault`, `/tmp` on an `emptyDir` and no service account token. Everything meets the `restricted` Pod Security Standard.
-- **NetworkPolicies** deny everything in the namespace, then allow DNS, ingress to the API on 8080 from the ingress controller's namespace (`grounded-api-ingress`: patch the placeholder namespace), egress to Postgres and Valkey in the namespace, to in-cluster S3 on 9000, and to 443 and 80 anywhere (gateways, OIDC, external S3, the crawler, MCP servers). Add egress in your overlay for anything else: a managed database outside the namespace, SMTP (587/465), model servers or MCP servers on other ports, or a trace collector (the `tracing` component adds its own).
+- **NetworkPolicies** deny everything in the namespace, then allow DNS (for every pod except OCR), ingress to the API on 8080 from the ingress controller's namespace (`grounded-api-ingress`: patch the placeholder namespace), egress to Postgres and Valkey in the namespace, to in-cluster S3 on 9000, and to 443 and 80 anywhere (gateways, OIDC, external S3, the crawler, MCP servers). Add egress in your overlay for anything else: a managed database outside the namespace, SMTP (587/465), model servers or MCP servers on other ports, or a trace collector (the `tracing` component adds its own).
+- **The OCR sidecar has no egress at all, not even DNS** (since v0.6.3): `grounded-allow-dns` selects every pod whose `app.kubernetes.io/component` is not `ocr`. NetworkPolicies combine by union, so if your overlay patches `grounded-allow-dns` (for a cluster DNS other than kube-dns), keep that `podSelector`, and make any namespace-wide allow policy of your own exclude OCR too. See [OCR sidecar](/docs/self-hosting/ocr-sidecar#network).
 - The crawler's own address checks, and the same checks for MCP servers, still refuse private addresses, whatever the NetworkPolicies allow.
 
 ## Ingress
@@ -232,6 +233,17 @@ Every resource carries `app.kubernetes.io/name: grounded` and, per workload, `ap
 - **Chat streams over Server-Sent Events.** The controller must not buffer responses and must allow reads of a few minutes. Traefik and most Gateway implementations need nothing. For NGINX-based controllers, turn off proxy buffering and raise the read timeout (for example `proxy-buffering: "off"`, `proxy-read-timeout: "600"`), and allow bodies up to `MAX_UPLOAD_BYTES`.
 - Metrics are served on the internal port 9091, never through the Ingress; the public port answers 404 for `/metrics`.
 
+### HSTS
+
+HSTS is the TLS proxy's job. Grounded doesn't trust a client-supplied `X-Forwarded-Proto` to decide it's on HTTPS, and the generic `ingress` component can't choose a controller-specific policy. Configure your controller or edge proxy to send `Strict-Transport-Security` on HTTPS responses, redirects and errors included:
+
+- Start with a short `max-age`, such as `300`, while you verify the install, then raise it to your policy (commonly `31536000`).
+- Don't add `includeSubDomains` or `preload` unless you control every affected host name and meet the preload requirements: they can break unrelated services and can't be undone quickly.
+- **Traefik:** a Headers middleware with `stsSeconds: 300`, `stsIncludeSubdomains: false`, `stsPreload: false` (and normally `forceSTSHeader: false`), attached to the HTTPS router.
+- **ingress-nginx:** the controller's `hsts` and `hsts-max-age` options, deciding `hsts-include-subdomains` and `hsts-preload` explicitly.
+
+Check the public HTTPS address, not the internal Service: `curl -sSI https://grounded.example.org/login` should show the header. Check an error response and the HTTP-to-HTTPS redirect too, and don't use `curl -k` as evidence: a certificate or a redirect alone isn't HSTS.
+
 ## Troubleshooting
 
 | Symptom | Likely cause |
@@ -239,6 +251,7 @@ Every resource carries `app.kubernetes.io/name: grounded` and, per workload, `ap
 | `ErrImagePull` for `…:pin-a-digest-in-your-overlay` | The overlay doesn't set `images:`. |
 | `CreateContainerConfigError` | A required secret or key is missing; `kubectl describe pod` names it. |
 | `migrate` init container fails | `DATABASE_URL` is wrong or Postgres is unreachable (NetworkPolicy, password encoding). On a managed or CloudNativePG database, a superuser must create the `vector` extension first. |
+| `migrate` fails with `migration 00054 needs the ICU collation "und-x-icu"` | Postgres isn't built with ICU (since v0.6.3). Use an image or service that is; see [Requirements](/docs/self-hosting/requirements). |
 | Pod exits with `invalid configuration` | The log lists every problem: missing keys, example keys, `DEV_AUTH` on, `APP_URL` not https, no OIDC issuer. |
 | Pods run but never become ready | `/readyz` through a port-forward shows which of Postgres, Valkey or storage fails. |
 | 502/504 from the ingress | `grounded-api-ingress` doesn't admit the controller's namespace. |

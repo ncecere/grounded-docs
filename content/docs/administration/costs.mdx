@@ -56,6 +56,7 @@ A team's own mode overrides the platform's: **Inherit**, **Off**, **Track only**
 
 - The [gap report](/docs/using/editors/gaps)'s labels, grouping and optional SystemOne checks, and [saved answers](/docs/using/editors/saved-answers)' near-identical checks, are metered to the team like its other model use.
 - [Follow-up suggestions](/docs/using/follow-up-suggestions) (since v0.4.1) are chat tokens of the agent's chat model, so they're part of **Chat** spend for that model and agent; their usage events carry `feature: suggestions`. Their moderation check, when the audience checks answers, is metered as moderation requests with the same feature.
+- [Contextual chunks](/docs/administration/contextual-chunks) (since v0.7.0) are chat tokens of the context-writing model: each successful call is recorded as chat input and output tokens with `contextual_chunks` in its metadata, so it appears as **Chat** spend. Calls for a platform-owned (shared) source have no team.
 - **Budgets**: every active team's mode, budget (plus this month's extensions), month-to-date spend, share and projected month-end.
 
 <Screenshot slot="admin-costs-budgets" />
@@ -81,10 +82,13 @@ Check its spend and projection on **Costs → Budgets** or its Budget card; the 
 
 Either change takes effect at once: waiting documents are queued, paused crawls continue and chats are admitted again.
 
+Since v0.6.3, team pages read the team's cost mode from `GET /v1/teams/{team}/budget-status` (`mode`: `off`, `track` or `enforce`) and don't ask for spend while cost tracking is off.
+
 ## Limitations
 
 - Budgets are checked against a figure cached for up to 30 seconds per server, so a busy team can go over its budget by about that much use. Documents already being ingested when a budget runs out finish; only pending ones wait.
-- Re-embedding during a [profile migration](/docs/administration/embedding-profiles) isn't checked against budgets.
+- Re-embedding during a [profile migration](/docs/administration/embedding-profiles) isn't checked against budgets. Writing [contextual chunks](/docs/administration/contextual-chunks) during a preview or migration is: before every call, the team's monthly budget (an enforced budget that's used up makes the document wait) and its daily chat-token quota are checked, as well as the source's own call, token and configured-price limits. A platform-owned source has no team budget, only its own limits.
+- Contextual chunks need the context-writing model's chat input and output prices, in the install's currency. A missing price or a currency mismatch blocks the work rather than counting it as free. Those amounts are local accounting, not your provider's invoice, and an attempt whose usage is unknown (a timeout, say) keeps its full reservation.
 - Usage that retention had purged before costs existed (v0.2.0) is kept per UTC day, so budget months before then are exact only to the day.
 - There are no per-agent budgets.
 

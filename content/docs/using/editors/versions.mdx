@@ -3,17 +3,17 @@ title: Versions and publishing
 description: Drafts, immutable published versions, comparing two versions and reverting the draft.
 ---
 
-Build and Appearance edit an agent's **draft**. Nobody chats with the draft except editors in the **Try it** panel. **Publish** turns the draft into a new, numbered version that can't be changed, and people always chat with the latest published version.
+**Build**, and the **Audience** and **Routers** cards on the **Share** tab, edit an agent's **draft**. Nobody chats with the draft except editors in the **Try it** panel. **Publish** turns the draft into a new, numbered version that can't be changed, and people always chat with the latest published version.
 
 ## Publishing
 
 1. Try the draft in the **Try it** panel.
-2. Choose **Publish** in the editor's header. Grounded checks the draft against the platform's rules first: the chat model must be approved for the knowledge bases' classification, and the audience must be allowed for it (and for a public audience, moderation and public access must be ready). If a check fails, Publish says which field to fix. While the saved draft has problems that publishing would refuse, which are listed under Build, **Publish** is disabled and says how many ("Fix the 2 problems listed under Build first.").
+2. Choose **Publish** in the editor's header. Grounded checks the draft against the platform's rules first: the chat model must be approved for the knowledge bases' classification, and the audience must be allowed for it (and for a public audience, moderation and public access must be ready). If a check fails, Publish says which field to fix. While the saved draft has problems that publishing would refuse, which are listed under Build, **Publish** is disabled and says how many ("Fix the 2 problems listed under Build first."). When the saved draft is the same as the live version, **Publish** is disabled with "No changes since version *N*"; since v0.6.3 the API refuses such a publish too (`409 no_changes`) instead of making an identical version.
 3. The new version goes live at once. The header's badge reads, for example, "v5 live".
 
-Editors can publish to the team. Only admins and owners can publish a version whose audience is everyone who signs in, or the public; the editor says so under Publish. Publishing notifies the team's owners when the audience is everyone who signs in or public, and starts the automatic runs of the agent's evaluation sets, if any are set to run automatically.
+Editors can publish to the team. Only admins and owners can publish a version whose audience is **Signed-in users** or **Public**; the editor says so under Publish. Publishing notifies the team's owners when the audience is signed-in users or public, and starts the automatic runs of the agent's evaluation sets, if any are set to run automatically.
 
-Settings (name, address, description), Share (links and widget keys) and disabling aren't versioned: saved changes apply at once.
+**Appearance** (accent colour, welcome message and starter questions), **Settings** (name, address, description, saved answers), Share's links and widget keys, and disabling aren't versioned: saved changes apply at once. The audience and whether routers can reach the agent are versioned: they change when you publish.
 
 ## The version menu
 

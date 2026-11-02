@@ -28,17 +28,19 @@ Turning it off asks for confirmation and stops everything at once: no new webhoo
 
 A webhook can only send to a host that an approved destination covers. **Admin → Webhooks** (in the Operations group) has an **Approved destinations** card:
 
-1. Enter a **Host pattern**: a host name such as `hooks.example.edu`, or `*.example.edu` for that host and its subdomains. `*` alone is refused.
+1. Enter a **Host pattern**: a host name such as `hooks.example.edu`, or `*.example.edu` for that host and its subdomains. `*` alone is refused. Since v0.6.3 it must be a real host name, each part up to 63 characters and the whole up to 253 (`400 invalid_pattern`); patterns saved before stay.
 2. Optionally add a **Note**, such as who asked for it.
 3. Choose **Approve destination**.
 
-The table lists each pattern, its note and when it was approved. Since v0.6.1 the note is for platform staff: platform admins and auditors see it, and everyone else who reads the destinations (team admins choosing an address) sees the patterns without it. **Remove…** in a row's menu withdraws it. Webhooks to hosts it covers stop at once: their deliveries fail as "no longer approved" and aren't retried. The webhooks stay, and you can approve the destination again.
+The table lists each pattern, its note and when it was approved. Since v0.6.1 the note is for platform staff: platform admins and auditors see it, and everyone else who reads the destinations (team admins choosing an address) sees the patterns without it. **Remove…** in a row's menu withdraws it. Webhooks to hosts it covers stop at once: their deliveries fail as "no longer approved" and aren't retried. The webhooks stay, and you can approve the destination again. Since v0.6.3, such a webhook can still be edited (description and events) and turned off, but not turned on or pointed at another host that isn't approved (`400 destination_not_approved`); its edit form says so, and nothing is delivered meanwhile.
 
 Team admins see the patterns (not the notes) when they choose an address, so approve only hosts you'd accept receiving events from every team. Until you approve one, no webhook can be made ("No destinations are approved yet").
 
+<Screenshot slot="admin-webhooks" />
+
 ## What the address rules are
 
-- The address is `https`, on port **443**, with a **host name** that an approved destination covers. An IP address is refused.
+- The address is `https`, on port **443**, with a **host name** that an approved destination covers. An IP address is refused, and so is a host name with a part longer than 63 characters or longer than 253 in all (`400 invalid_host`, since v0.6.3).
 - It's checked **when the webhook is saved and again before every delivery**. Removing a destination, or a DNS change, takes effect on the next delivery.
 - Grounded never sends to private, loopback, link-local, carrier-grade NAT, multicast or cloud metadata addresses, whatever the host name resolves to and whatever you approve. It connects to the address it checked, follows **no redirects** (a `3xx` answer is a failure) and reads at most 4 KB of the receiver's answer.
 - This is the guard the crawler uses, applied to webhooks.

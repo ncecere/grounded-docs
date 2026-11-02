@@ -5,10 +5,10 @@ description: Platform defaults and ceilings for team limits, per-team overrides,
 
 Limits keep one team from using more than its share of storage, ingestion, queries and models. Each limit has a **platform default** and a **ceiling**; a team may have an **override** up to the ceiling. **Usage & spend → Limits** sets the defaults and ceilings in five tabs: **Team resources**, **Ingestion**, **Queries & chat**, **Public agents** and **Evaluations**. A team's overrides are on its admin page's **Limits** tab.
 
-- An empty override means "inherit the default". `0` means "blocked".
+- An empty override means "inherit the default". `0` means "blocked", except for the longest public question (**Public message length**), which must be at least 1 since v0.6.3: turn [public access](/docs/administration/moderation-and-public-access#public-access) off to stop public chat.
 - Lowering a ceiling also caps existing overrides. A new override above the ceiling is refused. Since v0.4.2 a ceiling below a team's override names the teams it caps, on the row and in the save message.
 - Where a default differs from its built-in value, the row shows "Built-in default: N" with **Use it** to go back to it.
-- Changes are audited and take a revision check, so two admins can't overwrite each other.
+- Changes are audited and take a revision check, so two admins can't overwrite each other. Through the API (`PUT /v1/admin/limits`), each limit you update must include both `default` and `ceiling` since v0.6.3; an explicit `null` keeps it unlimited or inherited. A refused update leaves the revision and the audit log unchanged.
 - Team owners and admins see their effective limits and usage in [Usage & spend](/docs/using/owners/usage-and-spend), but can't change them.
 
 ## The limits
@@ -34,7 +34,7 @@ Limits keep one team from using more than its share of storage, ingestion, queri
 | **Evaluation sets** | 50 | Creation is refused. |
 | **Questions per evaluation set** | 500 | Adding or importing is refused. |
 
-Chat answers count towards the query limits too: each answer is one query. Evaluation runs work within the same query and chat limits, and so do searches and answers from AI tools over the [MCP server](/docs/using/mcp).
+Chat answers count towards the query limits too: each answer is one query. Model calls that write [contextual chunks](/docs/administration/contextual-chunks) count as chat tokens towards the team's **Chat tokens per day**; when it's reached, the build waits instead of failing. Evaluation runs work within the same query and chat limits, and so do searches and answers from AI tools over the [MCP server](/docs/using/mcp).
 
 ### Public agents
 
@@ -45,7 +45,7 @@ Chat answers count towards the query limits too: each answer is one query. Evalu
 | Questions per day per agent | 5,000 |
 | Tokens per day per agent | 2,000,000 |
 | Concurrent chats per agent | 20 |
-| Longest question (characters) | 2,000 |
+| Longest question (characters; at least 1) | 2,000 |
 
 A widget key may lower the per-minute limits for its sites, within these.
 

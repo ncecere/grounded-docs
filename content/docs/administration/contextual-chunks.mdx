@@ -1,0 +1,103 @@
+---
+title: "Contextual chunks"
+description: "Have a chat model describe where each section sits in its document and embed that with the passage: the installation switch, per-source settings and limits, estimates, previews, switching and rolling back."
+---
+
+With **contextual chunks**, a chat model writes a short description of where each section sits in its document ("This section of the Example University registrar's handbook explains the deadline for late course registration."), and that text is put in front of the passage **only in what is sent to the embedding model**. The vector reflects the context as well as the passage. Since v0.7.0.
+
+It's off at two levels, and nothing changes until a platform admin builds an index preview with it and switches to it. It sends source text to a model and spends money, so it has explicit limits of its own.
+
+<Callout type="warn" title="Not measured">
+  Contextual chunks haven't been measured on a real knowledge base. Two small synthetic checks with real models passed the mechanics and showed **no improvement**: plain and contextual retrieval ranked the same documents first. Preview it on a knowledge base with evaluation sets, and decide by the comparison.
+</Callout>
+
+## What changes, and what doesn't
+
+The generated text is embedding input, not document text:
+
+| Unchanged | Changed |
+|---|---|
+| The passages' text, heading paths and pages | The text the embedding model receives for each passage of an opted-in source |
+| Keyword search, which uses the original text | The passage's vector |
+| What retrieval returns, what a citation quotes, what the source viewer shows, [parent sections](/docs/administration/embedding-profiles#parent-sections) and their hashes | |
+
+The generated text is never in an API response, a log, a trace or the audit log. Logs and audit entries carry IDs, counts and token numbers only.
+
+## Before you start
+
+You need:
+
+- **The installation switch.** Set `CONTEXTUAL_CHUNKS=true` and restart the API and worker. While it's `false` (the default), no source can opt in and no context-writing call is made. `CONTEXTUAL_CONCURRENCY` (default 2, 1 to 16) bounds the calls at once per process. See [Configuration](/docs/self-hosting/configuration#ingestion-and-retrieval).
+- **Every API and worker on v0.7.0.** Older binaries can't maintain contextual indexes.
+- **A chat model to write the context**, of kind Chat, enabled, on an enabled connection, with a **declared context window** large enough for the bounded prompt and a maximum classification at least the source's. See [Models that write contextual chunks](/docs/administration/models#models-that-write-contextual-chunks).
+- **Both chat prices** for that model (input and output tokens), in the install's currency. A missing price blocks estimates and previews: unknown is not zero. See [Costs](/docs/administration/costs#1-enter-prices).
+- **Evaluation sets** on the knowledge base, so the preview has something to compare.
+
+## Configuring a source
+
+The source's **Overview** has a **Contextual chunks** card: "Off for this source. No contextual model work is authorized.", or the model it's opted in with, and counts of **Model attempts**, **Unknown-usage attempts** and **Cached contexts**. Every member of the source's team sees that state, read-only and without spend. Platform auditors read the settings.
+
+<Screenshot slot="source-contextual-card" />
+
+Only platform admins can change it, in a browser session (an API key never can). **Configure contextual chunks** opens:
+
+| Field | Default | Meaning |
+|---|---|---|
+| **Allow contextual index previews for this source** | Off | The source takes part in contextual previews and builds. While the installation switch is off it can be turned off but not on. |
+| **Context-writing chat model** | None | Required when on. Checked against the source's classification when saved, when a build starts and before each document. |
+| **Unusable-reply policy** | **Fail** | **Fail: leave this document unindexed for the set**, or **Plain: explicitly allow marked fallback** (embedded without context and marked). Limits always wait; they never fall back to plain. |
+| **Build call limit** | 200 | The most calls (attempts) one build may make: 1 to 100,000. |
+| **UTC-day call limit** | 200 | All calls admitted in a UTC day, for builds and new documents across every profile of the source: 1 to 100,000. |
+| **Build token limit**, **UTC-day token limit** | None | Input plus output tokens: 1 to 1,000,000,000. Required when on. |
+| **Build configured-price amount**, **UTC-day configured-price amount** | None | Positive decimal amounts, up to six decimal places. Required when on. |
+| **Configured-price currency** | None | The install's three-letter currency. Nothing is converted. |
+
+<Screenshot slot="source-contextual-dialog" />
+
+**Save contextual settings** changes no vector, starts no job and makes no model call ("Contextual settings saved: No vectors changed. Build and compare an index preview before switching."). It's audited as `source.contextual_update`, with IDs, switches and numbers only. If another admin saved first, your edits stay and **Discard edits and reload** loads theirs.
+
+A team that wants contextual chunks for its sources asks a platform admin.
+
+## Estimating
+
+**Estimate saved contextual settings**, on the card, reads the stored passages and the saved limits, and sends no model request and creates nothing. It shows the most context calls, input tokens and output tokens before cache reuse (with a 25% margin on the counted input), a configured-price amount or "Price unknown", and anything that blocks a preview: no model, a model not allowed for the classification or without a declared context window, more calls than the build call limit, the installation switch off.
+
+## Previewing, switching and rolling back
+
+Contextual inputs are built only through an [index preview](/docs/administration/embedding-profiles#previewing-new-settings):
+
+1. **Admin → Models → Embedding profiles → Migrations → Preview new settings…**, and pick the knowledge base.
+2. Set **Contextual embedding inputs** to **Build contextual inputs for opted-in sources**. It must be the only change that affects passages (passage size, overlap, chunker or repeated blocks), or the preview is refused (`409 migration_blocked`, `contextual_needs_same_passages`).
+3. **Estimate contextual work before building.** It sends no model request. The build can't start until an estimate shows no blockers, such as no opted-in source, the installation switch off, a missing or unsuitable model, or calls over a source's limit.
+4. **Build the new index.** Opted-in sources are embedded with context; other sources of the knowledge base are embedded as they are, so one knowledge base can mix. The knowledge base keeps answering from its current index.
+5. Compare, then **Switch to the new index** or **Discard preview**. The comparison counts documents embedded without context (by the Plain policy, too large, or the source turned off), so you see a mixed index before switching.
+
+After the switch, new and changed documents of an opted-in source get context too. Turning the source's switch off, or the installation switch, stops new context generation; passages already embedded with context keep their vectors until a new index replaces them.
+
+**To roll back,** **Switch back** within the grace period (immediate: the plain vectors were kept current), or later preview **Build plain inputs (contextual rollback)** and switch.
+
+**Before rolling back to an image older than v0.7.0,** switch affected knowledge bases back to a plain index first, then turn the source and installation switches off. The switches alone don't rewrite vectors, and an older worker can't maintain a contextual index. See [Upgrades](/docs/self-hosting/upgrades).
+
+## Limits, budgets and waiting
+
+Before every call, Grounded checks that the source is still opted in, the installation switch, the source's build and UTC-day limits (calls, tokens and configured-price amount), the team's monthly budget and its daily **Chat tokens per day** quota, and the model's classification. A reached limit, budget or quota makes the document **wait**; nothing fails, and raising the limit lets it continue. Platform-owned (shared) sources have no team budget, only their own limits.
+
+- **Unknown usage is counted.** A call that times out, is cancelled mid-flight or loses its response may still have been processed and billed by the provider: it counts against the limits with its full reservation. Reconcile with your gateway's own report; each call carries the `user` tag `grounded-contextual-<team>`.
+- **Configured prices are local accounting,** not your provider's invoice.
+- **Successful calls are chat tokens** of the context-writing model in the usage ledger, with `contextual_chunks` in their metadata, so they appear as **Chat** spend in [Costs](/docs/administration/costs) and count towards the team's daily chat-token quota ([Limits](/docs/administration/limits)).
+- **Generated context is cached** by its inputs (the section's text, the document's opening, the model and the prompt). A retry or another profile reuses it; changing a section regenerates only that section.
+- **Large documents:** a document needing more than 40 calls is embedded without context and marked too large.
+
+## Safety
+
+- The model gets a fixed instruction and one section of one document, delimited as untrusted data: no tools, no history, no retrieval, nothing from another source, team, user or conversation.
+- Its reply is cleaned to one short plain paragraph (no markup, links or invisible characters; at most 500 characters) and is never shown, executed or passed to another model call. A document that tries to steer the model can only change the vectors of its own passages.
+- The call goes through the same path as agent chat, so the connection's rate limit, timeout and compatibility settings apply, at background priority.
+
+## Records
+
+The generated text is deleted with its document, and turning a source off removes its cached context. The accounting of each call (IDs, token counts, price snapshot and outcome, never text or names) is kept after its source or index is deleted, so spend and daily limits stay correct. See [Retention](/docs/administration/retention).
+
+## API
+
+`GET` and `PUT /v1/admin/sources/{sourceId}/contextual` (the `PUT` needs a platform admin session), `POST /v1/admin/sources/{sourceId}/contextual/estimate` and `POST /v1/admin/profile-migrations/contextual-estimate` (estimates make no model call; auditors may use them), and `GET /v1/teams/{team}/sources/{sourceId}/contextual` for team members (session only, read-only). A preview asks for contextual inputs with `changes.contextualChunks`. See the [API reference](/docs/api).

@@ -5,11 +5,11 @@ description: Upload files or crawl websites, request crawl domains, read scanned
 
 A data source holds documents. Grounded parses each document, splits it into passages and indexes them, so knowledge bases can search them. Team editors, admins and owners create and manage sources under **Data sources** in the team's sidebar.
 
-When you create a source you choose three things that can't change later:
+When you create a source you choose:
 
-- **Type**: **Upload files** or **Website**.
-- **Embedding profile**: how passages are embedded. A knowledge base can only combine sources that use the same profile.
-- **Name** and **classification** can change later; the classification is [covered below](#classification).
+- **Type**: **Upload files** or **Website**. It can't change later.
+- **Embedding profile**: how documents are cut into passages and how passages are embedded. A knowledge base can only combine sources that use the same profile. You can't change it yourself: a platform admin can move it to another profile (a profile migration), or try new settings with an [index preview](/docs/using/editors/knowledge-bases#when-a-platform-admin-previews-new-settings).
+- **Name**, **Description** (optional) and **Classification**. These can change later; the classification is [covered below](#classification).
 
 ## Uploading files
 
@@ -18,10 +18,17 @@ An upload source accepts PDF, Word (DOCX), PowerPoint (PPTX), HTML, Markdown and
 - Choose **Upload files** on the source, or drop files on it. Each file becomes a document.
 - The default size limit is 100 MB per file; your platform may set another.
 - Uploading a file whose content is already in the source changes nothing. Uploading a new version of a file replaces the document.
-- Tags you set on the source are added to every document, so agents and searches can filter on them.
+- **Tags for these files**, in the **Upload files** dialog, are added to every file of that upload, so agents and searches can filter on them. A replaced file keeps its tags unless you set some. **Edit tags** in a document's row changes one document's tags.
+- Since v0.6.3 a file whose name contains control characters or invisible formatting characters (such as zero-width or text-direction marks) is refused rather than renamed, and a file over the size limit is refused with a message that states the limit.
 - Files can also be uploaded through the API, with an API key that has the `ingest` scope.
 
 Grounded parses these formats itself. PDFs are read by PDFium (Chrome's PDF engine) running sandboxed in WebAssembly; headings are inferred and repeating page headers and footers removed. Word files keep their headings, lists and tables; PowerPoint files become one page per slide, with speaker notes. An install may also run Apache Tika as a fallback parser.
+
+- **Tables with merged cells** (v0.7.0): a cell that spans rows in HTML (`rowspan`), or spans or merges cells in Word (`gridSpan`, `vMerge`), now keeps the cells after it under their own column headers. This changes the parsed text of such tables the next time a document is processed.
+- **Images in HTML** without alt text are dropped (v0.6.3); images with alt text are unchanged.
+- **Tables in PDFs** are read as paragraphs: the PDF parser reads lines, not table structure.
+
+How a document is then cut into passages depends on the source's embedding profile, which a platform admin sets up. Its **chunker** may keep tables whole, repeating the caption and header row in each piece of a long table (version 3), and may also never run a passage across a heading or across a bold label above a list (version 4). A profile may also use **parent sections**, which give agents the section around each matched passage. See [Embedding profiles](/docs/administration/embedding-profiles#chunkers).
 
 ## Crawling a website
 
@@ -43,7 +50,7 @@ For a crawl you can set:
 
 **Preview pages** shows the URLs a crawl would start with, without storing anything. Use it to check the scope before you create the source. If the start page can't be read, the preview says what the site answered, for example "That page returned 404 (not found). Check the address." (v0.4.2).
 
-The crawler always respects robots.txt, spaces its requests to each site, and doesn't run JavaScript: pages that only render their content in the browser come back empty. It fetches public sites only; sites behind a sign-in aren't supported. PDF and Word files it finds are parsed like uploads. Images are ignored.
+The crawler always respects robots.txt, spaces its requests to each site, and doesn't run JavaScript: pages that only render their content in the browser come back empty. It fetches public sites only; sites behind a sign-in aren't supported. PDF, Word (DOCX), PowerPoint (PPTX) and Markdown files it finds are parsed like uploads. Since v0.6.3, links to files it can't read (archives, installers, disk images, pictures, audio, video, fonts, and office formats such as `.doc`, `.xls`, `.xlsx`, `.ppt` and OpenDocument files) are skipped without being fetched.
 
 ### Keeping a website current
 
@@ -71,9 +78,36 @@ Approved domains apply to your team only. Private, loopback and link-local addre
 
 Websites repeat text on many pages: navigation, footers, "related content" cards. If those blocks were indexed, answers would cite them instead of real content. Grounded finds blocks that appear on many of a source's pages and leaves them out of search, keeping one copy so their information is still indexed once.
 
-- It's on by default for website sources and off for uploads. Turn it on or off under **Settings → Remove repeated blocks**.
-- The source's **Overview** shows how many repeated blocks were removed from how many pages, and **Show the most repeated blocks** lists them.
-- Changing the setting re-checks every document from its stored text. Nothing is fetched again.
+It's controlled on the source's **Overview**, in the **Repeated blocks** card. Editors, admins and owners see its switches; everyone in the team sees what was removed.
+
+- **Remove repeated blocks** is on by default for website sources and off for uploads.
+- The card shows how many repeated blocks were removed from how many pages, and the rule in force. **Show the most repeated blocks** lists them.
+- Changing the setting re-checks every page from its stored text in the background. Nothing is fetched again.
+
+### Near-duplicate blocks
+
+Removal matches blocks by their exact text, so a menu with a different item highlighted on each page, or a footer with a different date, used to be kept on every page. Since v0.7.0, **Also remove near-duplicate blocks** (off by default, under **Remove repeated blocks**) treats blocks of eight words or more that differ a little from page to page as one repeated block. Blocks that only share some words are kept. The switch is disabled until **Remove repeated blocks** is on.
+
+- In **Show the most repeated blocks**, a group of near-duplicates is listed once, with how many pages have it and how many variants it has ("34 pages, 3 variants").
+- Turning it on or off re-checks the pages from their stored text in the background. Nothing is fetched again, and only pages whose removed blocks change are cut into passages again.
+- It changes what the source's knowledge bases search as soon as the re-check finishes. A platform admin can try it first with [Preview new settings](/docs/administration/embedding-profiles#near-duplicate-repeated-blocks), which builds a second index beside the live one and compares them; switching to that index turns the setting on for its sources.
+
+<Screenshot slot="source-repeated-blocks-fuzzy" />
+
+## Contextual chunks
+
+Since v0.7.0 a platform admin can opt a source in to **contextual chunks**: a chat model writes a short description of where each section sits in its document, and that text is added only to what is embedded. Passages, keyword search, citations and the source viewer don't change. It's off by default, for the install and for each source, and only platform admins can configure it.
+
+Everyone in the team sees a read-only **Contextual chunks** card on each source's **Overview**:
+
+- "Off for this source. No contextual model work is authorized.", or "Opted in with *model*" once a platform admin has set it up.
+- "Contextual chunks are switched off for this installation." while the install's switch is off.
+- **Model attempts**, **Unknown-usage attempts** and **Cached contexts**. No spend is shown.
+- "Only platform admins can configure this opt-in and its spending limits. Ask one to estimate and preview it first."
+
+A platform admin turns it on for a knowledge base through an index preview, and nothing changes for your agents until they switch to it. The model calls are recorded as chat tokens of the chosen model, so they count towards your team's daily chat tokens and monthly budget ([Usage and spend](/docs/using/owners/usage-and-spend#contextual-chunks)); when a limit or the budget is reached, documents wait. See [Contextual chunks](/docs/administration/contextual-chunks) for how platform admins set it up.
+
+<Screenshot slot="source-contextual-card" />
 
 ## Scanned documents and OCR
 
@@ -96,9 +130,11 @@ OCR has limits: pages per document (200 by default) and **OCR pages per day** fo
 
 <Screenshot slot="source-documents-ocr" />
 
-A document moves through pending, fetching, parsing, chunking and embedding to **ready**. Others end as **failed** (with the error; you can retry), **skipped** (empty, or needs OCR) or **deleted**. A document can also **wait**: for the team's daily OCR or crawl page limit, for its monthly budget when the platform enforces budgets, or while the platform is in maintenance mode.
+A document moves through pending, fetching, parsing, chunking and embedding to **ready**. Others end as **failed** (with the error; you can retry), **skipped** (empty, or needs OCR) or **deleted**. A document can also **wait**: for the team's daily OCR or crawl page limit, for its monthly budget when the platform enforces budgets, while the platform is in maintenance mode, or, for a source opted in to [contextual chunks](#contextual-chunks), for that source's call, token or price limits or the team's daily chat tokens.
 
 Select documents in the table to retry or delete several at once. Since v0.4.2 the selection follows what the table shows: a filter, a search or another page clears the rows it hides, so the bar, the footer and the **Delete** dialog count the same rows and Delete removes exactly the ones it names. A disabled **Retry** says why beside it.
+
+To find failed documents, pages not processed in a long time, links the last crawl saw fail and the same file in two sources across all your sources at once, ask for a [content health report](/docs/using/editors/content-health).
 
 ## Classification
 

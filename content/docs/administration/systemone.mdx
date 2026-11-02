@@ -5,7 +5,7 @@ description: Optional SystemOne models that judge passages, check each claim aga
 
 **SystemOne** models are an optional kind of model that answer typed questions (yes/no, a choice, a score) with probabilities, over `POST /v1/systemone`. Grounded can use one to check its own work. Every SystemOne feature is **off** by default, and without a SystemOne model nothing changes: no requests, no extra fields, no change to prompts.
 
-To use one, add a connection to a service that answers `POST /v1/systemone`, then add a model of kind **SystemOne** under [Models](/docs/administration/models). Its classification ceiling applies like any model's. Then configure the features under **Models → SystemOne**.
+To use one, add a connection to a service that answers `POST /v1/systemone`, then add a model of kind **SystemOne** under [Models](/docs/administration/models). Its classification ceiling applies like any model's. Then configure the features under **Models → SystemOne**. **SystemOne** is always in the admin sidebar since v0.6.3; until a SystemOne model exists, its page says how to add one.
 
 <Callout type="warn" title="Each check costs time">
   SystemOne requests run on the model service, often one GPU. Passage judging makes one request per candidate passage (in the project's tests on one GPU, about 0.7 s each), and an answer waits for it at most the **Passage judging time limit**; citation checks one per claim and cited source, after the answer. Measure on your own hardware before turning them on for busy agents.

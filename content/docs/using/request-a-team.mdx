@@ -16,16 +16,18 @@ On **Request a team**, choose **New request**. The form asks for:
 
 | Field | What to put |
 |---|---|
-| **Team name** | What people will call it. |
+| **Team name** | What people will call it. Since v0.6.3 a name with control characters or invisible formatting characters (such as zero-width or text-direction marks) is refused. |
 | **What is it for?** | Who will use it and what it will answer questions about, up to 1,000 characters. The reviewer reads this, so be specific. |
 | **Highest classification of its data** | The most sensitive level of data the team will hold ([Classifications](/docs/administration/classifications)). The reviewer may change it. |
 | **Owner** (optional) | The email of the person who should own the team. Leave it empty to own it yourself. |
 
 Choose **Send request**. A platform admin is notified. The request has no address: the reviewer chooses the team's address when they approve it.
 
+<Screenshot slot="team-request-new" />
+
 ## Following it
 
-The page lists your requests with their **Status**:
+The page lists your requests, with **Search your requests** to find one by name or purpose. On a phone each row stacks. Each request has a **Status**:
 
 | Status | Meaning |
 |---|---|
@@ -34,7 +36,11 @@ The page lists your requests with their **Status**:
 | **Declined** | No team was made. The reviewer's reason is in **Outcome**, and in the notification you were sent. |
 | **Withdrawn** | You took it back. |
 
-You get a **Team request decided** notification when it's decided (see [Your settings](/docs/using/personal-settings)). When it's approved, the team is made at that moment and its owner is you, or the person you named. If you named someone else, the notification says who owns the team and takes you back to this page. Someone you named who has never signed in is invited by email. The reviewer may also start the team with a first agent, a draft for its owner to change and publish.
+Since v0.6.3 the **Classification** column shows the level the team was actually approved for. When the reviewer changed the level you asked for, "Asked for *level*" is shown under it.
+
+<Screenshot slot="team-requests-page" />
+
+You get a **Team request decided** notification when it's decided (see [Your settings](/docs/using/personal-settings)). When it's approved, the team is made at that moment and its owner is you, or the person you named. If you named someone else, the notification says who owns the team and takes you back to this page. Someone you named who has never signed in is invited by email. If the person you named is suspended, the reviewer can't approve the request with them as owner and must name someone else (since v0.6.3), so the team may end up owned by someone other than the person you named. The reviewer may also start the team with a first agent, a draft for its owner to change and publish.
 
 **Withdraw…** is in a waiting request's menu. It removes the request from the platform admins' queue, and you can ask again afterwards.
 

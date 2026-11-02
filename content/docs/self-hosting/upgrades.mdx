@@ -39,18 +39,23 @@ Stopping pods drain: they fail readiness, wait `SHUTDOWN_DELAY` for load balance
 
 **Rolling back** means pinning the previous digest: because of expand/contract, the previous release runs on the newer schema. Migrations are never rolled back. **Downgrading** across a release isn't supported; to go back further, restore a backup taken before the upgrade.
 
+Two rollbacks need care:
+
+- **From v0.7.0:** switch every knowledge base that uses a v0.7.0 indexing option (chunker 3 or 4, parent sections, near-duplicate repeated blocks, contextual chunks) back to its previous index, with **Switch back** within the grace period or a preview of the previous settings and a switch. Then turn contextual opt-ins off. A switch alone doesn't rewrite vectors, and an older worker can't maintain those indexes. See [Embedding profiles](/docs/administration/embedding-profiles#upgrades-and-rollback) and [Contextual chunks](/docs/administration/contextual-chunks#previewing-switching-and-rolling-back).
+- **From v0.6.3 to v0.6.2:** a v0.6.2 pod may save an agent template whose name differs from another only by non-ASCII case. That's accepted on purpose (see [After a database ICU update](#after-a-database-icu-update)).
+
 ## Pinning digests
 
 Images are published for linux/amd64 and linux/arm64. Release tags are `vX.Y.Z`, `vX.Y` and `latest-release`; release candidates get only their own tag, such as `v0.4.3-rc.1`. There's no `latest` tag. **Tags can move, so deploy by digest**:
 
 ```sh
-docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.6.1   # prints the index digest
+docker buildx imagetools inspect ghcr.io/ncecere/grounded:v0.7.0   # prints the index digest
 ```
 
 ```yaml
 images:
   - name: ghcr.io/ncecere/grounded
-    newTag: v0.6.1             # informational
+    newTag: v0.7.0             # informational
     digest: sha256:<digest>    # what is deployed
 ```
 
@@ -64,11 +69,11 @@ cosign verify ghcr.io/ncecere/grounded@sha256:<digest> \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-For a stricter check, use `--certificate-identity https://github.com/ncecere/grounded/.github/workflows/image.yml@refs/tags/v0.6.1`. The same works for `grounded-ocr`. Then:
+For a stricter check, use `--certificate-identity https://github.com/ncecere/grounded/.github/workflows/image.yml@refs/tags/v0.7.0`. The same works for `grounded-ocr`. Then:
 
 ```sh
 docker run --rm ghcr.io/ncecere/grounded@sha256:<digest> version
-# grounded v0.6.1 (<commit>)
+# grounded v0.7.0 (<commit>)
 ```
 
 Each image carries an SPDX SBOM and SLSA provenance as attestations, covered by the signature:
@@ -85,6 +90,9 @@ Since v0.2.0, each GitHub release also attaches the SBOMs per platform, the dige
 
 | From → to | Migrations | What to do |
 |---|---|---|
+| v0.6.3 → [v0.7.0](/docs/releases/v0-7-0) | `00056` to `00059`, all additive (schema 55 → 59): near-duplicate block sketches and the source setting, the profile's parent size and passage ranges, the content health tables, and the contextual-chunks flag with its settings, cache and accounting tables | A rolling upgrade: bump `?ref=` and both digests. Four new optional environment variables, each leaving behaviour as before: `RETRIEVAL_PARENT_EXPANSION` (`true`), `BOILERPLATE_FUZZY` (`false`), `CONTEXTUAL_CHUNKS` (`false`) and `CONTEXTUAL_CONCURRENCY` (`2`). Nothing changed in `deploy/kubernetes` or `deploy/observability`. Every new feature is off. **Upgrade every API and worker before choosing chunker 3 or 4, parent sections, near-duplicate blocks or contextual chunks.** HTML and Word tables with merged cells keep their columns: their parsed text changes when a document is next processed, for every chunker. A new worker queue, `content_health`, needs no setting. **Before rolling back,** switch knowledge bases back to their previous index (above). The project rehearsed this upgrade with the new features unused. |
+| v0.6.2 → [v0.6.3](/docs/releases/v0-6-3) | `00054` and `00055` (schema 53 → 55) | **Postgres must be built with ICU** (`und-x-icu`): `00054` checks it first and stops otherwise, then renames agent templates whose names differ only by case (the oldest keeps its name; the others become "Name (2)", "Name (3)"…) and adds a non-unique lookup index, briefly locking the templates table. `00055` adds a column to team requests without rewriting rows. Bump `?ref=` and both digests, and re-apply the base with the `ocr-tesseract` component: the OCR sidecar now has no egress, DNS included, and `grounded-allow-dns` excludes it. Keep that `podSelector` if you patch `grounded-allow-dns`, and exclude OCR from any namespace-wide allow policy of yours. No new environment variables. API behaviour changes: `405` for a wrong method, new `400` codes for badly formatted values and hidden characters, text-only OpenAI messages (at most 51), and `topK` 1 to 50. After any ICU update of the database server, see [below](#after-a-database-icu-update). |
+| v0.6.1 → [v0.6.2](/docs/releases/v0-6-2) | None (schema stays at 53) | A security patch (Go 1.26.10, golang.org/x/net v0.62.0, go-jose v4.1.6, seroval 1.7.3). Bump `?ref=` and both digests. No new environment variables, and nothing changed in `deploy/kubernetes` or `deploy/observability`. To build from source, use Go 1.26.10 or later. |
 | v0.6.0 → [v0.6.1](/docs/releases/v0-6-1) | None (schema stays at 53) | A rolling upgrade: bump `?ref=` and the digests. No new environment variables, and nothing changed in `deploy/kubernetes` or `deploy/observability`. **Check your API keys and shared links:** a key restricted to agents now reaches only the knowledge bases those agents' published versions answer from, a key restricted to knowledge bases no longer lists agents that use others, a key with only the `mcp` scope gets `403 missing_scope` on the REST API, and a personal key never acts above its owner's current role. Team members (and query keys) get an agent's published version, not its draft. A shared link works only while the person who made it can still chat with the agent. Rolling back is pinning the previous image; it also brings back the old behaviours. |
 | v0.5.0 → [v0.6.0](/docs/releases/v0-6-0) | `00049` to `00053`, all additive (schema 48 → 53): `agent_templates`, `team_request_settings` and `team_requests`, `conversation_shares`, `message_events.routing`, and the webhook tables | A rolling upgrade: bump `?ref=` and the digests. No new environment variables, and nothing changed in `deploy/kubernetes` or `deploy/observability`. **Webhooks and team requests are off** until a platform admin turns them on in Admin → Settings → Features, and no agent is reachable through routers until its team opts in. `grounded rotate-keys` also re-encrypts the webhooks' signing secrets (`webhooks.secret_cipher`). Four new notification types appear in notification settings, on by default for the people they reach. **Before rolling back to v0.5.0, switch routers off** (unpublish or disable them): v0.5.0 would run one as an ordinary agent with no knowledge bases, which only refuses; the new tables stay and are ignored, and webhooks stop sending. Routers need the SystemOne scope check. |
 | v0.4.4 → [v0.5.0](/docs/releases/v0-5-0) | `00046` to `00048` (schema 45 → 48), all additive | A rolling upgrade: bump `?ref=` and the digests. No new environment variables. Before rolling back to an earlier release, switch or discard any index preview. |
@@ -100,7 +108,22 @@ Since v0.2.0, each GitHub release also attaches the SBOMs per platform, the dige
 | v0.1.0 → [v0.2.0](/docs/releases/v0-2-0) | `00030` to `00034`, additive only | Bump `?ref=` and the digest. If you vendored the base, re-vendor or switch to the remote base. The image is public, so the `private-registry` component can go. New optional settings for OCR, SSO groups and evaluations. |
 | First install: [v0.1.0](/docs/releases/v0-1-0) | — | [Install on Kubernetes](/docs/self-hosting/kubernetes). |
 
+The project rehearsed the upgrade from v0.6.3 to v0.7.0. Going straight from v0.6.2 or earlier to v0.7.0 hasn't been tested: upgrade through v0.6.3 (and check its ICU requirement) first.
+
 Security fixes are released as a patch of the latest minor release; older minor releases don't get fixes, so stay on the latest release. Before 1.0, minor releases may include breaking changes; the release notes say how to adapt.
+
+## After a database ICU update
+
+Since v0.6.3, one index (`agent_templates_name_fold_idx`) is ordered by PostgreSQL's ICU collation `und-x-icu`. After an ICU, libicu or operating-system update of the database server, PostgreSQL may warn `collation "und-x-icu" has a version mismatch`. Rebuild the index, then record the new version:
+
+```sql
+REINDEX INDEX CONCURRENTLY agent_templates_name_fold_idx;
+ALTER COLLATION "und-x-icu" REFRESH VERSION;
+```
+
+The templates table is small, so this takes moments; until then a name lookup could miss. Restoring a dump into a server with a different ICU version needs the same two statements.
+
+During a v0.6.3 rollout, and after a rollback to v0.6.2, a v0.6.2 pod can still save a template whose name differs from another only by non-ASCII case (in a cluster created with `--locale=C`). That's accepted on purpose rather than failing with a 500; the unique index ships in a later release, which renames any such twin first.
 
 ## Moved pages in v0.2.1
 

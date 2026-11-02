@@ -1,0 +1,107 @@
+---
+title: v0.6.3
+description: "The rest of the v0.6.0 QA fixes: API errors and methods that follow the contract, names that can't hide characters, two chat tabs in step, safer team requests and webhooks, and an OCR sidecar with no outbound traffic. Two migrations; PostgreSQL needs ICU."
+---
+
+Released 2026-10-30. v0.6.3 finishes the fixes from the v0.6.0 QA pass for the API, chat, the editors' and owners' pages and the v0.6.0 features, and isolates the OCR sidecar's network. It has **two migrations** (the schema moves from 53 to 55), **no new environment variables** and no new retrieval mode. **PostgreSQL must be built with ICU.** Some API answers change: read "For integrations", then "Upgrading from v0.6.2".
+
+## What changed
+
+### For integrations
+
+See the [API overview](/docs/api#conventions).
+
+- **Methods follow the contract.** A wrong method on a known path is `405 method_not_allowed` with an `Allow` header; an unknown path stays `404`. `OPTIONS` grants no cross-origin write.
+- **A value in the wrong format says so:** `400 invalid_email`, `invalid_date` or `invalid_id`, naming the field and the expected format. That includes an ID in a request body, such as a malformed `conversationId` on a chat. A body that isn't JSON, unknown fields and values of the wrong kind stay `invalid_json`. An agent configuration error names the public field, such as `maxOutputTokens must be a whole number`.
+- **The [OpenAI-compatible endpoint](/docs/api/openai-compatible)** accepts text-only messages (an image or other non-text part is `400 invalid_messages`) and at most 51 submitted messages, ignored roles included. Session, CSRF, rate-limit and internal errors are answered in OpenAI's shape too, keeping `Retry-After`.
+- **Search:** an explicit `topK` outside 1–50 is `400 invalid_topk` instead of being clamped. Leaving it out still uses the knowledge base's setting.
+- **[API keys](/docs/api/authentication):** an unknown or wrongly cased scope is `400 invalid_scopes` (scopes are `query`, `ingest`, `manage` or `mcp`, lower-case); a known scope above your role is still `403`. Revoking another person's key you can't see is `404 key_not_found`, the same as an unknown key. The `Bearer` scheme name is case-insensitive on the REST, OpenAI-compatible and MCP endpoints; secrets aren't.
+- **No-op changes stay no-ops.** A source `PATCH` that changes nothing keeps its revision and writes no audit entry; publishing an unchanged agent draft is `409 no_changes`.
+- **Every `/v1` operation documents a default error response** in the API description, and shared `429` answers carry `Retry-After`.
+- `GET /v1/teams/{team}/budget-status` carries the team's cost `mode` (`off`, `track` or `enforce`), and team pages no longer ask for spend while cost tracking is off.
+
+**Who is affected:** clients that relied on `404` for a wrong method, on `invalid_json` for badly formatted values or on a clamped `topK`, that send mixed-case scopes, or that send image parts or more than 51 messages to the OpenAI-compatible endpoint.
+
+### Names can't hide characters
+
+New and renamed teams, agents, knowledge bases, sources and API keys, and explicit conversation titles, refuse control, bidirectional, zero-width and other invisible formatting characters (`400 invalid_name`, `invalid_title`). An upload whose filename has one is refused before it's stored (`400 invalid_filename`) instead of being renamed. A conversation's first title leaves hidden characters out without changing the question.
+
+Existing names aren't changed. Ordinary letters, accents and variation selectors are fine; emoji and scripts that need a zero-width joiner need a name without it. This doesn't protect against every look-alike character.
+
+### For people, editors and owners
+
+- **Two chat tabs stay in step.** A tab that comes back into view, or finishes an answer, adds what another tab or device stored, in order, without disturbing its own answer. A `?c=null` link says "This conversation isn't available". See [Your conversations](/docs/using/chat#your-conversations).
+- **A router's Share dialog** says up front when its conversation can't be shared (a router sent a question to another agent), names that agent and links to the conversation with it. Markdown exports of router conversations say which agent answered each message. See [Sharing a conversation](/docs/using/chat#sharing-a-conversation).
+- **Team requests show what was approved.** The [Request a team](/docs/using/request-a-team) page shows the classification that was approved, with what you asked for beside it when they differ.
+- **Suggested addresses** keep accented letters and romanise Greek and Cyrillic (`Ünï` becomes `uni`), and are never a single letter.
+- **Crawls** skip links to archives, installers, pictures, audio, video and fonts without fetching them, so a site with many download links no longer sits at **Running**. HTML pages lose images without alt text, which left stray punctuation in passages. See [Crawling a website](/docs/using/editors/data-sources#crawling-a-website).
+- **Webhooks to a withdrawn destination** can still be edited (description, events) and turned off, but not turned on until a platform admin approves the destination again. Nothing is delivered meanwhile, and the edit form says so. See [Webhooks for teams](/docs/using/owners/webhooks).
+- On a 390 px phone, the Request a team, review queue and webhook tables stack each row instead of scrolling sideways.
+- Controls are named with the text they show, for screen-reader and voice-control users (WCAG 2.5.3).
+
+### For platform admins
+
+- **A team request whose owner is suspended isn't approved silently.** The **Approve** dialog warns "The owner's account is suspended" and asks for another **Owner**; without one the API answers `409 owner_suspended` and creates nothing. The queue shows the approved classification too. See [Team requests](/docs/administration/team-requests#approving).
+- **Template names are unique ignoring case in every script,** whatever the database's locale (`409 template_name_taken`). Existing templates whose names differ only by case beyond ASCII ("qa über" and "QA ÜBER") are renamed during the upgrade: the oldest keeps its name, the others become "Name (2)", "Name (3)" and so on, and nothing is deleted. See [Agent templates](/docs/administration/agent-templates#renaming-and-deleting).
+- **Approved webhook destinations** must be real host names: each part up to 63 characters and the whole name up to 253 (`400 invalid_pattern`, `invalid_host`). Patterns saved before stay, and long ones wrap. See [Webhooks for administrators](/docs/administration/webhooks).
+- **Limits:** **Longest question** for public agents must be at least 1; to stop public chat, turn public access off. Other limits still accept 0 to block. A platform limit update through the API must include both `default` and `ceiling` (`null` still means unlimited or inherit). See [Limits](/docs/administration/limits#public-agents).
+- **Inviting an address again renews its open invite:** a new expiry and role, the email sent again, and "Renewed invite" (`team.invite_renew`) in the audit log instead of a second invite. See [People and teams](/docs/administration/people-and-teams).
+- **Auditors get `403` on admin writes** before any revision or body check. Read-only previews (SSO group rules, migration preflight) still work for them.
+- **Validation:** a connection can't be created with an explicit zero timeout (leaving it out still gives 60 seconds); a chat model can't declare more output tokens than its known context window; the message for an agent's disable reason names its five-character minimum, counted in characters.
+- **SystemOne** is always in the admin sidebar; until a SystemOne model exists, its page says how to add one. Links to **Admin → Settings → Features** land on the Features card after a reload.
+
+### OCR networking
+
+The `ocr-tesseract` component now denies all outbound traffic from the OCR sidecar, **including DNS**, and the base's DNS policy (`grounded-allow-dns`) leaves OCR out, because Kubernetes NetworkPolicies combine by union. The API and worker can still call the sidecar. See [OCR sidecar](/docs/self-hosting/ocr-sidecar).
+
+**Who is affected:** operators whose overlay patches `grounded-allow-dns`, or who add namespace-wide allow policies of their own (see "Upgrading from v0.6.2").
+
+The [changelog](https://github.com/ncecere/grounded/blob/main/CHANGELOG.md) has the full list, with the issue numbers.
+
+## Requirements
+
+As for [v0.2.0](/docs/releases/v0-2-0#requirements), and **PostgreSQL must be built with ICU**, with the `und-x-icu` collation. The official `postgres` and `pgvector/pgvector` images, CloudNativePG and the usual managed services are. To check, run:
+
+```sql
+SELECT lower('ÜÉ' COLLATE "und-x-icu");
+```
+
+It returns `üé` when ICU is there. See [Requirements](/docs/self-hosting/requirements).
+
+## Upgrading from v0.6.2
+
+A rolling upgrade with no downtime. Take a backup as for any upgrade ([Upgrades](/docs/self-hosting/upgrades)), check that PostgreSQL has ICU, then change every `?ref=v0.6.2` in your overlay to `?ref=v0.6.3` and pin both `ghcr.io/ncecere/grounded` and `ghcr.io/ncecere/grounded-ocr` to the digests [below](#verifying-the-images).
+
+- **Two migrations** (the schema moves from 53 to 55).
+  - `00054` checks for ICU first and stops with `migration 00054 needs the ICU collation "und-x-icu"` if it's missing, changing nothing. It then renames template names that differ only by case (see above) and adds a lookup index. It briefly locks the templates table for writes.
+  - `00055` adds the approved classification to team requests without rewriting any row. Requests approved before the upgrade show the classification the approval recorded.
+- **No new environment variables.** `deploy/kubernetes` changed: the OCR component's NetworkPolicy and the base's `grounded-allow-dns`. Re-apply the base and the `ocr-tesseract` component. If your overlay patches `grounded-allow-dns`, keep its pod selector (every pod except `app.kubernetes.io/component: ocr`). A namespace-wide allow policy of your own must leave OCR out too, or it gives the sidecar back its egress.
+- **After an ICU, libicu or operating-system update of the database server,** or after restoring a dump into a server with another ICU version, run:
+
+  ```sql
+  REINDEX INDEX CONCURRENTLY agent_templates_name_fold_idx;
+  ALTER COLLATION "und-x-icu" REFRESH VERSION;
+  ```
+
+- **During the rollout, and after rolling back to v0.6.2,** a v0.6.2 pod can still save a template whose name differs from another only by case beyond ASCII. That is accepted on purpose rather than failing; a later release adds the unique index in the database.
+- **Rolling back** is pinning the previous image. The new column and index stay and are harmless to v0.6.2.
+- **API:** new fields `ownerSuspended` and `approvedClassification` on team requests and `ownerEmail` on approving one, and `mode` on budget status. Error codes change as listed under "For integrations" (`405 method_not_allowed`, `invalid_email`, `invalid_date`, `invalid_id`, `invalid_name`, `invalid_title`, `invalid_filename`, `invalid_messages`, `invalid_topk`, `invalid_scopes`, `owner_suspended`, `no_changes`, `invalid_pattern`, `invalid_host`).
+
+## Known limitations
+
+The [v0.6.1 limitations](/docs/releases/v0-6-1#known-limitations) still apply unless a change above resolves them, and:
+
+- **Template-name uniqueness isn't in the database yet.** Grounded checks it when a template is saved; the unique index follows in a later release.
+- **Skipping known download extensions** doesn't cover a download link without one: the crawler may still have to fetch it to find out.
+- **The images** have no Go findings and no fixable high or critical findings. The app image has four advisories of unknown severity (certificate and time-zone data), and the OCR image has Debian findings with no published fix: neither is free of known vulnerabilities.
+
+## Verifying the images
+
+As for [v0.2.0](/docs/releases/v0-2-0#verifying-the-images), with the tag `v0.6.3`. The binary reports `grounded v0.6.3 (…)`.
+
+- `ghcr.io/ncecere/grounded@sha256:d40097f802c1d2c6f73455581821ef573c2fa97d35a00145fb6165871e582113`
+- `ghcr.io/ncecere/grounded-ocr@sha256:9f738a742061781bc092df0aa2ec55c90ae9452ab5a0497f5925a870daefc3ed`
+
+## Reporting problems
+
+Open an issue at https://github.com/ncecere/grounded/issues. Report security problems privately as [`SECURITY.md`](https://github.com/ncecere/grounded/blob/main/SECURITY.md) describes.

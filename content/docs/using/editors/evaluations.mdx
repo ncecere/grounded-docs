@@ -86,6 +86,10 @@ When the platform has a [rerank model](/docs/administration/reranking), runs rer
 
 Evaluation runs never use [saved answers](/docs/using/editors/saved-answers) and don't count towards [Gaps](/docs/using/editors/gaps).
 
+### With parent sections
+
+When the embedding profile uses parent sections (v0.7.0), retrieval runs still score the passages that come back, so they score the same as without sections. Full-answer runs ask the agent as people do, so the model is given the sections.
+
 ### Questions that can't be scored
 
 Questions that can't be scored say why, and are counted apart:
@@ -117,6 +121,15 @@ A set's Settings tab has **Run automatically** (off by default). Automatic runs 
 - **nightly** at 03:00 UTC, when the set's knowledge bases had documents added, changed or deleted in the last day.
 
 When an automatic run's recall@k is more than 5 points below the previous retrieval run, or a question that passed now fails, the team's editors, admins and owners get the notification **Evaluation scores dropped**. Each person can turn it off in their notification settings. Full-answer runs are always started by hand.
+
+## Index previews
+
+When a platform admin [previews new index settings](/docs/using/editors/knowledge-bases#when-a-platform-admin-previews-new-settings) on a knowledge base (since v0.5.0), the knowledge base's own evaluation sets are run on both the current and the new index, retrieval only. Agents' sets aren't run.
+
+- The results show on the knowledge base's page: each set's recall and MRR on both indexes, and each question that changed, with its rank on both.
+- These runs aren't in the team's run list, its trend or its regression checks.
+- They count towards the team's query usage, like any evaluation run.
+- A knowledge base without evaluation sets has nothing to compare, so a preview is a good reason to write some.
 
 ## Limits and retention
 

@@ -25,10 +25,10 @@ A service key has a **responsible contact**, a team member to ask about it, show
 |---|---|---|
 | **Query** | Chat with agents and search knowledge bases | Everyone |
 | **Ingest** | Upload documents to a data source, start and cancel a crawl, preview a site map, and read sources, documents and agents | Editors, admins, owners |
-| **Manage** | Today the same calls as Ingest | Admins, owners |
+| **Manage** | Today the same calls as Ingest, although the form describes it as "change sources and knowledge bases" | Admins, owners |
 | **MCP** | Search knowledge bases and ask agents from AI tools, over the [MCP server](/docs/using/mcp). Nothing on the REST API | Everyone |
 
-Neither Ingest nor Manage can create, change or delete data sources, knowledge bases, agents or members, or publish an agent: those need a person signed in to the app (a key gets `401` there).
+On the form the scopes read **Query: search knowledge bases**, **Ingest: upload and manage documents**, **Manage: change sources and knowledge bases** and **MCP: search and ask from AI tools**. Neither Ingest nor Manage can create, change or delete data sources, knowledge bases, agents or members, or publish an agent: those need a person signed in to the app (a key gets `401` there).
 
 A key can also be **restricted** to some knowledge bases and some agents. Leave them unchecked to allow every knowledge base, or every agent, of the team.
 
@@ -48,6 +48,8 @@ A key with only the Query scope, or one whose owner is a plain member, sees the 
 
 Keys always belong to one team, and can never administer the platform.
 
+When you create a key through the API, an unknown or wrongly cased scope is refused (`400 invalid_scopes`); a known scope above your role is still `403`. An upload or other source change made with a key that lacks the Ingest scope says the key needs it. Both since v0.6.3.
+
 The **MCP** scope works only while a platform admin has turned the MCP server on; the form says when it's off. A key with only the MCP scope can't call the REST API, and a key for AI tools doesn't need Query. Over MCP a key reaches exactly what it could reach as a query key: its team, and only the knowledge bases and agents it's restricted to.
 
 ## Creating one
@@ -56,7 +58,9 @@ The **MCP** scope works only while a platform admin has turned the MCP server on
 2. Name it after what will use it ("Course site search"), pick personal or service, the scopes, any restrictions, and optionally an expiry date (a calendar; choose the day again to clear it).
 3. Copy the secret. **It's shown once**, right after creation; Grounded stores only a keyed hash of it. The dialog also shows an example request, and for a key with the MCP scope the MCP server's address.
 
-Keys look like `rag_<id>_<secret>`. Send them as a bearer token:
+Since v0.6.3 a key name with control characters or invisible formatting characters (such as zero-width or text-direction marks) is refused.
+
+Keys look like `rag_<id>_<secret>`. Send them as a bearer token (since v0.6.3 the word `Bearer` can be written in any case; the key itself is case-sensitive):
 
 ```sh
 curl -H "Authorization: Bearer $GROUNDED_API_KEY" https://grounded.example.org/v1/models
@@ -65,6 +69,8 @@ curl -H "Authorization: Bearer $GROUNDED_API_KEY" https://grounded.example.org/v
 ## Revoking
 
 **Revoke…** stops the key at once; programs using it get 401. It can't be undone. Revoked keys stay visible from the audit log, read-only, so the history keeps making sense.
+
+Revoking a key you can't see, such as another member's personal key, answers `404 key_not_found`, the same as a key that doesn't exist (since v0.6.3).
 
 Each key's page shows when it was created and last used. Revoke keys nobody uses. If a key may have leaked, revoke it and create a new one.
 

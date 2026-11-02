@@ -9,10 +9,11 @@ An agent answers questions from one or more knowledge bases with a chat model. E
 
 **Agents → New agent** asks for:
 
-- **Start from** (since v0.6.0): **A blank agent**, or a [template](#starting-from-a-template).
-- **Name** and **Address**: the address is part of the agent's link, `/a/<team>/<address>`.
-- **Description**: shown in the agent directory.
-- **Knowledge bases**: up to five. The agent searches each with its own settings.
+- **Start from** (since v0.6.0, shown when your platform has templates): **A blank agent**, or a [template](#starting-from-a-template).
+- **Name**. Since v0.6.3 a name with control characters or invisible formatting characters (such as zero-width or text-direction marks) is refused.
+- **Knowledge bases**: up to five. The agent searches each with its own settings. A router has none, and the dialog says so instead.
+- **Address** (optional): part of the agent's link, `/a/<team>/<address>`. It's suggested from the name. Since v0.6.3 the suggestion turns accented, Greek and Cyrillic letters into plain ones and is never a single letter; a name with nothing usable gets the default address `agent` (numbered if it's taken).
+- **Description** (optional): shown in Discover agents.
 - **Chat model**: the models your platform allows for the knowledge bases' classification. If a model isn't approved for their level, the dialog says so. Since v0.4.2 the dialog starts on a model whose latest health check passed and that supports tools, never on a failing one; a model failing its health checks is marked **Failing** in the picker, which says so under it.
 
 You can change everything later. Nobody can chat with the agent until you [publish](/docs/using/editors/versions) it.
@@ -25,6 +26,8 @@ A template is how an agent answers, never what it answers from or who may use it
 
 **Front door (router)** makes a [router](/docs/using/editors/routers): the dialog has no knowledge bases, because a router sends each question to another agent.
 
+<Screenshot slot="new-agent-start-from" />
+
 Only editors, admins and owners see **Start from**. Platform admins manage the saved templates ([Agent templates](/docs/administration/agent-templates)).
 
 ### Saving an agent as a template
@@ -35,7 +38,7 @@ A **platform admin** who is also an editor, admin or owner of the agent's team s
 
 The agent editor has six tabs: **Build · Evaluations · Appearance · Share · Analytics · Settings**. The header shows the version badge ("v4 live", or "Draft" before the first publish), which opens the [version history](/docs/using/editors/versions), and **Publish**.
 
-Build edits the **draft**. People keep chatting with the published version until you publish again. Appearance, Settings and Share aren't versioned: they apply at once (and an invalid value there never holds up **Publish**).
+Build edits the **draft**, and so do the **Audience** and **Routers** cards on the Share tab. People keep chatting with the published version until you publish again. Appearance, Settings, and Share's links and widget keys aren't versioned: they apply at once (and an invalid value there never holds up **Publish**). See [Versions and publishing](/docs/using/editors/versions).
 
 <Screenshot slot="agent-build" />
 
@@ -108,8 +111,8 @@ Each check adds latency: passage judging roughly one SystemOne request per passa
 |---|---|
 | **Temperature** | The model's sampling temperature. Blank uses the model's default. |
 | **Maximum answer length (tokens)** | Blank uses the model's limit. |
-| **Reasoning effort** | How long a reasoning model thinks before answering: **Default**, **Off**, **Low**, **Medium** or **High**. Lower starts answering sooner. **Default** follows the audience's setting (Low for public agents, unless a platform admin changed it; see [Moderation modes and reasoning](/docs/administration/moderation-modes#reasoning-effort)), else the model's. **Off** needs the chat model's **How to turn thinking off**, and Low to High its **Accepts reasoning effort** ([Models](/docs/administration/models#compatibility)); until a platform admin sets them, those choices are disabled and say why. |
-| **Source token budget** | Passages are trimmed to about this many tokens (500–32,000; default 6,000). |
+| **Reasoning effort** | How long a reasoning model thinks before answering: **Default**, **Off**, **Low**, **Medium** or **High**. Lower starts answering sooner. **Default** follows the audience's setting (Low for public agents, unless a platform admin changed it; see [Moderation modes and reasoning](/docs/administration/moderation-modes#reasoning-effort)), else the model's. **Off** needs the chat model's **How to turn thinking off**, and Low to High its **Accepts reasoning effort** ([Models](/docs/administration/models#compatibility)); until a platform admin sets them, those choices are disabled and the description names the Admin → Models setting each needs. Since v0.4.4, when the model's last **Test** found that it keeps thinking with thinking off, the option reads **Off (ignored by this model)**, and choosing it warns "Off did not stop this model from thinking in its last Test". |
+| **Source token budget** | Passages are trimmed to about this many tokens (500–32,000; default 6,000). With [parent sections](/docs/using/editors/knowledge-bases#how-search-works), a section is given to the model only if it fits what is left of this budget; otherwise the model gets the matched passage. |
 | **Maximum searches** | With "let the model decide", how many model turns may search (1–8; default 4). The last turn must answer. |
 | **Minimum similarity** | Drop passages less similar than this (0–1). 0 turns it off. |
 | **Rewrite follow-up questions** | With "search before every answer", rewrite a follow-up that depends on the conversation ("what about summer?", "can I pay for it by card?") into a question that stands alone before searching (on by default). It adds a short model call, asked for low reasoning effort when the model accepts one (off when the answer's effort is Off). A question that stands alone isn't rewritten. |
@@ -125,7 +128,7 @@ The section's summary lists what's on, starting with the reasoning effort and th
 
 The panel beside Build chats with the **draft**, so you can test a change before publishing it. It works like the chat, with two differences: you can open the model's reasoning, and every answer has **Add to evaluations**. It offers [follow-up suggestions](/docs/using/follow-up-suggestions) like the chat, when the draft has them on. Since v0.4.2 its message box stays whole however short the window (the conversation shrinks first), a shadow at the bottom shows when more is below, and **Send** is a secondary button, so **Publish** is the page's one main action.
 
-Since v0.4.1 the reasoning and the answer's steps are shown in the order they happened. Tool steps use the tool's title ("Used Check outage", v0.4.2). With **Let the model decide when to search**, or with tools, the model may think, search or call a tool, then think again: Try it shows the reasoning before the call, the call, then the reasoning after it, each part of the reasoning in its own collapsed **Reasoning** panel (only the last one streams, until the answer starts). With **Search before every answer** the search comes first, as before. Before v0.4.1 every step came first and all the reasoning was merged after them. A citation's source opens in the [source viewer](/docs/using/source-viewer) under the conversation. Test conversations aren't kept in your conversation history, never use or create [saved answers](/docs/using/editors/saved-answers), and don't count towards [Gaps](/docs/using/editors/gaps).
+Since v0.4.1 the reasoning and the answer's steps are shown in the order they happened. Tool steps use the tool's title ("Used Check outage", v0.4.2). With **Let the model decide when to search**, or with tools, the model may think, search or call a tool, then think again: Try it shows the reasoning before the call, the call, then the reasoning after it, each part of the reasoning in its own collapsed **Reasoning** panel (only the last one streams, until the answer starts). With **Search before every answer** the search comes first, as before. Before v0.4.1 every step came first and all the reasoning was merged after them. A citation's source opens in the [source viewer](/docs/using/source-viewer) under the conversation. When the knowledge base uses parent sections, it opens as the whole **Cited section** the model was given, with the **Matched passage** marked ([When the model used a larger section](/docs/using/source-viewer#when-the-model-used-a-larger-section)). Test conversations aren't kept in your conversation history, never use or create [saved answers](/docs/using/editors/saved-answers), and don't count towards [Gaps](/docs/using/editors/gaps).
 
 ## Appearance
 
@@ -139,7 +142,7 @@ A live preview shows the result. There's no custom CSS, so every agent stays acc
 
 ## Settings
 
-**Name**, **Address** and **Description**; **Saved answers**: whether the agent reuses a recent answer to the same first question, for how long (24 hours by default), and **Clear saved answers** ([Saved answers](/docs/using/editors/saved-answers); on by default for public agents); and a danger zone to **Disable**, **Enable** or **Delete** the agent.
+**Name**, **Address** and **Description**; **Saved answers**: whether the agent reuses a recent answer to the same first question, for how long (24 hours by default), and **Clear saved answers** ([Saved answers](/docs/using/editors/saved-answers); on by default for public agents); and a danger zone to **Disable agent**, **Enable agent** or **Delete agent**. Only team admins and owners can use the danger zone: editors see its buttons disabled, with "Only team admins and owners can do this." The header's "…" menu also has **Delete agent…** for team admins and owners, and **Save as template…** for [platform admins](#saving-an-agent-as-a-template).
 
 These settings aren't part of versions: saved changes reach people at once. A save of only these fields says "Saved", not "Draft saved", and the team's audit log records it as "Changed agent details". Disabling an agent stops all chat with it until you enable it again. Deleting it stops chat for good; people keep read-only access to their own conversations with it.
 

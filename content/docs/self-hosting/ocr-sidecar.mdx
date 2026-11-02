@@ -11,17 +11,17 @@ Add the component and pin the image by digest, like Grounded's:
 
 ```yaml
 components:
-  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ocr-tesseract?ref=v0.6.1
+  - https://github.com/ncecere/grounded//deploy/kubernetes/components/ocr-tesseract?ref=v0.7.0
 images:
   - name: ghcr.io/ncecere/grounded-ocr
-    newTag: v0.6.1
+    newTag: v0.7.0
     digest: sha256:<digest>
 ```
 
 It adds:
 
 - the `grounded-ocr` Deployment and Service (port 8080);
-- a NetworkPolicy that lets only Grounded's api and worker pods call it;
+- two NetworkPolicies: `grounded-ocr-ingress`, which lets only Grounded's api and worker pods call it on 8080 and gives it **no egress**, and `grounded-app-egress-ocr`, which lets the api and worker reach it (see [Network](#network));
 - `OCR_TESSERACT_URL=http://grounded-ocr:8080` in `grounded-config`.
 
 The sidecar runs as a non-root user with a read-only root filesystem, writes only a temporary directory per request under `/tmp`, and passes the `restricted` Pod Security Standard. The image is multi-arch, signed and scanned like the main image; verify it the same way ([Verifying images](/docs/self-hosting/upgrades#verifying-images)).
@@ -34,6 +34,16 @@ kubectl -n grounded exec deploy/grounded-ocr -- grounded-ocr version
 
 Then turn OCR on in the admin portal and press **Test**.
 
+## Network
+
+Since v0.6.3 the sidecar initiates no traffic at all, **not even DNS**: it has nothing to call. The base's `grounded-allow-dns` policy selects every pod except those with `app.kubernetes.io/component: ocr`, because NetworkPolicies combine by union and a namespace-wide DNS grant would otherwise allow it again.
+
+- If your overlay patches `grounded-allow-dns` (for example for a cluster DNS other than kube-dns), keep its `podSelector`.
+- If you add a namespace-wide allow policy of your own, exclude OCR from it too.
+- Upgrading from an earlier release, re-apply the base and the `ocr-tesseract` component together.
+
+A kind test of this policy is part of the project's Kubernetes smoke test (`make k8s-smoke`).
+
 ## Sizing
 
 Each request is one page. The sidecar runs `OCR_CONCURRENCY` Tesseract processes at once (2 in the component, matching its CPU limit) and queues the rest until its timeout. Each Grounded worker sends at most `OCR_CONCURRENCY` pages at once (its own setting, default 2). A page takes about 0.5–3 seconds of CPU. Scale the sidecar's replicas or CPUs with the number of workers.
@@ -43,7 +53,7 @@ Each request is one page. The sidecar runs `OCR_CONCURRENCY` Tesseract processes
 The image includes `eng`, `spa`, `fra`, `deu`, `ita`, `por`, `nld`, `pol`, `rus`, `ukr`, `ara`, `hin`, `chi_sim`, `chi_tra`, `jpn`, `kor` and `vie` (and `osd`). For another language, derive an image:
 
 ```dockerfile
-FROM ghcr.io/ncecere/grounded-ocr:v0.6.1
+FROM ghcr.io/ncecere/grounded-ocr:v0.7.0
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr-ell \
  && rm -rf /var/lib/apt/lists/*

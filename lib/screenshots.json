@@ -1,6 +1,21 @@
 {
+  "account-api-keys": {
+    "src": "/images/account-api-keys.webp",
+    "width": 1440,
+    "height": 900
+  },
   "account-menu-theme": {
     "src": "/images/account-menu-theme.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "account-profile": {
+    "src": "/images/account-profile.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-agent-templates": {
+    "src": "/images/admin-agent-templates.webp",
     "width": 1440,
     "height": 900
   },
@@ -49,6 +64,11 @@
     "width": 1440,
     "height": 900
   },
+  "admin-features-content-health": {
+    "src": "/images/admin-features-content-health.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-features-mcp": {
     "src": "/images/admin-features-mcp.webp",
     "width": 1440,
@@ -59,10 +79,15 @@
     "width": 1440,
     "height": 900
   },
+  "admin-index-preview-comparison": {
+    "src": "/images/admin-index-preview-comparison.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-mcp-server-tools": {
     "src": "/images/admin-mcp-server-tools.webp",
     "width": 1440,
-    "height": 1920
+    "height": 2534
   },
   "admin-mcp-servers": {
     "src": "/images/admin-mcp-servers.webp",
@@ -97,10 +122,15 @@
   "admin-overview-features": {
     "src": "/images/admin-overview-features.webp",
     "width": 1440,
-    "height": 1940
+    "height": 1997
   },
   "admin-parsing-ocr": {
     "src": "/images/admin-parsing-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "admin-profile-add-chunker": {
+    "src": "/images/admin-profile-add-chunker.webp",
     "width": 1440,
     "height": 900
   },
@@ -134,6 +164,11 @@
     "width": 1440,
     "height": 900
   },
+  "admin-team-requests": {
+    "src": "/images/admin-team-requests.webp",
+    "width": 1440,
+    "height": 900
+  },
   "admin-teams": {
     "src": "/images/admin-teams.webp",
     "width": 1440,
@@ -143,6 +178,11 @@
     "src": "/images/admin-user-connected-apps.webp",
     "width": 1440,
     "height": 900
+  },
+  "admin-webhooks": {
+    "src": "/images/admin-webhooks.webp",
+    "width": 1440,
+    "height": 1236
   },
   "agent-analytics": {
     "src": "/images/agent-analytics.webp",
@@ -164,6 +204,11 @@
     "width": 1440,
     "height": 900
   },
+  "agent-build-routing": {
+    "src": "/images/agent-build-routing.webp",
+    "width": 1440,
+    "height": 900
+  },
   "agent-build-systemone-added-time": {
     "src": "/images/agent-build-systemone-added-time.webp",
     "width": 1440,
@@ -181,6 +226,11 @@
   },
   "agent-share": {
     "src": "/images/agent-share.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "agent-share-routers": {
+    "src": "/images/agent-share-routers.webp",
     "width": 1440,
     "height": 900
   },
@@ -214,6 +264,11 @@
     "width": 1440,
     "height": 900
   },
+  "chat-share-dialog": {
+    "src": "/images/chat-share-dialog.webp",
+    "width": 1440,
+    "height": 900
+  },
   "chat-source-cards": {
     "src": "/images/chat-source-cards.webp",
     "width": 1440,
@@ -233,6 +288,16 @@
     "src": "/images/connected-apps.webp",
     "width": 1440,
     "height": 900
+  },
+  "content-health-make-report": {
+    "src": "/images/content-health-make-report.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "content-health-report": {
+    "src": "/images/content-health-report.webp",
+    "width": 1440,
+    "height": 2400
   },
   "crawl-domains": {
     "src": "/images/crawl-domains.webp",
@@ -314,6 +379,11 @@
     "width": 1440,
     "height": 900
   },
+  "kb-index-preview-ready": {
+    "src": "/images/kb-index-preview-ready.webp",
+    "width": 1440,
+    "height": 900
+  },
   "kb-try-it": {
     "src": "/images/kb-try-it.webp",
     "width": 1440,
@@ -326,6 +396,11 @@
   },
   "mcp-key-created": {
     "src": "/images/mcp-key-created.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "new-agent-start-from": {
+    "src": "/images/new-agent-start-from.webp",
     "width": 1440,
     "height": 900
   },
@@ -359,6 +434,16 @@
     "width": 1440,
     "height": 900
   },
+  "source-contextual-card": {
+    "src": "/images/source-contextual-card.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "source-contextual-dialog": {
+    "src": "/images/source-contextual-dialog.webp",
+    "width": 1440,
+    "height": 900
+  },
   "source-document-ocr": {
     "src": "/images/source-document-ocr.webp",
     "width": 1440,
@@ -366,6 +451,11 @@
   },
   "source-documents-ocr": {
     "src": "/images/source-documents-ocr.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "source-repeated-blocks-fuzzy": {
+    "src": "/images/source-repeated-blocks-fuzzy.webp",
     "width": 1440,
     "height": 900
   },
@@ -389,13 +479,33 @@
     "width": 1440,
     "height": 900
   },
+  "team-request-new": {
+    "src": "/images/team-request-new.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "team-requests-page": {
+    "src": "/images/team-requests-page.webp",
+    "width": 1440,
+    "height": 900
+  },
   "team-usage-spend": {
     "src": "/images/team-usage-spend.webp",
     "width": 1440,
     "height": 900
   },
+  "team-webhooks": {
+    "src": "/images/team-webhooks.webp",
+    "width": 1440,
+    "height": 900
+  },
   "tracing-answer-trace": {
     "src": "/images/tracing-answer-trace.webp",
+    "width": 1440,
+    "height": 900
+  },
+  "webhook-deliveries": {
+    "src": "/images/webhook-deliveries.webp",
     "width": 1440,
     "height": 900
   }
